@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The no-network rule, enforced by the browser itself: this page may use only
+     what is inside this one file. No web fonts, scripts, pictures or requests. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>MHWG Presentation Studio</title>
+<!-- Built from presentation-studio/src by build.py — edit the sources, not this file. -->
+<style>{{FONTS}}</style>
+<style>{{STUDIO_CSS}}</style>
+<style>{{DOC_CSS}}</style>
+</head>
+<body data-build="{{VERSION}}">
+
+<!-- Brand marks live once in the DOM and are cloned wherever needed. -->
+{{BRAND_MARKS}}
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" data-wordmark></span>
+    <span class="brand-app">Presentation&nbsp;Studio</span>
+  </div>
+  <div class="doc-title">
+    <input id="docTitle" placeholder="Name this file (only you see it)" spellcheck="false" aria-label="File name">
+    <span class="save-state" id="saveState">not saved yet</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-icon" id="btnUndo" title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
+    <button class="btn btn-icon" id="btnRedo" title="Redo (Ctrl+Y)" aria-label="Redo">&#8631;</button>
+    <span class="tb-sep"></span>
+    <button class="btn" id="btnNew" title="Start a new presentation">New</button>
+    <button class="btn" id="btnOpen" title="Open a saved .mhwg.json file">Open</button>
+    <button class="btn" id="btnSave" title="Save the working file (Ctrl+S)">Save</button>
+    <span class="tb-sep"></span>
+    <button class="btn" id="btnHelp" title="How this works">Help</button>
+    <button class="btn" id="btnPresent" title="Show it full screen, one page at a time">Present</button>
+    <button class="btn btn-primary" id="btnExport" title="Export the finished PDF (Ctrl+P)">Export PDF</button>
+  </div>
+</header>
+
+<main class="shell">
+
+  <!-- Left rail: five steps, left to right -->
+  <aside class="rail" id="rail">
+    <nav class="rail-tabs" role="tablist">
+      <button class="rail-tab is-active" data-panel="start"><i>1</i>Start</button>
+      <button class="rail-tab" data-panel="build"><i>2</i>Build <b id="buildChip"></b></button>
+      <button class="rail-tab" data-panel="copilot"><i>3</i>Copilot&nbsp;&amp;&nbsp;JSON</button>
+      <button class="rail-tab" data-panel="style"><i>4</i>Style</button>
+      <button class="rail-tab" data-panel="finish"><i>5</i>Finish <b id="finishChip"></b></button>
+    </nav>
+
+    <!-- 1 · START -->
+    <section class="panel is-active" data-panel="start">
+      <div class="panel-intro">
+        <h2>Start here</h2>
+        <p>Pick what you are making and fill in the cover. The page on the right
+          updates as you type.</p>
+      </div>
+      <div class="card">
+        <h3>What are you making?</h3>
+        <div id="pieceGrid" class="piece-grid"></div>
+        <p class="hint">Switching replaces the sections with that template's. Undo (&#8630;) brings them back.</p>
+      </div>
+      <div class="card">
+        <h3>The cover</h3>
+        <label class="field"><span>Prepared for</span>
+          <input id="fldClient" placeholder="Robert &amp; Anne Kowalchuk"></label>
+        <label class="field"><span>Title</span>
+          <select id="fldTitleIdea" aria-label="Title suggestions"></select>
+          <input id="fldTitle" placeholder="The Plan" class="mt6"></label>
+        <label class="field"><span>Subtitle</span>
+          <input id="fldSubtitle" placeholder="A summary of where you stand and what comes next"></label>
+        <div class="form-grid">
+          <label class="field"><span>Prepared by</span><select id="fldAdvisor"></select></label>
+          <label class="field"><span>Date on the cover</span><input id="fldDate" type="date"></label>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Format</h3>
+        <div id="formatPick" class="swatch-grid two"></div>
+      </div>
+      <div class="card next-card">
+        <h3>Next — how do you want to fill it in?</h3>
+        <button class="route-btn" data-go="build"><i>&#9998;</i><b>I'll type it myself</b>
+          <span>Click any text on the page and type over it. Add sections and blocks on Build.</span></button>
+        <button class="route-btn" data-go="copilot"><i>&#10022;</i><b>Copilot writes it</b>
+          <span>Copy one prompt into Copilot, paste the answer back. It is laid out for you.</span></button>
+        <button class="route-btn" data-go="copilot-json"><i>{&#8202;}</i><b>I have JSON</b>
+          <span>From Copilot, a script or a coder — the whole presentation in one paste.</span></button>
+      </div>
+    </section>
+
+    <!-- 2 · BUILD -->
+    <section class="panel" data-panel="build">
+      <div class="panel-intro">
+        <h2>Build the pages</h2>
+        <p><b>Click any text on the page to type over it.</b> Point at a block on the page for
+          its tools (add below, Copilot, move, delete); click it to see every setting on the right.</p>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Sections</h3><span class="progress-label" id="buildProgress"></span></div>
+        <div class="progress-bar"><i id="buildBar"></i></div>
+        <p class="hint">Click a section to go to it. Drag &#10303; to change the order.</p>
+        <div id="outline" class="outline"></div>
+        <div class="add-row">
+          <select id="presetPick" aria-label="Kind of section"></select>
+          <button class="btn" id="btnAddSection">+ Add</button>
+        </div>
+        <button class="btn btn-wide btn-rec" id="btnAddRec">+ Account recommendation page</button>
+        <button class="btn btn-ghost btn-wide" id="btnBorrow">+ Sections from another template&hellip;</button>
+      </div>
+      <div class="card">
+        <h3>Add a block</h3>
+        <p class="hint" id="addWhere"></p>
+        <div class="palette" id="palette"></div>
+      </div>
+      <div class="card">
+        <h3>Drop files in</h3>
+        <div class="dropzone" id="dropzone">
+          <strong>Drop files here — or onto the page</strong>
+          <span>Word (.docx) &middot; pictures &middot; text (.txt, .md) &middot; PDF text &middot; .json</span>
+          <button class="btn btn-ghost btn-mini" id="btnBrowse">or browse&hellip;</button>
+          <input type="file" id="fileInput" multiple hidden
+                 accept=".docx,.txt,.md,.json,.pdf,.png,.jpg,.jpeg,.gif,.webp,.svg">
+        </div>
+        <p class="hint">A Word file's Heading&nbsp;1 lines become sections, the same as <code>#</code> in pasted text.</p>
+      </div>
+      <button class="btn btn-wide next-btn" data-go="style">Next: Style &rarr;</button>
+    </section>
+
+    <!-- 3 · COPILOT & JSON -->
+    <section class="panel" data-panel="copilot">
+      <div class="panel-intro">
+        <h2>Copilot &amp; JSON</h2>
+        <p>Copilot writes, this program formats. Nothing here goes online: you copy a prompt into
+          Copilot on your work machine and paste its answer back.</p>
+      </div>
+
+      <div class="card step-card">
+        <span class="step-n">1</span>
+        <h3>The essentials <em>optional</em></h3>
+        <p class="hint">Whatever you put here goes into every prompt, so Copilot uses your figures exactly.</p>
+        <label class="field"><span>The one thing the client should take away</span>
+          <textarea id="fldMessage" rows="2" placeholder="e.g. You can retire in 2032 without changing how you live."></textarea></label>
+        <div class="field"><span>Key figures</span></div>
+        <div id="numRows" class="num-rows"></div>
+        <button class="btn btn-ghost btn-mini" id="btnAddNum">+ Another figure</button>
+        <details class="sub">
+          <summary>Put these figures on the page</summary>
+          <label class="field"><span>In section</span><select id="numSection"></select></label>
+          <div class="btn-row"><button class="btn btn-wide" id="btnNumStats">As key-number cards</button>
+            <button class="btn btn-wide" id="btnNumFacts">As fact rows</button></div>
+          <p class="hint">Press again after changing a figure — the cards already on the page are updated, not duplicated.</p>
+        </details>
+      </div>
+
+      <div class="card step-card">
+        <span class="step-n">2</span>
+        <h3>Copy a prompt</h3>
+        <div class="choice-list compact" id="promptKind">
+          <label class="choice"><input type="radio" name="promptKind" value="text" checked>
+            <span><b>Whole presentation — as text</b><em>Most reliable. Headings, bullets, tables, number cards.</em></span></label>
+          <label class="choice"><input type="radio" name="promptKind" value="json">
+            <span><b>Whole presentation — as JSON</b><em>Copilot can also build charts and choose block types.</em></span></label>
+          <label class="choice"><input type="radio" name="promptKind" value="section">
+            <span><b>One section</b><em>Write or rewrite a single section.</em></span></label>
+          <label class="choice"><input type="radio" name="promptKind" value="tool">
+            <span><b>Polishing tools</b><em>Plain-language rewrite, cut to fit, action plan&hellip;</em></span></label>
+        </div>
+        <select id="promptSection" class="mt6" hidden aria-label="Section"></select>
+        <select id="promptTool" class="mt6" hidden aria-label="Tool"></select>
+        <button class="btn btn-primary btn-wide mt8" id="btnCopyPrompt">Copy the prompt</button>
+        <details class="sub"><summary>See the prompt</summary><pre class="prompt-preview" id="promptPreview"></pre></details>
+        <p class="hint">Then in Copilot: paste the prompt, add your notes (or attach the plan, notes and statements) where it says NOTES.</p>
+      </div>
+
+      <div class="card step-card" id="pasteCard">
+        <span class="step-n">3</span>
+        <h3>Paste the answer</h3>
+        <textarea id="pasteBox" rows="9" spellcheck="false"></textarea>
+        <p class="hint">Text or JSON — the program works out which. You see a preview before anything changes.</p>
+        <div class="btn-row"><button class="btn btn-primary btn-wide" id="btnSmartPaste">Preview &amp; lay it out</button>
+          <button class="btn btn-ghost" id="btnClearPaste">Clear</button></div>
+      </div>
+
+      <div class="card">
+        <h3>Prefer Word?</h3>
+        <p class="hint">Download a Word file with these headings and a note under each. Fill it in with
+          Copilot in Word, then drop it on the page.</p>
+        <button class="btn btn-wide" id="btnWordDraft">Download the Word draft</button>
+      </div>
+
+      <div class="card" id="jsonCard">
+        <h3>For coders &amp; automation</h3>
+        <p class="hint">The whole presentation can be read and written as JSON — round-trip it through a
+          script, a spreadsheet macro or Copilot. Paste JSON into step 3.</p>
+        <div class="btn-grid">
+          <button class="btn" id="btnCopyJSON">Copy as JSON</button>
+          <button class="btn" id="btnDownloadJSON">Download .json</button>
+          <button class="btn" id="btnJSONRef">JSON format</button>
+          <button class="btn" id="btnLibrary">Portfolio library</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · STYLE -->
+    <section class="panel" data-panel="style">
+      <div class="panel-intro">
+        <h2>Style</h2>
+        <p>Everything here is already set the house way. Change it only if this piece needs it.</p>
+      </div>
+      <div class="card">
+        <h3>Cover</h3>
+        <div id="coverPick" class="swatch-grid four"></div>
+        <button class="btn btn-wide mt8" id="btnCoverImage" hidden>Choose the cover photograph&hellip;</button>
+      </div>
+      <div class="card">
+        <h3>Inside pages</h3>
+        <div id="lookPick" class="swatch-grid two"></div>
+        <div class="field"><span>Accent</span></div>
+        <div class="swatch-row">
+          <label class="swatch"><input type="radio" name="accent" value="gold"><span style="--sw:#CFBD91"></span>Gold</label>
+          <label class="swatch"><input type="radio" name="accent" value="shield"><span style="--sw:#42BF19"></span>Shield green</label>
+        </div>
+        <div class="field"><span>Text size</span></div>
+        <div class="swatch-row">
+          <label class="swatch"><input type="radio" name="density" value="comfortable">Comfortable</label>
+          <label class="swatch"><input type="radio" name="density" value="compact">Compact (fits more)</label>
+        </div>
+        <label class="check"><input type="checkbox" id="optRunningHead"> Running header on each page</label>
+        <label class="check"><input type="checkbox" id="optWatermark"> Faint wordmark watermark</label>
+      </div>
+      <div class="card">
+        <h3>Pages included</h3>
+        <label class="check"><input type="checkbox" id="optToc"> Table of contents</label>
+        <label class="check"><input type="checkbox" id="optDividers"> Full-page section dividers</label>
+        <label class="check"><input type="checkbox" id="optSectionBreak"> Each section starts a new page</label>
+        <label class="check"><input type="checkbox" id="optTeam"> Closing page: your team &amp; contact</label>
+        <label class="check"><input type="checkbox" id="optDisc"> Important disclosures</label>
+        <label class="check"><input type="checkbox" id="optConfidential"> "Confidential — prepared for…" footer</label>
+        <label class="check"><input type="checkbox" id="optPageNums"> Page numbers</label>
+      </div>
+      <details class="card">
+        <summary><h3>Team on the closing page</h3></summary>
+        <div id="teamEditor" class="team-editor"></div>
+        <button class="btn btn-wide btn-ghost" id="btnAddMember">+ Add a team member</button>
+      </details>
+      <details class="card">
+        <summary><h3>Contact block</h3></summary>
+        <label class="field"><span>Firm line</span><input id="fldFirm"></label>
+        <label class="field"><span>Address</span><input id="fldAddress"></label>
+        <label class="field"><span>Phone</span><input id="fldPhone"></label>
+        <label class="field"><span>Website</span><input id="fldWeb"></label>
+      </details>
+      <details class="card">
+        <summary><h3>Disclosures</h3></summary>
+        <p class="hint">House standard wording. One paragraph per blank line. Any change is flagged on
+          Finish so compliance sees it.</p>
+        <textarea id="fldDisclosures" rows="10" spellcheck="false"></textarea>
+        <button class="btn btn-wide btn-ghost" id="btnResetDisc">Restore the standard wording</button>
+      </details>
+      <button class="btn btn-wide next-btn" data-go="finish">Next: Finish &rarr;</button>
+    </section>
+
+    <!-- 5 · FINISH -->
+    <section class="panel" data-panel="finish">
+      <div class="panel-intro">
+        <h2>Finish</h2>
+        <p>Check it over, save the working file, export the PDF.</p>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Check it over</h3><button class="btn btn-mini" id="btnRecheck">Check again</button></div>
+        <div id="checkList"></div>
+      </div>
+      <div class="card">
+        <h3>Compliance</h3>
+        <label class="check"><input type="checkbox" id="optDraft"> Marked DRAFT — pending compliance review</label>
+        <p class="hint">Leave this on until the piece has been through the usual review. Turning it off
+          records exactly what was approved; any later change is flagged above.</p>
+      </div>
+      <div class="card">
+        <h3>Save &amp; export</h3>
+        <button class="btn btn-wide" id="btnSave2">Save the working file (.mhwg.json)</button>
+        <button class="btn btn-primary btn-wide" id="btnExport2">Export the PDF</button>
+        <button class="btn btn-wide" id="btnPresent2">Present full screen</button>
+        <p class="hint">The working file is what you reopen to change the piece later — keep it on the
+          work drive with the client file.</p>
+      </div>
+    </section>
+  </aside>
+
+  <!-- Page canvas -->
+  <section class="canvas" id="canvas">
+    <div class="canvas-bar">
+      <div class="zoom">
+        <button class="btn btn-mini" id="btnZoomOut" aria-label="Zoom out">&minus;</button>
+        <button class="btn btn-mini btn-plain" id="zoomLabel" title="Fit to window">Fit</button>
+        <button class="btn btn-mini" id="btnZoomIn" aria-label="Zoom in">+</button>
+      </div>
+      <div class="canvas-status" id="pageCount"></div>
+      <span class="canvas-tip" id="canvasTip">Click text to edit &middot; point at a block for tools</span>
+      <label class="check check-inline"><input type="checkbox" id="optEditInline" checked> Edit on the page</label>
+    </div>
+    <div class="pages" id="pages"></div>
+  </section>
+
+  <!-- Inspector -->
+  <aside class="inspector" id="inspector" hidden>
+    <div class="inspector-head">
+      <h2 id="inspectorTitle">Block</h2>
+      <button class="btn btn-mini" id="btnCloseInspector" aria-label="Close">&#10005;</button>
+    </div>
+    <div class="inspector-body" id="inspectorBody"></div>
+    <div class="inspector-foot">
+      <button class="btn btn-mini" id="btnBlockCopilot">&#10022; Copilot</button>
+      <button class="btn btn-mini" id="btnBlockUp" title="Move up">&uarr;</button>
+      <button class="btn btn-mini" id="btnBlockDown" title="Move down">&darr;</button>
+      <button class="btn btn-mini" id="btnBlockDup">Duplicate</button>
+      <button class="btn btn-mini btn-danger" id="btnBlockDelete">Delete</button>
+    </div>
+  </aside>
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head"><h2 id="modalTitle"></h2>
+      <button class="btn btn-mini" id="btnModalClose" aria-label="Close">&#10005;</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="insert-menu" id="insertMenu" hidden></div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+{{SCRIPTS}}
+</script>
+</body>
+</html>

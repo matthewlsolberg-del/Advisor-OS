@@ -1,0 +1,127 @@
+{
+  "meta": {
+    "kind": "plan_summary",
+    "client": "Robert & Anne Kowalchuk",
+    "title": "The Kowalchuk Plan",
+    "subtitle": "Where you stand today, what the plan projects, and what we do next.",
+    "date": "2026-10-08"
+  },
+  "design": {
+    "format": "report",
+    "cover": "white",
+    "look": "private",
+    "accent": "gold"
+  },
+  "sections": [
+    {
+      "title": "What we set out to do",
+      "blocks": [
+        {
+          "type": "lead",
+          "text": "You asked us three questions: can you retire in 2032, will the money last, and what happens to what is left."
+        },
+        {
+          "type": "bullets",
+          "items": [
+            "Retire in 2032 without changing how you live",
+            "Keep enough set aside that a bad year does not force a decision",
+            "Leave the farm intact for the next generation"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Where you stand today",
+      "blocks": [
+        {
+          "type": "stats",
+          "items": [
+            {
+              "num": "$2.4M",
+              "label": "Total net worth",
+              "note": "Including real estate"
+            },
+            {
+              "num": "$1.48M",
+              "label": "Investable assets"
+            },
+            {
+              "num": "$0",
+              "label": "Non-mortgage debt"
+            }
+          ]
+        },
+        {
+          "type": "facts",
+          "items": [
+            {
+              "k": "RRSP",
+              "v": "$860,000"
+            },
+            {
+              "k": "TFSA",
+              "v": "$210,000"
+            },
+            {
+              "k": "Non-registered",
+              "v": "$410,000"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "[NEEDS ADVISOR INPUT: one paragraph on what the balance sheet says]"
+        }
+      ]
+    },
+    {
+      "title": "What the plan projects",
+      "blocks": [
+        {
+          "type": "chart",
+          "chart": "bar",
+          "title": "Projected portfolio value",
+          "labels": [
+            "2026",
+            "2032",
+            "2040",
+            "2050"
+          ],
+          "series": [
+            {
+              "name": "Base case",
+              "values": [
+                1.48,
+                2.05,
+                2.4,
+                2.1
+              ]
+            }
+          ],
+          "unit": "$M",
+          "caption": "Illustrative only. Assumes a 5.0% average annual return and 2.1% inflation; actual results will differ."
+        },
+        {
+          "type": "callout",
+          "tone": "important",
+          "title": "The headline",
+          "text": "On these assumptions the plan supports your target income to age 95."
+        }
+      ]
+    },
+    {
+      "type": "recommendation",
+      "account": "TFSA",
+      "amount": "$95,000",
+      "portfolio": "TD Core Managed Asset Allocation Portfolios - Balanced Growth",
+      "howItFits": [
+        "Tax-free growth suits the longest-term money in the plan.",
+        "A balanced-growth mix matches a 15-year horizon."
+      ]
+    },
+    {
+      "title": "What we do next",
+      "text": "1. Confirm the plan assumptions - You review the income target and retirement date. (Owner: You, When: Next 2 weeks)\n2. Rebalance to the target mix - We bring the portfolio back to the plan allocation. (Owner: Us, When: Next 30 days)"
+    }
+  ]
+}

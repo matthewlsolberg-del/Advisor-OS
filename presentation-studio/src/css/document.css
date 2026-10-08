@@ -1,0 +1,637 @@
+/* ==========================================================================
+   The document — US Letter pages, TD 2026 Premium palette, MHWG house style.
+   Screen and print render from these same rules, so what you see is the PDF.
+
+   Colour discipline (TD Brand Standards, section 1):
+     · body copy is never green — green is reserved for kickers, rules, one
+       highlighted phrase, and data-vis
+     · white text never sits on Shield Green; on Premium Green it is approved
+     · no gradients, no transparency effects on green
+   ========================================================================== */
+
+.doc{
+  /* palette */
+  --deep:#002B1A; --shield:#42BF19; --green-dk:#25A106; --kick:#1A7E0C;
+  --gold:#CFBD91; --gold-dk:#78704F; --ink:#1C1C1C; --gray:#3C4339;
+  --hair:#E4E9E2; --tint:#F4F8F5; --paper:#FFFFFF;
+  --accent:var(--gold);            /* switched by the Design panel */
+  --accent-line:var(--shield);
+
+  /* geometry (96px = 1in, so these are true print inches) */
+  --pw:816px; --ph:1056px;
+  --mx:92px; --mt:96px; --mb:68px;
+
+  /* type */
+  --f-disp:"TD Sans Headline","MHWG Display",Georgia,"Times New Roman",serif;
+  --f-text:"TD Sans Body","MHWG Text","Segoe UI",system-ui,sans-serif;
+  /* sized for reading on paper: body 11pt, disclosures 8.5pt (96px = 72pt) */
+  --t-body:14.7px; --l-body:22.5px;
+  --t-lead:16px;   --l-lead:24.5px;
+  --t-h2:31px;     --t-h3:17px;
+  --t-kick:10.5px; --t-cap:11.5px; --t-disc:11.3px;
+  --gap:15px;
+}
+.doc[data-density="compact"]{
+  --mt:86px; --mb:58px;
+  --t-body:13.6px; --l-body:20.5px; --t-lead:15px; --l-lead:22.5px;
+  --t-h2:27px; --t-h3:16px; --gap:11px;
+}
+.doc[data-accent="shield"]{ --accent:var(--shield); }
+
+/* ── Page ───────────────────────────────────────────────────────────────── */
+.page{
+  width:var(--pw); height:var(--ph); background:var(--paper); position:relative;
+  overflow:hidden; font-family:var(--f-text); color:var(--ink);
+  box-shadow:0 6px 22px rgba(0,32,16,.16); flex:0 0 auto;
+}
+.page-inner{
+  position:absolute; left:var(--mx); right:var(--mx); top:var(--mt); bottom:var(--mb);
+}
+.page-body{ position:absolute; inset:0; }
+
+/* running header */
+.page-head{
+  position:absolute; left:var(--mx); right:var(--mx); top:52px;
+  display:flex; align-items:baseline; justify-content:space-between;
+  font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:#8b978d;
+}
+.page-head .ph-left{color:var(--kick); font-weight:600}
+.page-head::after{
+  content:""; position:absolute; left:0; right:0; bottom:-10px; height:1px; background:var(--hair);
+}
+.page-head .ph-rule{
+  position:absolute; left:0; bottom:-10px; width:54px; height:2.4px; background:var(--accent);
+}
+
+/* running footer */
+.page-foot{
+  position:absolute; left:var(--mx); right:var(--mx); bottom:30px;
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:9.5px; letter-spacing:.08em; color:#6f7c72;
+}
+.page-foot .pf-num{font-variant-numeric:tabular-nums;color:var(--gray)}
+.page-foot::before{
+  content:""; position:absolute; left:0; right:0; top:-9px; height:1px; background:var(--hair);
+}
+.page-draft{
+  position:absolute; left:var(--mx); bottom:14px; font-size:9.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:#9a4f2e; font-weight:600;
+}
+.page-draft.is-on-dark{color:var(--gold); z-index:2}
+
+/* watermark */
+.page-watermark{
+  position:absolute; left:50%; top:52%; transform:translate(-50%,-50%) rotate(-18deg);
+  width:520px; opacity:.05; pointer-events:none;
+}
+.page-watermark svg{width:100%;height:auto;display:block}
+.page-watermark .wm-ink,.page-watermark .wm-green{fill:var(--deep)}
+
+/* ── Cover ──────────────────────────────────────────────────────────────── */
+.cover{position:absolute;inset:0;display:flex;flex-direction:column}
+.cover-frame{position:absolute;inset:26px;border:1px solid rgba(207,189,145,.42);pointer-events:none}
+.cover-wm{position:absolute;left:64px;top:66px;width:250px}
+.cover-wm svg{width:100%;height:auto;display:block}
+.cover-body{padding:0 64px}
+/* Weighted spacers put the title block a little below centre and hold the
+   ‘prepared for’ block on the bottom edge — the same proportions on every cover. */
+.cover-gap{flex:1 1 auto}
+.cover-gap.gap-a{flex-grow:2}
+.cover-gap.gap-b{flex-grow:1}
+.cover-kick{
+  font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;margin-bottom:16px;
+}
+.cover-title{
+  font-family:var(--f-disp); font-size:47px; line-height:1.06; letter-spacing:-.015em;
+  margin:0 0 14px; max-width:15ch; text-wrap:balance;
+}
+.cover-rule{width:96px;height:3px;margin:22px 0 20px}
+.cover-sub{font-size:15.5px;line-height:1.5;max-width:46ch;margin:0}
+.cover-foot{
+  padding:0 64px 58px; display:flex; justify-content:space-between;
+  align-items:flex-end; gap:24px;
+}
+.cover-for{font-size:12px;line-height:1.55}
+.cover-for .cf-label{
+  display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:5px;
+}
+.cover-for .cf-name{font-family:var(--f-disp);font-size:19px;letter-spacing:-.01em}
+.cover-meta{text-align:right;font-size:11px;line-height:1.7}
+
+/* clean white — the default. Paper white, generous space, gold hairlines, and one
+   solid Premium Green band on the bottom edge. No frame, no tint, no transparency. */
+.cover[data-style="white"]{background:#fff;color:var(--ink)}
+.cover[data-style="white"] .cover-frame{display:none}
+.cover[data-style="white"]::before{
+  content:"";position:absolute;left:64px;right:64px;top:172px;height:1px;background:var(--gold);z-index:1;
+}
+.cover[data-style="white"]::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:16px;background:var(--deep);
+  border-top:3px solid var(--gold);z-index:1;
+}
+.cover[data-style="white"] .cover-kick{color:var(--kick);letter-spacing:.28em}
+.cover[data-style="white"] .cover-title{color:var(--deep);font-size:58px;line-height:1.02;max-width:18ch}
+.cover[data-style="white"] .cover-rule{background:var(--gold);width:72px;height:2px;margin:26px 0 22px}
+.cover[data-style="white"] .cover-sub{color:var(--gray);font-size:16.5px;max-width:42ch}
+.cover[data-style="white"] .cover-foot{
+  margin:0 64px;padding:24px 0 84px;border-top:1px solid var(--gold);
+}
+.cover[data-style="white"] .cf-label{color:var(--kick)}
+.cover[data-style="white"] .cf-name{color:var(--deep);font-size:23px}
+.cover[data-style="white"] .cover-meta{color:var(--gray)}
+
+/* premium (deep green) */
+.cover[data-style="premium"]{background:var(--deep);color:#fff}
+.cover[data-style="premium"] .cover-wm .wm-ink{fill:#fff}
+.cover[data-style="premium"] .cover-wm .wm-green{fill:var(--shield)}
+.cover[data-style="premium"] .cover-kick{color:var(--gold)}
+.cover[data-style="premium"] .cover-rule{background:var(--gold)}
+.cover[data-style="premium"] .cover-sub{color:rgba(255,255,255,.82)}
+.cover[data-style="premium"] .cf-label{color:var(--gold)}
+.cover[data-style="premium"] .cover-meta{color:rgba(255,255,255,.7)}
+
+/* ivory */
+.cover[data-style="ivory"]{background:#FBFAF6;color:var(--ink)}
+.cover[data-style="ivory"] .cover-frame{border-color:rgba(0,43,26,.16)}
+.cover[data-style="ivory"] .cover-kick{color:var(--kick)}
+.cover[data-style="ivory"] .cover-title{color:var(--deep)}
+.cover[data-style="ivory"] .cover-rule{background:var(--accent)}
+.cover[data-style="ivory"] .cover-sub{color:var(--gray)}
+.cover[data-style="ivory"] .cf-label{color:var(--kick)}
+.cover[data-style="ivory"] .cover-meta{color:var(--gray)}
+.cover[data-style="ivory"] .cf-name{color:var(--deep)}
+
+/* photograph */
+.cover[data-style="photo"]{background:var(--deep);color:#fff}
+.cover-photo{position:absolute;inset:0;background-size:cover;background-position:center}
+.cover-scrim{position:absolute;inset:0;background:rgba(0,43,26,.72)}
+.cover[data-style="photo"] .cover-wm .wm-ink{fill:#fff}
+.cover[data-style="photo"] .cover-wm .wm-green{fill:var(--shield)}
+.cover[data-style="photo"] .cover-kick,.cover[data-style="photo"] .cf-label{color:var(--gold)}
+.cover[data-style="photo"] .cover-rule{background:var(--gold)}
+.cover[data-style="photo"] .cover-sub{color:rgba(255,255,255,.85)}
+.cover[data-style="photo"] .cover-meta{color:rgba(255,255,255,.7)}
+/* The scrim is a positioned layer, so the text blocks need their own stacking
+   context to sit above it. The frame and wordmark are already absolute. */
+.cover-body,.cover-foot{position:relative;z-index:1}
+.cover-frame,.cover-wm{z-index:1}
+
+/* ── Section divider page ───────────────────────────────────────────────── */
+.divider{position:absolute;inset:0;background:var(--deep);color:#fff;display:flex;flex-direction:column;justify-content:center;padding:0 78px}
+.divider-frame{position:absolute;inset:26px;border:1px solid rgba(207,189,145,.3)}
+.divider-num{
+  font-family:var(--f-disp);font-size:13px;letter-spacing:.3em;color:var(--gold);margin-bottom:18px;
+}
+.divider-title{font-family:var(--f-disp);font-size:38px;line-height:1.1;letter-spacing:-.015em;margin:0;max-width:18ch}
+.divider-rule{width:88px;height:3px;background:var(--gold);margin:24px 0}
+.divider-sub{font-size:14px;line-height:1.55;color:rgba(255,255,255,.78);max-width:44ch;margin:0}
+.divider-wm{position:absolute;right:60px;bottom:56px;width:190px;opacity:.5}
+.divider-wm svg{width:100%;height:auto;display:block}
+.divider-wm .wm-ink{fill:#fff}.divider-wm .wm-green{fill:var(--shield)}
+
+/* ── Table of contents ──────────────────────────────────────────────────── */
+.toc-title{font-family:var(--f-disp);font-size:40px;font-weight:400;letter-spacing:-.02em;color:var(--deep);margin:24px 0 8px}
+.toc-rule{width:40px;height:1.5px;background:var(--gold);margin:16px 0 44px}
+.toc-list{list-style:none;margin:0;padding:0}
+.toc-item{display:flex;align-items:baseline;gap:14px;padding:15px 0;border-bottom:1px solid var(--hair)}
+.toc-item:first-child{border-top:1px solid var(--hair)}
+.toc-num{font-family:var(--f-disp);font-size:13px;color:var(--gold-dk);min-width:34px;letter-spacing:.18em}
+.doc[data-accent="shield"] .toc-num{color:var(--green-dk)}
+.toc-name{font-family:var(--f-disp);font-size:19px;color:var(--deep);letter-spacing:-.01em}
+.toc-dots{flex:1;border-bottom:0}
+.toc-page{font-family:var(--f-disp);font-size:14px;color:var(--gray);font-variant-numeric:tabular-nums}
+.toc-note{margin-top:26px;font-size:var(--t-cap);color:var(--gray);line-height:1.5}
+
+/* ── Blocks ─────────────────────────────────────────────────────────────── */
+.blk{margin:0 0 var(--gap)}
+.blk:last-child{margin-bottom:0}
+
+.blk-kicker{
+  font-size:var(--t-kick);letter-spacing:.16em;text-transform:uppercase;color:var(--kick);
+  font-weight:600;margin:0 0 5px;
+}
+.blk-h2{
+  font-family:var(--f-disp);font-size:var(--t-h2);line-height:1.12;color:var(--deep);
+  margin:0 0 14px;letter-spacing:-.018em;font-weight:400;text-wrap:balance;
+}
+.blk-h2::after{content:"";display:block;width:40px;height:1.5px;background:var(--gold);margin-top:16px}
+/* the section's number, set like a private-bank report: small gold figures above the title */
+.blk-secnum{font-family:var(--f-disp);font-size:13px;letter-spacing:.18em;color:var(--gold-dk);margin:0 0 6px}
+.blk-heading:has(.blk-secnum){margin-bottom:calc(var(--gap) + 8px)}
+.blk-h3{
+  font-family:var(--f-disp);font-size:var(--t-h3);line-height:1.3;color:var(--deep);
+  margin:0 0 6px;
+}
+.blk-p{font-size:var(--t-body);line-height:var(--l-body);margin:0 0 var(--gap);color:var(--ink)}
+.blk-p:last-child{margin-bottom:0}
+.blk-lead{font-size:var(--t-lead);line-height:var(--l-lead);color:var(--gray);margin:0}
+.blk-p b,.blk-lead b,.blk li b{font-weight:700;color:var(--ink)}
+/* the one key phrase: weight and a gold rule under it — body copy is never green */
+.blk em.hl{font-style:normal;color:var(--ink);font-weight:700;
+  text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:3px;
+  text-underline-offset:3px;text-decoration-skip-ink:none}
+
+/* lists */
+.blk-list{margin:0;padding:0;list-style:none}
+.blk-list li{
+  position:relative;padding-left:20px;font-size:var(--t-body);line-height:var(--l-body);
+  margin-bottom:7px;
+}
+.blk-list li:last-child{margin-bottom:0}
+.blk-list.is-bullet li::before{
+  content:"";position:absolute;left:2px;top:calc(var(--l-body)/2 - 2.5px);
+  width:5px;height:5px;background:var(--accent);
+}
+.doc[data-accent="shield"] .blk-list.is-bullet li::before{background:var(--shield)}
+.blk-list.is-number{counter-reset:li}
+.blk-list.is-number li{padding-left:26px;counter-increment:li}
+.blk-list.is-number li::before{
+  content:counter(li);position:absolute;left:0;top:0;font-family:var(--f-disp);
+  font-size:11.5px;color:var(--green-dk);line-height:var(--l-body);font-weight:600;
+}
+.blk-list.is-check li::before{
+  content:"";position:absolute;left:1px;top:calc(var(--l-body)/2 - 5px);width:10px;height:10px;
+  border:1.4px solid var(--accent);border-radius:2px;
+}
+
+/* callout */
+.blk-callout:not(.blk){
+  border-left:2px solid var(--gold);background:#fff;padding:4px 0 4px 22px;margin-left:2px;
+  font-family:var(--f-disp);font-size:18px;line-height:1.5;color:var(--deep);
+}
+.blk-callout .co-title{
+  font-family:var(--f-disp);font-size:12.5px;color:var(--deep);margin-bottom:4px;
+  letter-spacing:.02em;
+}
+/* the other tones stay working notices (a box, body type); the default note is a statement */
+.blk-callout:not(.blk)[data-tone="important"],.blk-callout:not(.blk)[data-tone="watch"],.blk-callout:not(.blk)[data-tone="quiet"]{
+  padding:12px 16px 12px 20px;font-family:var(--f-text);font-size:var(--t-body);line-height:var(--l-body);color:var(--ink)}
+.blk-callout:not(.blk)[data-tone="important"]{border-left-color:var(--shield);background:#F1F9EE}
+.blk-callout:not(.blk)[data-tone="watch"]{border-left-color:#D99E14;background:#FDF8EC}
+.blk-callout:not(.blk)[data-tone="quiet"]{background:#fff;border:1px solid var(--hair);border-left:3px solid var(--hair)}
+
+/* pull quote */
+.blk-quote{text-align:center;padding:6px 30px}
+.blk-quote .q-rule{width:52px;height:2px;background:var(--accent);margin:0 auto 14px}
+.blk-quote .q-text{
+  font-family:var(--f-disp);font-size:18px;line-height:1.45;color:var(--deep);margin:0;
+}
+.blk-quote .q-by{margin-top:10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gray)}
+
+/* stat cards */
+.blk-stats{display:grid;gap:0;border-top:1.5px solid var(--gold)}
+.blk-stats[data-cols="2"]{grid-template-columns:repeat(2,1fr)}
+.blk-stats[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+.blk-stats[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+.stat{padding:16px 18px 6px 0;background:#fff}
+.stat + .stat{padding-left:18px;border-left:1px solid var(--hair)}
+.blk-stats[data-cols="2"] .stat:nth-child(2n+1),
+.blk-stats[data-cols="3"] .stat:nth-child(3n+1),
+.blk-stats[data-cols="4"] .stat:nth-child(4n+1){padding-left:0;border-left:0}
+.stat .s-num{font-family:var(--f-disp);font-size:32px;line-height:1.05;color:var(--deep);letter-spacing:-.025em}
+.blk-stats[data-cols="4"] .stat .s-num{font-size:26px}
+.stat .s-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--kick);margin-top:9px;font-weight:600}
+.stat .s-note{font-size:11px;line-height:1.45;color:var(--gray);margin-top:4px}
+
+/* fact rows (key : value with a leader) */
+.blk-facts{border-top:1px solid var(--hair)}
+.fact{display:flex;align-items:baseline;gap:10px;padding:7.5px 0;border-bottom:1px solid var(--hair)}
+.fact .f-k{font-size:var(--t-body);color:var(--gray);flex:0 0 auto;max-width:58%}
+.fact .f-dots{flex:1;border-bottom:1px dotted #d3dbd5;transform:translateY(-3px)}
+.fact .f-v{font-family:var(--f-disp);font-size:var(--t-body);color:var(--deep);text-align:right;font-variant-numeric:tabular-nums}
+
+/* table */
+.blk-table table{width:100%;border-collapse:collapse;font-size:12.8px}
+.blk-table th{
+  background:#fff;color:var(--deep);text-align:left;padding:0 10px 8px;font-weight:600;
+  font-size:9.8px;letter-spacing:.14em;text-transform:uppercase;border-bottom:1.5px solid var(--gold);
+}
+.blk-table th:first-child,.blk-table td:first-child{padding-left:0}
+.blk-table th:last-child,.blk-table td:last-child{padding-right:0}
+.blk-table td{padding:7.5px 10px;border-bottom:1px solid var(--hair);line-height:1.45;vertical-align:top}
+
+.blk-table td.num,.blk-table th.num{text-align:right;font-variant-numeric:tabular-nums}
+.blk-table tr.total td{font-weight:700;color:var(--deep);border-top:1.6px solid var(--deep);background:#fff}
+.blk-cap{font-size:var(--t-cap);color:var(--gray);margin-top:7px;line-height:1.45}
+
+/* action plan */
+.blk-actions{border-top:1px solid var(--hair)}
+.action{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--hair)}
+.action .a-n{
+  flex:0 0 22px;height:22px;border-radius:50%;background:var(--deep);color:#fff;
+  font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:600;
+}
+.action .a-body{flex:1}
+.action .a-t{font-family:var(--f-disp);font-size:13.5px;color:var(--deep);margin-bottom:3px}
+.action .a-d{font-size:var(--t-body);line-height:1.5;color:var(--ink)}
+.action .a-meta{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--kick);margin-top:5px;font-weight:600}
+
+/* two column */
+.blk-two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.blk-two .col-h{font-family:var(--f-disp);font-size:13.5px;color:var(--deep);margin-bottom:6px}
+.blk-two .col-h.is-a{color:var(--green-dk)}
+
+/* figures: images, charts, infographics */
+.blk-fig figure{margin:0}
+.blk-fig img{display:block;width:100%;height:auto;border:1px solid var(--hair)}
+.blk-fig[data-size="half"]{width:50%}
+.blk-fig[data-size="two-thirds"]{width:66%}
+.blk-fig[data-frame="none"] img{border:0}
+.blk-viz svg{display:block;width:100%;height:auto}
+.viz-title{font-family:var(--f-disp);font-size:13.5px;color:var(--deep);margin-bottom:8px}
+
+/* spacer + rule */
+.blk-rule{height:1px;background:var(--hair);margin:4px 0}
+.blk-space{height:18px}
+
+/* ── Closing page ───────────────────────────────────────────────────────── */
+.closing-h{font-family:var(--f-disp);font-size:var(--t-h2);color:var(--deep);margin:0 0 4px;text-align:center}
+.closing-sub{text-align:center;font-size:12.5px;color:var(--gray);margin:0 0 14px}
+.closing-rule{height:2px;background:var(--accent);margin-bottom:20px}
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.team-cell{padding:14px 10px;text-align:center;border-bottom:1px solid var(--hair)}
+.team-cell:nth-child(odd){border-right:1px solid var(--hair)}
+.team-cell .t-name{font-family:var(--f-disp);font-size:15px;color:var(--deep)}
+.team-cell .t-desig{font-size:10px;color:var(--gold-dk);font-weight:600;margin-top:4px;letter-spacing:.1em}
+.team-cell .t-title{font-size:10.8px;color:var(--gray);margin-top:3px}
+.contact{text-align:center;padding:22px 0 18px;border-top:1.5px solid var(--gold);margin-top:22px}
+.contact .c-firm{font-family:var(--f-disp);font-size:15px;color:var(--deep)}
+.contact .c-line{font-size:11.8px;color:var(--gray);margin-top:5px;line-height:1.6}
+.disc-h{
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep);
+  font-weight:600;margin:18px 0 7px;padding-top:12px;border-top:1px solid var(--hair);
+}
+.disc-p{font-size:var(--t-disc);line-height:1.5;color:var(--gray);margin:0 0 6px;text-align:left}
+.disc-draft{font-size:var(--t-disc);color:#b06a4a;margin-bottom:6px;letter-spacing:.04em}
+
+/* ── Editing affordances (screen only) ──────────────────────────────────── */
+.is-editable{outline:1px dashed transparent;transition:outline-color .12s,background .12s;border-radius:2px}
+/* An empty field still occupies one line once it is clickable. Reserving that
+   line for everyone — measurer included — keeps the layout pass honest. */
+.is-editable:empty{min-height:var(--l-body)}
+.doc.edit-on p.is-editable:empty::before,
+.doc.edit-on .blk-h2.is-editable:empty::before,
+.doc.edit-on .blk-h3.is-editable:empty::before{content:"Click to write";color:#b3bfb6}
+.doc.edit-on .is-editable:hover{outline-color:#c3cfc6;background:rgba(66,191,25,.05)}
+.doc.edit-on .is-editable:focus{outline:1px solid var(--shield);background:rgba(66,191,25,.06)}
+.blk-hit{position:relative}
+.doc.edit-on .blk-hit:hover{box-shadow:0 0 0 1px rgba(66,191,25,.35)}
+.blk-hit.is-selected{box-shadow:0 0 0 2px var(--shield)}
+.blk-tag{
+  position:absolute;top:-9px;left:-1px;background:var(--shield);color:#0d1f0a;font-size:9px;
+  letter-spacing:.08em;text-transform:uppercase;padding:1px 5px;border-radius:2px;display:none;
+  font-family:var(--f-text);z-index:3;
+}
+.blk-hit.is-selected .blk-tag{display:block}
+.page-overflow{
+  position:absolute;right:8px;bottom:8px;background:#861600;color:#fff;font-size:9px;
+  padding:2px 6px;border-radius:2px;letter-spacing:.06em;
+}
+
+/* ── Print ──────────────────────────────────────────────────────────────── */
+@page{ size:letter; margin:0; }
+@media print{
+  .page{
+    box-shadow:none; margin:0 !important; break-after:page; page-break-after:always;
+    zoom:1 !important;
+  }
+  .page:last-child{break-after:auto;page-break-after:auto}
+  .blk-tag,.page-overflow{display:none !important}
+  .is-editable:empty::before{content:none !important}
+  .blk-hit.is-selected{box-shadow:none}
+  .doc.edit-on .is-editable:hover{outline-color:transparent;background:none}
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+
+/* TD shield on the document cover — top right, transparent */
+.cover-shield{position:absolute;right:64px;top:66px;z-index:1}
+.cover-shield .td-shield{display:block;background:transparent;box-shadow:none;padding:0;border-radius:0}
+.cover-shield .td-shield img,.cover-shield .td-shield-img{display:block;height:56px;width:auto}
+.cover-wm{width:250px !important;max-width:250px}
+
+/* Copilot's gap markers: loud on screen and in print, so nobody misses one */
+mark.needs{background:#FFE8B3;color:#5c3a06;font-weight:600;padding:0 2px;border-radius:2px}
+
+/* ── Page style: Classic ─────────────────────────────────────────────────────
+   The original inside pages (Oct 2): tighter margins, boxed key numbers, a
+   tinted callout, a green table header. Private bank (the default) is the base
+   above; Classic only overrides. Pick it on guide step 1 or in Design. */
+.doc[data-look="classic"]{ --mx:78px; --mt:92px; --mb:64px; --t-h2:24px; --t-h3:16.5px; }
+.doc[data-look="classic"][data-density="compact"]{ --t-h2:22px; --t-h3:15.5px; }
+.doc[data-look="classic"] .blk-secnum{display:none}
+.doc[data-look="classic"] .blk-heading:has(.blk-secnum){margin-bottom:var(--gap)}
+.doc[data-look="classic"] .blk-h2{line-height:1.2;margin:0 0 9px;letter-spacing:-.012em;font-weight:inherit}
+.doc[data-look="classic"] .blk-h2::after{width:46px;height:2.4px;background:var(--accent);margin-top:9px}
+.doc[data-look="classic"] .toc-title{font-size:var(--t-h2);font-weight:inherit;letter-spacing:0;margin:0 0 6px}
+.doc[data-look="classic"] .toc-rule{width:54px;height:2.4px;background:var(--accent);margin:0 0 22px}
+.doc[data-look="classic"] .toc-item{gap:10px;padding:9px 0}
+.doc[data-look="classic"] .toc-item:first-child{border-top:0}
+.doc[data-look="classic"] .toc-num{font-size:12px;color:var(--accent);min-width:26px;letter-spacing:.06em}
+.doc[data-look="classic"][data-accent="shield"] .toc-num{color:var(--green-dk)}
+.doc[data-look="classic"] .toc-name{font-size:14.5px;letter-spacing:0}
+.doc[data-look="classic"] .toc-dots{border-bottom:1px dotted #c9d3cb;transform:translateY(-3px)}
+.doc[data-look="classic"] .toc-page{font-family:var(--f-text);font-size:12px}
+.doc[data-look="classic"] .blk-callout:not(.blk){
+  border-left:3px solid var(--accent);background:var(--tint);padding:13px 16px;margin-left:0;
+  font-family:var(--f-text);font-size:var(--t-body);line-height:var(--l-body);color:var(--ink)}
+.doc[data-look="classic"] .blk-callout:not(.blk)[data-tone="important"]{border-left-color:var(--shield);background:#F1F9EE}
+.doc[data-look="classic"] .blk-callout:not(.blk)[data-tone="watch"]{border-left-color:#D99E14;background:#FDF8EC}
+.doc[data-look="classic"] .blk-callout:not(.blk)[data-tone="quiet"]{background:#fff;border:1px solid var(--hair);border-left:3px solid var(--hair)}
+.doc[data-look="classic"] .blk-stats{gap:10px;border-top:0}
+.doc[data-look="classic"] .stat,
+.doc[data-look="classic"] .stat + .stat,
+.doc[data-look="classic"] .blk-stats .stat:nth-child(n){
+  border:1px solid var(--hair);border-top:2.4px solid var(--accent);padding:12px 13px 13px;background:#fff}
+.doc[data-look="classic"] .stat .s-num{font-size:25px;line-height:1.1;letter-spacing:-.02em}
+.doc[data-look="classic"] .blk-stats[data-cols="4"] .stat .s-num{font-size:21px}
+.doc[data-look="classic"] .stat .s-label{font-size:10.5px;letter-spacing:.1em;margin-top:7px}
+.doc[data-look="classic"] .stat .s-note{font-size:10.8px;line-height:1.4;margin-top:5px}
+.doc[data-look="classic"] .blk-table table{font-size:12.4px}
+.doc[data-look="classic"] .blk-table th{
+  background:var(--deep);color:#fff;padding:8px 10px;font-size:10.5px;letter-spacing:.08em;border-bottom:0}
+.doc[data-look="classic"] .blk-table th:first-child,.doc[data-look="classic"] .blk-table td:first-child{padding-left:10px}
+.doc[data-look="classic"] .blk-table th:last-child,.doc[data-look="classic"] .blk-table td:last-child{padding-right:10px}
+.doc[data-look="classic"] .blk-table tbody tr:nth-child(even) td{background:var(--tint)}
+.doc[data-look="classic"] .blk-table tr.total td{background:#fff}
+.doc[data-look="classic"] .team-cell .t-desig{font-size:10.5px;color:var(--green-dk);margin-top:3px;letter-spacing:.04em}
+.doc[data-look="classic"] .contact{padding:20px 0 16px;border-top:2px solid var(--accent);margin-top:18px}
+
+/* ── Format: Presentation (landscape slides) ────────────────────────────────
+   16:9 at 13.33 x 7.5 in, so it fills a laptop or boardroom TV and prints/saves
+   as a landscape PDF (the @page size is set at export, app.js). The same blocks
+   and the same layout engine; only the page and the type scale change. */
+.doc[data-format="slides"]{
+  --pw:1280px; --ph:720px; --mx:104px; --mt:84px; --mb:62px;
+  --t-body:19px; --l-body:29px; --t-lead:22px; --l-lead:32px;
+  --t-h2:40px; --t-h3:23px; --t-kick:12px; --t-cap:13.5px; --gap:18px;
+}
+.doc[data-format="slides"][data-density="compact"]{ --t-body:17px; --l-body:26px; --t-h2:34px; --gap:14px; }
+.doc[data-format="slides"][data-look="classic"]{ --mx:96px; --t-h2:32px; }
+.doc[data-format="slides"] .page-head{top:40px}
+.doc[data-format="slides"] .page-foot{bottom:24px}
+.doc[data-format="slides"] .page-draft{bottom:9px}
+.doc[data-format="slides"] .cover-wm{left:72px;top:58px}
+.doc[data-format="slides"] .cover-shield{right:72px;top:58px}
+.doc[data-format="slides"] .cover-body{padding:0 72px}
+.doc[data-format="slides"] .cover-foot{padding-left:72px;padding-right:72px}
+.doc[data-format="slides"] .cover[data-style="white"] .cover-foot{margin:0 72px;padding:20px 0 48px}
+.doc[data-format="slides"] .cover[data-style="white"]::before{left:72px;right:72px;top:150px}
+.doc[data-format="slides"] .cover-title{font-size:56px;max-width:22ch}
+.doc[data-format="slides"] .cover[data-style="white"] .cover-title{font-size:64px;max-width:24ch}
+.doc[data-format="slides"] .cover-sub{font-size:19px;max-width:60ch}
+.doc[data-format="slides"] .stat .s-num{font-size:42px}
+.doc[data-format="slides"] .blk-stats[data-cols="4"] .stat .s-num{font-size:34px}
+.doc[data-format="slides"] .stat .s-label{font-size:12px}
+.doc[data-format="slides"] .stat .s-note{font-size:13.5px}
+.doc[data-format="slides"] .blk-callout:not(.blk){font-size:24px}
+.doc[data-format="slides"] .blk-table table{font-size:16px}
+.doc[data-format="slides"] .blk-table th{font-size:12px}
+.doc[data-format="slides"] .toc-title{font-size:46px;margin-top:6px}
+.doc[data-format="slides"] .toc-rule{margin-bottom:26px}
+.doc[data-format="slides"] .toc-item{padding:11px 0}
+.doc[data-format="slides"] .toc-name{font-size:22px}
+
+
+/* ── Account recommendation page (portfolios.js) ──────────────────────── */
+
+
+/* MHWG recommendation-page treatment, modelled on the approved recommendation pages */
+.recommendation-page .page-inner{top:78px;bottom:54px}
+.recommendation-page .page-head{top:38px}
+.recommendation-page .blk{margin-bottom:8px}
+.recommendation-page .blk-h2{font-size:29px;line-height:1.08;margin-bottom:9px}
+.recommendation-page .blk-h3{font-size:15px;line-height:1.25;margin-bottom:4px}
+.recommendation-page .blk-kicker{font-size:9.5px;letter-spacing:.16em;margin-bottom:4px}
+.recommendation-page .blk-p{font-size:12.3px;line-height:18px;margin:0}
+.recommendation-page .blk-two{gap:18px}
+.recommendation-page .blk-two .col-h{font-size:12.8px;margin-bottom:3px}
+.recommendation-page .blk-two .blk-p{font-size:11.6px;line-height:16.5px}
+.recommendation-page .blk-table table{font-size:11.2px}
+.recommendation-page .blk-table th{padding:0 7px 6px;font-size:9.2px}
+.recommendation-page .blk-table td{padding:4.5px 7px;line-height:1.3}
+.recommendation-page .blk-list li{font-size:11.8px;line-height:17px;margin-bottom:4px}
+.recommendation-page .blk-cap{font-size:10.2px;line-height:1.35;margin-top:5px}
+
+
+
+/* v1.3 Portfolio Library + fixed one-page recommendation profile */
+.blk-recommendation{margin-bottom:0!important}
+.rec-profile{font-family:var(--f-text);color:var(--ink)}
+.rec-profile .rec-recommendation-title{font-family:var(--f-disp);font-size:25px;line-height:1.08;color:var(--deep);margin:0 0 10px;padding-bottom:9px;border-bottom:1px solid var(--gold)}
+.rec-profile .rec-label{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--kick);font-weight:700;margin:7px 0 3px}
+.rec-profile .rec-approach{font-size:11.5px;line-height:16px;margin:0 0 7px}
+.rec-profile .rec-features{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;margin-bottom:8px}
+.rec-profile .rec-feature b{display:block;font-size:11px;line-height:1.2;color:var(--green-dk);margin-bottom:2px}
+.rec-profile .rec-feature span{display:block;font-size:10.2px;line-height:14px}
+.rec-profile .rec-snapshot{display:grid;grid-template-columns:39% 61%;gap:18px;align-items:start;margin-top:4px}
+.rec-profile .rec-donut-wrap{display:flex;flex-direction:column;align-items:center}
+.rec-profile .rec-donut{width:168px;height:168px;display:block}
+.rec-profile .rec-legend{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:2px 7px;margin-top:4px}
+.rec-profile .rec-legend-row{display:grid;grid-template-columns:7px 1fr auto;gap:4px;align-items:center;font-size:7.8px;line-height:1.25}
+.rec-profile .rec-dot{width:7px;height:7px}
+.rec-profile .rec-holdings-title{font-family:var(--f-disp);font-size:13px;color:var(--deep);margin:0 0 5px}
+.rec-profile .rec-holdings-head,.rec-profile .rec-holding{display:grid;grid-template-columns:1fr 48px;gap:8px}
+.rec-profile .rec-holdings-head{font-size:8px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--gold);padding-bottom:4px}
+.rec-profile .rec-holding{font-size:9.2px;line-height:1.25;padding:3.3px 0;border-bottom:1px solid var(--hair)}
+.rec-profile .rec-holding span:last-child{text-align:right;font-weight:700;color:var(--deep)}
+.rec-profile .rec-fit{margin-top:8px;border-top:1px solid var(--gold);padding-top:6px}
+.rec-profile .rec-fit h3{font-family:var(--f-disp);font-size:13px;color:var(--deep);margin:0 0 3px}
+.rec-profile .rec-fit ul{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:2px 16px}
+.rec-profile .rec-fit li{font-size:9.5px;line-height:13px;position:relative;padding-left:11px}
+.rec-profile .rec-fit li:before{content:"";position:absolute;left:1px;top:5px;width:4px;height:4px;background:var(--gold)}
+.rec-profile .rec-asat{font-size:8px;line-height:1.3;color:var(--gray);margin-top:5px}
+.recommendation-page .page-inner{top:80px;bottom:54px}
+.recommendation-page .blk-heading:first-child{margin-bottom:8px}
+.recommendation-page .blk-heading:first-child .blk-h2{font-size:29px;line-height:1.05;margin-bottom:5px}
+
+
+
+/* v1.4-v1.5 cumulative portfolio UX */
+.rec-profile .rec-snapshot{grid-template-columns:42% 58%;gap:20px}
+.rec-profile .rec-donut{width:146px;height:146px;overflow:visible}
+.rec-profile .rec-legend{grid-template-columns:1fr;gap:2px;margin-top:7px}
+.rec-profile .rec-legend-row{grid-template-columns:8px 1fr 34px;font-size:8.4px;line-height:1.25}
+.rec-profile .rec-dot{width:8px;height:8px}
+.rec-profile .rec-donut-wrap{overflow:visible;min-width:0;padding:0 3px}
+
+
+
+/* MHWG v1.6 recommendation layout polish */
+.rec-profile .rec-snapshot{align-items:start}
+.rec-profile .rec-snapshot>div{min-width:0}
+.rec-profile .rec-donut-wrap{align-items:stretch;overflow:visible;padding:0 3px}
+.rec-profile .rec-allocation-title{margin:0 0 14px;color:var(--deep);text-align:left}
+.rec-profile .rec-donut{align-self:center;display:block;width:146px;height:146px;overflow:visible;margin:0 auto}
+.rec-profile .rec-legend{margin-top:10px}
+.rec-profile .rec-holdings-title{font-family:var(--f-disp);font-size:13px;line-height:1.2;color:var(--deep);font-weight:400;margin:0 0 14px}
+
+
+/* MHWG Portfolio Profiles v1.7 */
+.rec-profile .rec-summary{font-size:11.5px;line-height:16px;margin:0 0 8px}
+.rec-profile .rec-commentary{display:grid;grid-template-columns:1fr 1fr;gap:7px 18px;margin:5px 0 9px}
+.rec-profile .rec-commentary-block b{display:block;font-size:10.8px;line-height:1.2;color:var(--green-dk);margin-bottom:2px;text-transform:uppercase}
+.rec-profile .rec-commentary-block span{display:block;font-size:10.1px;line-height:13.8px}
+.rec-profile .rec-characteristics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:3px 0 9px;padding:7px 8px;background:#f0f3ef;border-top:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+.rec-profile .rec-characteristic{min-width:0}
+.rec-profile .rec-characteristic span{display:block;font-size:7.4px;letter-spacing:.09em;text-transform:uppercase;color:#53625a;margin-bottom:2px}
+.rec-profile .rec-characteristic b{display:block;font-size:9.4px;line-height:1.2;color:var(--deep);overflow-wrap:anywhere}
+.rec-profile .rec-no-chart{min-height:150px;display:flex;align-items:center;justify-content:center;text-align:center;border:1px solid var(--hair);background:#fafbf9;color:#66736c;font-size:9px;line-height:1.4;padding:18px}
+.rec-profile .rec-snapshot.no-visual{grid-template-columns:1fr}
+.rec-profile .rec-snapshot.no-visual .rec-holdings{max-width:none}
+.rec-profile .rec-holdings-title{font-weight:600}
+@media print{
+ .rec-profile .rec-commentary{gap:5px 16px}
+ .rec-profile .rec-characteristics{break-inside:avoid}
+}
+
+
+/* MHWG v1.8 one-page recommendation cleanup */
+.rec-profile .rec-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--gold);border-bottom:1px solid var(--gold);background:var(--tint);margin:8px 0 10px}
+.rec-profile .rec-stat{padding:7px 8px;min-width:0}
+.rec-profile .rec-stat-label{font-size:7px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);line-height:1.2}
+.rec-profile .rec-stat-value{font-size:9.3px;font-weight:700;color:var(--deep);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-profile .rec-features{gap:5px 18px;margin-bottom:7px}
+.rec-profile .rec-feature span{font-size:9.7px;line-height:13px}
+.rec-profile .rec-approach{font-size:10.8px;line-height:15px;margin-bottom:6px}
+.rec-profile .rec-snapshot{margin-top:0}
+.rec-profile .rec-donut{width:142px;height:142px}
+.rec-profile .rec-legend{margin-top:7px}
+.rec-profile .rec-holding{padding:3px 0;font-size:9px}
+.rec-profile .rec-fit{margin-top:7px;padding-top:5px}
+.rec-profile .rec-fit li{font-size:9.1px;line-height:12.5px}
+.recommendation-page .page-inner{top:76px;bottom:50px}
+
+
+/* MHWG Portfolio Recommendation Standard v2.1 */
+.rec-profile .rec-summary,.rec-profile .rec-approach{font-size:10.7px;line-height:14.2px;margin:0 0 7px}
+.rec-profile .rec-commentary,.rec-profile .rec-features{display:grid;grid-template-columns:1fr 1fr;gap:6px 17px;margin:4px 0 7px}
+.rec-profile .rec-commentary-block b,.rec-profile .rec-feature b{font-size:10.3px;line-height:1.16;margin-bottom:1px}
+.rec-profile .rec-commentary-block span,.rec-profile .rec-feature span{font-size:9.6px;line-height:12.7px}
+.rec-profile .rec-stats{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;margin:2px 0 7px;padding:6px 8px}
+.rec-profile .rec-snapshot{display:grid!important;grid-template-columns:minmax(225px,.82fr) minmax(0,1.38fr)!important;gap:24px;margin-top:4px}
+.rec-profile .rec-allocation-title,.rec-profile .rec-holdings-title{margin-bottom:9px}
+.rec-profile .rec-donut{width:138px;height:138px}
+.rec-profile .rec-legend{margin-top:6px}
+.rec-profile .rec-legend-row{font-size:8.2px;line-height:12px}
+.rec-profile .rec-holding{font-size:8.4px;line-height:11.8px;padding:1px 0}
+.rec-profile .rec-fit{margin-top:6px;padding-top:5px}
+.rec-profile .rec-fit h3{margin:0 0 3px}
+.rec-profile .rec-fit li{font-size:9.2px;line-height:12.7px;margin-bottom:1px}
+@media print{.rec-profile .rec-summary,.rec-profile .rec-approach{font-size:10.4px;line-height:13.7px}.rec-profile .rec-commentary-block span,.rec-profile .rec-feature span{font-size:9.3px;line-height:12.2px}}
+
+/* consolidated from the v4.4 – v6.0 layers: one account recommendation per page */
+.blk-recommendation{position:relative}
+.recommendation-page .page-inner{top:66px;bottom:42px}
+.recommendation-page .blk-recommendation{break-inside:avoid;page-break-inside:avoid;margin:0}
+.recommendation-page .rec-profile{max-height:none;overflow:visible}
+.recommendation-page .rec-recommendation-title{font-size:25px;line-height:1.06;margin-bottom:7px;padding-bottom:7px}
+.recommendation-page .rec-summary{font-size:10.7px;line-height:13.7px;margin-bottom:6px}
+.recommendation-page .rec-commentary{gap:5px 16px;margin:3px 0 6px}
+.recommendation-page .rec-commentary-block span{font-size:9.3px;line-height:11.8px}
+.recommendation-page .rec-stats{margin:2px 0 5px;padding:5px 7px}
+.recommendation-page .rec-snapshot{gap:18px;margin-top:2px}
+.recommendation-page .rec-donut{width:132px;height:132px}
+.recommendation-page .rec-holding{font-size:8.1px;line-height:10.7px;padding:0}
+.recommendation-page .rec-fit{margin-top:4px;padding-top:4px}
+.recommendation-page .rec-fit li{font-size:8.8px;line-height:11.4px;margin-bottom:0}
+.recommendation-page .rec-asat{font-size:7.5px;margin-top:3px}
