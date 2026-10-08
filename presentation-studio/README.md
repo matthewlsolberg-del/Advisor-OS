@@ -12,6 +12,15 @@ in Edge or Chrome. Partners start with [`docs/QUICK_START.md`](docs/QUICK_START.
 - **Three ways to fill it in**, mixable: type on the page; have Copilot write it (text or JSON);
   paste Presentation JSON from a script ([format](docs/PRESENTATION_JSON.md)).
 
+## Portfolio Builder (separate tool, same engine)
+
+[`dist/MHWG_Portfolio_Builder.html`](dist/MHWG_Portfolio_Builder.html) — enter each client's
+accounts and dollar values, assign a one-page model portfolio to each, and it produces the
+household recommendation: investor profile page, portfolio-at-a-glance summary with the combined
+asset allocation checked against the profile's equity range, and one locked model page per
+account. See [`docs/PORTFOLIO_BUILDER.md`](docs/PORTFOLIO_BUILDER.md). It shares the brand, page
+engine, model profiles and portfolio library with Presentation Studio but is not merged into it.
+
 ## What changed in v7
 
 v6.3 had grown about twenty "patch" layers (v1.1 → v6.3), each hiding or re-wiring the previous
@@ -53,10 +62,15 @@ src/
   js/workflow.js      section status, paste-with-preview, the Finish check
   js/portfolios.js    portfolio library + account recommendation pages
   js/automation.js    Presentation JSON, smart paste, per-block Copilot
-  js/app.js           state, undo, tabs, inspector, import/export, boot
+  js/ui.js            toasts, modal, clipboard, files (shared by both tools)
+  js/app.js           Presentation Studio: state, undo, tabs, inspector, import/export, boot
+  js/builder.js       Portfolio Builder: household, accounts, profiles, the check, the document
+  builder.html        Portfolio Builder page shell
+  css/builder.css     Portfolio Builder additions
   assets/             embedded fonts, brand marks, standard portfolio profiles
-build.py              → dist/MHWG_Presentation_Studio.html (one self-contained file)
-tests/smoke.mjs       end-to-end test in headless Chromium
+build.py              → dist/MHWG_Presentation_Studio.html and dist/MHWG_Portfolio_Builder.html
+tests/smoke.mjs       Presentation Studio end-to-end test (headless Chromium)
+tests/builder.mjs     Portfolio Builder end-to-end test (offline, checks the math by hand)
 examples/             sample Presentation JSON
 archive/              the v6.3 file this was rebuilt from
 ```
@@ -65,7 +79,8 @@ Build and test:
 
 ```bash
 python3 build.py
-NODE_PATH=$(npm root -g) node tests/smoke.mjs [screenshot-dir]   # needs Playwright + Chromium
+NODE_PATH=$(npm root -g) node tests/smoke.mjs [screenshot-dir]     # needs Playwright + Chromium
+NODE_PATH=$(npm root -g) node tests/builder.mjs [screenshot-dir]
 ```
 
 Edit the files in `src/`, never `dist/` directly, then rebuild. The deck object is the single

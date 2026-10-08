@@ -1,0 +1,90 @@
+/* ==========================================================================
+   Portfolio Builder — additions to studio.css (the rail) and to the document
+   (investor profile, household table, range check). Shared engine otherwise.
+   ========================================================================== */
+
+body.builder{--rail-w:440px}
+.builder-rail .panel{padding-bottom:60px}
+.field em.opt{font-style:normal;font-weight:400;color:var(--muted);margin-left:4px}
+#fldNotes{font-family:var(--ui);font-size:13px}
+
+/* investor profile picker */
+.profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.profile-card{border:1px solid var(--hair);border-radius:6px;background:#fff;padding:8px;cursor:pointer;text-align:left;line-height:1.25}
+.profile-card:hover{border-color:var(--shield);background:var(--tint)}
+.profile-card.is-on{border-color:var(--shield);background:var(--select);box-shadow:inset 0 0 0 1px var(--shield)}
+.profile-card b{display:block;font-size:12px;color:var(--deep)}
+.profile-card span{font-size:10.5px;color:var(--gray)}
+
+/* people and accounts */
+.pb-person{border:1px solid var(--hair);border-radius:7px;padding:8px;margin-bottom:8px;background:#FBFCFA}
+.pb-person.is-joint{background:#F7F9F4;border-style:dashed}
+.pb-person-head{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.pb-person-head input{flex:1;font-weight:600;color:var(--deep);border:1px solid #D5DDD3;border-radius:5px;padding:6px 8px}
+.pb-person-name{flex:1;font-weight:600;color:var(--deep);padding:4px 2px}
+.pb-acct{background:#fff;border:1px solid var(--hair);border-radius:6px;padding:7px;margin-bottom:6px;transition:box-shadow .3s}
+.pb-acct.is-flash{box-shadow:0 0 0 3px rgba(66,191,25,.45)}
+.pb-acct-line{display:grid;grid-template-columns:1fr 120px 26px;gap:5px;align-items:center}
+.pb-acct select,.pb-acct input,.pb-acct textarea{width:100%;padding:6px 8px;border:1px solid #D5DDD3;border-radius:5px;background:#fff;font-size:12.5px}
+.pb-val{text-align:right;font-variant-numeric:tabular-nums}
+.pb-model{margin-top:5px}
+.pb-status{font-size:11.5px;margin:5px 2px 0;color:var(--gray)}
+.pb-status::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:#c8d0c9;vertical-align:0}
+.pb-status.is-within::before{background:var(--shield)}
+.pb-status.is-above::before,.pb-status.is-below::before{background:var(--warn)}
+.pb-status.is-warn{color:var(--danger)}
+.pb-status.is-warn::before{background:var(--danger)}
+.pb-status.is-empty{color:var(--muted);font-style:italic}
+.pb-more{margin-top:4px}
+.pb-more > summary{cursor:pointer;font-size:11.5px;color:var(--kick)}
+.pb-more textarea{margin-top:5px;font-family:var(--ui)}
+.pb-add{margin-top:2px}
+
+/* the check card */
+.pb-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.pb-totals div{background:var(--tint);border-radius:6px;padding:7px 8px}
+.pb-totals span{display:block;font-size:10.5px;color:var(--gray)}
+.pb-totals b{display:block;font-size:15px;color:var(--deep);font-variant-numeric:tabular-nums}
+.pb-mini{margin:4px 0 10px}
+.pb-mini .pb-range-key{font-size:10.5px}
+.check-row.is-bad{border-left-color:var(--danger);font-weight:600}
+.check-row.is-info{border-left-color:#c8d0c9;color:var(--gray)}
+
+/* profiles editor */
+.pe-head,.pe-row{display:grid;grid-template-columns:1.2fr .55fr .55fr 1fr 1.2fr 1fr;gap:5px}
+.pe-head{font-size:10.5px;color:var(--gray);font-weight:600;margin:10px 0 4px}
+.pe-head span:last-child{display:none}
+.pe-row{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--hair)}
+.pe-row input,.pe-row textarea{width:100%;padding:5px 7px;border:1px solid #D5DDD3;border-radius:4px;font-size:12px;font-family:var(--ui)}
+.pe-row textarea{grid-column:1/-1}
+
+/* ── In the document ───────────────────────────────────────────────────── */
+
+.pb-profile .pb-prof-kicker{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--kick);margin:4px 0 2px}
+.pb-profile .pb-prof-name{font-family:var(--f-disp);font-size:40px;line-height:1.08;color:var(--deep);margin:0 0 14px;letter-spacing:-.015em}
+.pb-profile .blk-lead{margin-bottom:22px}
+.pb-profile .blk-facts{margin-top:22px}
+.pb-prof-label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--kick);font-weight:600;margin:0 0 10px}
+.pb-fineprint{font-size:11px;line-height:1.5;color:var(--gray);margin-top:18px}
+
+.pb-range{margin:6px 0 4px}
+.pb-range-track{position:relative;height:14px;background:var(--hair);border-radius:7px;margin:26px 0 6px}
+.pb-range-band{position:absolute;top:0;bottom:0;background:var(--deep);border-radius:7px}
+.pb-range-mark{position:absolute;top:-6px;width:3px;height:26px;background:var(--shield);margin-left:-1.5px;border-radius:2px}
+.pb-range-mark span{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;color:var(--deep);white-space:nowrap;
+  background:#fff;padding:1px 5px;border:1px solid var(--shield);border-radius:3px}
+.pb-range-scale{display:flex;justify-content:space-between;font-size:9.5px;color:var(--gray);font-variant-numeric:tabular-nums}
+.pb-range-key{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray);margin-top:8px}
+.pb-range-key i{display:inline-block;width:18px;height:8px;border-radius:4px;background:var(--deep)}
+.pb-range-key b{display:inline-block;width:3px;height:12px;background:var(--shield);margin-left:12px}
+
+.pb-table td.num,.pb-table th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pb-table tr.pb-group td{font-family:var(--f-disp);font-size:14px;color:var(--deep);padding-top:12px;border-bottom:1px solid var(--gold)}
+.pb-table tr.pb-sub td{font-weight:600;color:var(--gray);font-size:.95em}
+
+.pb-check p{font-size:12.5px;line-height:1.55;margin:12px 0 0;color:var(--ink)}
+.pb-check.is-above .pb-range-mark,.pb-check.is-below .pb-range-mark{background:var(--warn)}
+.pb-check.is-above .pb-range-mark span,.pb-check.is-below .pb-range-mark span{border-color:var(--warn)}
+
+.builder .blk-recommendation{cursor:pointer}
+@media print{ .builder .blk-recommendation{cursor:auto} }

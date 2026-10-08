@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The no-network rule, enforced by the browser itself: this page may use only
+     what is inside this one file. No web fonts, scripts, pictures or requests. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>MHWG Portfolio Builder</title>
+<!-- Built from presentation-studio/src by build.py — edit the sources, not this file. -->
+<style>{{FONTS}}</style>
+<style>{{STUDIO_CSS}}</style>
+<style>{{DOC_CSS}}</style>
+</head>
+<body data-build="{{VERSION}}" class="builder">
+
+{{BRAND_MARKS}}
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" data-wordmark></span>
+    <span class="brand-app">Portfolio&nbsp;Builder</span>
+  </div>
+  <div class="doc-title">
+    <span class="save-state" id="saveState">not saved yet</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-icon" id="btnUndo" title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
+    <button class="btn btn-icon" id="btnRedo" title="Redo (Ctrl+Y)" aria-label="Redo">&#8631;</button>
+    <span class="tb-sep"></span>
+    <button class="btn" id="btnNew" title="Start a new household">New</button>
+    <button class="btn" id="btnOpen" title="Open a saved household file">Open</button>
+    <button class="btn" id="btnSave" title="Save the household file (Ctrl+S)">Save</button>
+    <button class="btn" id="btnPasteJSON" title="Load a household from Copilot, a script or a spreadsheet">Paste JSON</button>
+    <span class="tb-sep"></span>
+    <button class="btn" id="btnHelp">Help</button>
+    <button class="btn btn-primary" id="btnExport" title="Export the finished PDF (Ctrl+P)">Export PDF</button>
+  </div>
+</header>
+
+<main class="shell">
+  <aside class="rail builder-rail" id="rail">
+    <section class="panel is-active">
+
+      <div class="panel-intro">
+        <h2>Build the household portfolio</h2>
+        <p>Who the clients are, which accounts they have and what each is worth, then a model
+          portfolio for every account. The document on the right builds itself.</p>
+      </div>
+
+      <div class="card step-card">
+        <span class="step-n">1</span>
+        <h3>Household</h3>
+        <label class="field"><span>Prepared for</span>
+          <input id="fldHousehold" placeholder="Matt &amp; Kelsey Solberg"></label>
+        <div class="form-grid">
+          <label class="field"><span>Prepared by</span><select id="fldAdvisor"></select></label>
+          <label class="field"><span>Date</span><input id="fldDate" type="date"></label>
+        </div>
+      </div>
+
+      <div class="card step-card">
+        <span class="step-n">2</span>
+        <div class="card-head"><h3>Investor profile</h3>
+          <button class="btn btn-mini btn-ghost" id="btnProfiles">Edit profiles</button></div>
+        <div id="profileGrid" class="profile-grid"></div>
+        <p class="hint" id="profileNote"></p>
+      </div>
+
+      <div class="card step-card">
+        <span class="step-n">3</span>
+        <div class="card-head"><h3>People &amp; accounts</h3>
+          <button class="btn btn-mini btn-ghost" id="btnLibrary">Portfolio library</button></div>
+        <div id="people"></div>
+        <div class="btn-row">
+          <button class="btn btn-wide" id="btnAddPerson">+ Add a person</button>
+          <button class="btn btn-wide" id="btnFillModels" title="Give every account without a model the profile's matching model">Use profile model for blanks</button>
+        </div>
+      </div>
+
+      <div class="card step-card" id="checkCard">
+        <span class="step-n">4</span>
+        <h3>Does it line up?</h3>
+        <div id="checkBody"></div>
+      </div>
+
+      <div class="card step-card">
+        <span class="step-n">5</span>
+        <h3>The document</h3>
+        <div class="form-grid">
+          <label class="field"><span>Cover</span><select id="optCover">
+            <option value="white">Clean white</option><option value="premium">Premium green</option><option value="ivory">Ivory</option></select></label>
+          <label class="field"><span>Format</span><select id="optFormat">
+            <option value="report">Report (portrait)</option><option value="slides">Slides (landscape)</option></select></label>
+        </div>
+        <label class="check"><input type="checkbox" id="optProfilePage"> Investor profile page</label>
+        <label class="check"><input type="checkbox" id="optSummaryPage"> Portfolio summary page</label>
+        <label class="check"><input type="checkbox" id="optModelPages"> One-page model portfolio for each account</label>
+        <label class="check"><input type="checkbox" id="optToc"> Table of contents</label>
+        <label class="check"><input type="checkbox" id="optTeam"> Your team &amp; contact page</label>
+        <label class="check"><input type="checkbox" id="optDisc"> Important disclosures</label>
+        <label class="check"><input type="checkbox" id="optDraft"> Marked DRAFT — pending compliance review</label>
+        <label class="field"><span>A few words on how it all fits together <em class="opt">optional, on the summary page</em></span>
+          <textarea id="fldNotes" rows="4" placeholder="e.g. The registered accounts carry the long-term growth; the joint account holds the more conservative money you may draw on first."></textarea></label>
+        <button class="btn btn-mini" id="btnNotesPrompt">Copy a Copilot prompt for this</button>
+        <div class="btn-row mt8">
+          <button class="btn btn-wide" id="btnSave2">Save household</button>
+          <button class="btn btn-primary btn-wide" id="btnExport2">Export PDF</button>
+        </div>
+      </div>
+    </section>
+  </aside>
+
+  <section class="canvas" id="canvas">
+    <div class="canvas-bar">
+      <div class="zoom">
+        <button class="btn btn-mini" id="btnZoomOut" aria-label="Zoom out">&minus;</button>
+        <button class="btn btn-mini btn-plain" id="zoomLabel" title="Fit to window">Fit</button>
+        <button class="btn btn-mini" id="btnZoomIn" aria-label="Zoom in">+</button>
+      </div>
+      <div class="canvas-status" id="pageCount"></div>
+      <span class="canvas-tip">The document updates as you type &middot; click a recommendation page to jump to its account</span>
+    </div>
+    <div class="pages doc" id="pages"></div>
+  </section>
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head"><h2 id="modalTitle"></h2>
+      <button class="btn btn-mini" id="btnModalClose" aria-label="Close">&#10005;</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+{{SCRIPTS}}
+</script>
+</body>
+</html>

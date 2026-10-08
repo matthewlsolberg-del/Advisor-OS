@@ -44,6 +44,9 @@ const brandPair = () => {
 
 /* ── Blocks ─────────────────────────────────────────────────────────────── */
 
+/** Extra block types: BLOCK_RENDERERS.myType = (block, wrap) => { …fill wrap… } */
+const BLOCK_RENDERERS = {};
+
 /** editable(<tag>, class, richtext, blockId, path) */
 function editable(tag, cls, text, bid, path){
   const n = el(tag, cls + " is-editable", richToHtml(text || ""));
@@ -212,7 +215,10 @@ function renderBlock(b){
     case "pagebreak": wrap.appendChild(el("div","blk-cap","— page break —")); break;
     /* an account recommendation: the locked one-page portfolio profile (portfolios.js) */
     case "recommendation": wrap.insertAdjacentHTML("beforeend", recommendationHTML(b)); break;
-    default: wrap.appendChild(el("p","blk-p", esc(JSON.stringify(b))));
+    default:
+      /* block types a page adds for itself (Portfolio Builder's summary blocks) */
+      if (BLOCK_RENDERERS[b.type]){ BLOCK_RENDERERS[b.type](b, wrap); break; }
+      wrap.appendChild(el("p","blk-p", esc(JSON.stringify(b))));
   }
   return wrap;
 }
