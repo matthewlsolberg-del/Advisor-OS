@@ -22,7 +22,7 @@ SRC = ROOT / "src"
 # Load order matters: each module uses what the ones before it define.
 TARGETS = [
     {
-        "out": "MHWG_Presentation_Studio.html", "page": "index.html", "version": "7.0",
+        "out": "MHWG_Presentation_Studio.html", "page": "index.html", "version": "8.8",
         "css": ["css/studio.css"],
         "scripts": [
             "brand.js",       # house standards, block factory, templates

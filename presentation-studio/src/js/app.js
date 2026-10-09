@@ -102,6 +102,7 @@ function setPath(obj, path, value){
   cur[last] = value;
 }
 function blockLabelOf(b){
+  if (b.type === "householdSummary") return "Our recommendations";
   return b.type === "recommendation" ? "Recommendation" : (BLOCK_KINDS.find(k => k.type === b.type) || {}).label || b.type;
 }
 
@@ -143,6 +144,7 @@ function render(){
   const edit = $("optEditInline").checked;
   const keepTop = host.scrollTop, keepLeft = host.scrollLeft;
   host.className = "pages doc" + (edit ? " edit-on" : "");
+  ensureHouseholdSummary(deck);
   const result = layout(deck, host);
   $("pageCount").textContent = result.pages.length + (result.pages.length === 1 ? " page" : " pages");
   if (edit){
@@ -196,6 +198,8 @@ function decorateBlocks(){
       if (!sec) return;
       btn("+ Block", "Add a block at the top of this section", (b) => showInsertMenu(b, {sectionId: sec.id, top: true}));
       btn("✦ Copilot", "Write this section with Copilot", () => { showRail("copilot"); setPromptKind("section", sec.id); });
+    } else if (w.dataset.type === "householdSummary"){
+      btn("Choose investor profile", "Set the household investor profile", () => selectBlock(bid, false));
     } else if (w.dataset.type === "recommendation"){
       btn("Edit recommendation", "Change the account, amount, portfolio or points", () => selectBlock(bid, false));
       btn("Delete page", "Remove this recommendation page", () => {
@@ -356,6 +360,7 @@ function buildTeamEditor(){
 const STATUS_TEXT = {done:"written", started:"part written", empty:"to write"};
 
 function buildOutline(){
+  ensureHouseholdSummary(deck);
   const host = $("outline");
   host.innerHTML = "";
   const p = deckProgress();
@@ -419,14 +424,18 @@ function buildOutline(){
     head.onclick = (e) => {
       if (e.target.closest("button")) return;
       currentSectionId = s.id;
-      if (s.accountRecommendation){ const r = s.blocks[0]; if (r) selectBlock(r.id, true); return; }
+      if (s.accountRecommendation || s.recommendationOverview){
+        const r = s.blocks.find(b => b.type === "recommendation" || b.type === "householdSummary");
+        if (r) selectBlock(r.id, true);
+        return;
+      }
       openSectionId = open && e.target.tagName !== "INPUT" ? null : s.id;
       buildOutline(); updateAddWhere();
       jumpToSection(s);
     };
     box.appendChild(head);
 
-    if (open && !s.accountRecommendation){
+    if (open && !s.accountRecommendation && !s.recommendationOverview){
       const list = el("div", "o-blocks");
       if (!(s.blocks || []).length) list.appendChild(el("div", "o-empty", "Empty — add a block below, or paste text on Copilot & JSON."));
       (s.blocks || []).forEach((b, bi) => {
@@ -723,8 +732,10 @@ function buildInspector(){
   box.hidden = false;
   $("inspectorTitle").textContent = blockLabelOf(b);
   body.innerHTML = "";
-  const isRec = b.type === "recommendation";
-  ["btnBlockUp", "btnBlockDown", "btnBlockDup", "btnBlockCopilot"].forEach(id => { $(id).hidden = isRec; });
+  const isRec = b.type === "recommendation", isHousehold = b.type === "householdSummary";
+  ["btnBlockUp", "btnBlockDown", "btnBlockDup", "btnBlockCopilot"].forEach(id => { $(id).hidden = isRec || isHousehold; });
+  $("btnBlockDelete").hidden = isHousehold;
+  if (isHousehold){ $("inspectorTitle").textContent = "Our recommendations"; buildHouseholdSummaryInspector(body); return; }
   if (isRec){ buildRecommendationInspector(b, body); return; }
   body.appendChild(el("p", "insp-note insp-sec", "In “" + esc(found.section.title || "section") + "”" + (b.seed ? " · <b>still sample text</b>" : "")));
 
@@ -1185,6 +1196,12 @@ function migrate(d){
   if (dropped) setTimeout(() => toast(dropped + (dropped === 1 ? " picture was a web link" : " pictures were web links") +
     " — removed, this program never loads anything from the internet. Drop the picture file in instead.", 7000), 50);
   migrateRecommendations(d);
+  /* files saved by the v8.x Copilot builds kept the household profile under d.v8 */
+  if (d.v8 && d.v8.investorProfile && !(d.household && d.household.investorProfile)){
+    d.household = Object.assign({}, d.household, {investorProfile: d.v8.investorProfile});
+  }
+  delete d.v8;
+  ensureHouseholdSummary(d);
   return d;
 }
 
@@ -1309,39 +1326,45 @@ function presentEnd(){
 
 
 function showHelp(){
-  showModal("How this works", `
-    <h3>Five steps, left to right</h3>
-    <ol>
-      <li><b>Start</b> — what you are making, who it is for, report or slides.</li>
-      <li><b>Build</b> — the sections. Click any text on the page and type over it. Point at a block for its
-        tools; click it to see its settings on the right. Add sections, blocks and account recommendations here.</li>
-      <li><b>Copilot &amp; JSON</b> — copy a prompt into Copilot, paste its answer back. Text or JSON, the
-        program works out which and shows you a preview first.</li>
-      <li><b>Style</b> — cover, page style, which pages are included, team, disclosures.</li>
-      <li><b>Finish</b> — a check list of anything left to do, the DRAFT tag, Save and Export PDF.</li>
+  showModal("Partner Quick Start", `
+    <p class="lead">Use this guide to build, review and save a client presentation without changing the underlying tool.</p>
+    <h3>Recommended workflow</h3>
+    <ol class="helper-steps">
+      <li><b>Start</b><br>Choose the type of presentation and enter the client, title, advisor and date.</li>
+      <li><b>Build the narrative</b><br>Use the sections in the left sidebar. Select a section to edit it, reorder it or add content.</li>
+      <li><b>Add recommendations</b><br>In Build, add one account recommendation for each account. Enter the account label, amount and approved portfolio.</li>
+      <li><b>Set the household profile</b><br>Select <b>Our recommendations</b> in the left sidebar. Choose the Investor Profile in the right-hand settings panel.</li>
+      <li><b>Review the summary</b><br>Confirm the household total, overall allocation, every account amount and each assigned portfolio.</li>
+      <li><b>Finish and save</b><br>Run the Finish checks, save the <code>.mhwg.json</code> working file, then export the PDF.</li>
     </ol>
-    <h3>Nothing leaves this computer</h3>
-    <p>The program never connects to anything — no internet, no AI, no cloud. Copilot runs where it always
-    does; you carry prompts to it and answers back by copy and paste.</p>
-    <h3>The paste format (for typing or Copilot)</h3>
+    <div class="helper-grid">
+      <div class="helper-card"><b>Editing an account</b><p>Select the account in the left sidebar. Use the right panel to change the account name, amount, portfolio or “How it fits” points.</p></div>
+      <div class="helper-card"><b>Editing the Investor Profile</b><p>Select <b>Our recommendations</b> in the left sidebar. The profile dropdown appears in the right panel, not on the client-facing page.</p></div>
+      <div class="helper-card"><b>Portfolio library</b><p>Use Portfolio library to view approved profiles or add an approved profile from Copilot JSON. Existing saved profiles are retained between versions.</p></div>
+      <div class="helper-card"><b>Saving versus exporting</b><p><b>Save</b> creates the editable working file. <b>Export PDF</b> creates the client-facing output. Keep the working file with the client file.</p></div>
+    </div>
+    <h3>Before sharing the PDF</h3>
     <ul>
-      <li><code># Section</code> and <code>## Sub-heading</code> · <code>- bullet</code> · <code>1. numbered</code></li>
-      <li><code>&gt; one sentence</code> becomes a callout · <code>Label: value</code> becomes a fact row</li>
-      <li><code>$1.2M | Projected at 65 | note</code> becomes a key-number card</li>
-      <li><code>| Option | Cost |</code> becomes a table — or paste cells straight from Excel</li>
-      <li><code>1. Title - detail (Owner: Us, When: 30 days)</code> becomes an action plan</li>
-      <li><code>**bold**</code> and <code>==one highlighted phrase==</code></li>
+      <li>Confirm client names, account labels and dollar amounts.</li>
+      <li>Confirm the household total equals the account reconciliation total.</li>
+      <li>Confirm the selected Investor Profile and the household allocation are appropriate.</li>
+      <li>Confirm every recommended portfolio is the intended approved profile.</li>
+      <li>Review advisor-input markers, disclosures, page overflow warnings and the DRAFT status.</li>
     </ul>
-    <h3>Keyboard</h3>
-    <p><code>Ctrl+Z</code> undo · <code>Ctrl+Y</code> redo · <code>Ctrl+S</code> save · <code>Ctrl+P</code> export ·
-    <code>Enter</code> finishes editing a line · <code>Delete</code> removes the selected block.</p>
-    <h3>Saving</h3>
-    <p><b>Save</b> writes a <code>.mhwg.json</code> working file to Downloads — the file you reopen to change the
-    piece later. The browser also keeps a working copy so nothing is lost if the window closes.</p>
+    <h3>Copilot and source material</h3>
+    <p>Copilot is used through copy and paste. The HTML does not connect directly to Copilot or the internet. Use approved source material, verify all figures, and do not treat generated wording as a substitute for advisor review.</p>
+    <h3>Common fixes</h3>
+    <ul>
+      <li><b>Recommendation missing:</b> add an account recommendation in Build and select an approved portfolio.</li>
+      <li><b>Household allocation looks wrong:</b> verify every account amount and each portfolio allocation profile.</li>
+      <li><b>Page is too long:</b> shorten optional wording first. Do not remove required disclosures.</li>
+      <li><b>Need to continue later:</b> open the saved <code>.mhwg.json</code> working file, not the exported PDF.</li>
+    </ul>
     <div class="modal-actions">
-      <button class="btn btn-ghost" id="btnClearLocal">Clear the working copy from this browser</button>
+      <button class="btn btn-ghost" id="btnClearLocal">Clear browser working copy</button>
       <button class="btn" id="btnHelpJSON">JSON format</button>
-      <button class="btn btn-primary" id="btnHelpWelcome">Show the welcome screen</button></div>`, {wide:true});
+      <button class="btn btn-primary" id="btnHelpWelcome">Show welcome screen</button>
+    </div>`, {wide:true});
   $("btnClearLocal").onclick = () => { try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e){} toast("Working copy cleared from this browser"); };
   $("btnHelpJSON").onclick = showJSONReference;
   $("btnHelpWelcome").onclick = () => showWelcome(false);

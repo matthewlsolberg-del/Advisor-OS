@@ -377,6 +377,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
   .pages{display:block;padding:0;overflow:visible}
   #presentHost,#presentView,#measure{display:none !important}
 }
+
+/* Help: the partner quick start (from Matt's v8.7 Studio) */
+.helper-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:8px 0 14px}
+.helper-card{border:1px solid var(--hair);border-left:3px solid var(--shield);border-radius:6px;padding:10px 11px;background:var(--tint)}
+.helper-card b{display:block;color:var(--deep);margin-bottom:3px}
+.helper-card p{margin:0;font-size:12px;line-height:1.45;color:var(--gray)}
+.helper-steps{counter-reset:helper;margin:8px 0 14px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}
+.helper-steps li{list-style:none;position:relative;padding:8px 9px 8px 35px;border-bottom:1px solid var(--hair);font-size:12px;line-height:1.4}
+.helper-steps li:before{counter-increment:helper;content:counter(helper);position:absolute;left:3px;top:7px;width:22px;height:22px;border-radius:50%;background:var(--deep);color:#fff;text-align:center;line-height:22px;font-weight:700;font-size:11px}
 </style>
 <style>/* ==========================================================================
    The document — US Letter pages, TD 2026 Premium palette, MHWG house style.
@@ -1015,9 +1024,78 @@ mark.needs{background:#FFE8B3;color:#5c3a06;font-weight:600;padding:0 2px;border
 .recommendation-page .rec-fit{margin-top:4px;padding-top:4px}
 .recommendation-page .rec-fit li{font-size:8.8px;line-height:11.4px;margin-bottom:0}
 .recommendation-page .rec-asat{font-size:7.5px;margin-top:3px}
+
+/* ── Account recommendation pages: type sizes (from Matt's v7.1–v8.4 Studio) ── */
+.recommendation-page .blk-heading:first-child{margin-bottom:6px}
+.recommendation-page .blk-heading:first-child .blk-kicker{font-size:10.2px;font-weight:700;letter-spacing:.18em}
+.recommendation-page .blk-heading:first-child .blk-h2{font-size:27px;line-height:1.04;font-weight:700;letter-spacing:-.01em;margin-bottom:5px;padding-bottom:7px;border-bottom:1px solid var(--gold)}
+.recommendation-page .rec-summary{margin-bottom:5px;font-size:11.45px;line-height:14.8px}
+.recommendation-page .rec-commentary-block b{font-size:10.65px;line-height:1.18}
+.recommendation-page .rec-commentary-block span{font-size:10.2px;line-height:12.8px}
+.recommendation-page .rec-stat-label{font-size:8.65px}
+.recommendation-page .rec-stat-value{font-size:11.45px}
+.recommendation-page .rec-legend-row{font-size:8.5px;line-height:11.8px}
+.recommendation-page .rec-holdings-title{margin-bottom:4px;font-size:14px}
+.recommendation-page .rec-holdings-head{padding-bottom:3px;font-size:8.7px}
+.recommendation-page .rec-holding{font-size:9.05px;line-height:11.35px;padding:.25px 0}
+.recommendation-page .rec-fit h3{font-size:14px}
+.recommendation-page .rec-fit li{margin-bottom:0;font-size:9.65px;line-height:12.15px}
+.recommendation-page .rec-asat{margin-top:2px;font-size:8px}
+
+/* ── "Our recommendations": the household summary page (from Matt's v8.7 Studio) ── */
+.household-summary-page .page-inner{top:78px;bottom:50px}
+.hh-wrap{font-family:var(--f-text);color:var(--ink);display:block}
+.hh-page-kicker{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--kick);font-weight:700;margin:0 0 5px}
+.hh-page-title{font-family:var(--f-disp);font-size:32px;line-height:1.04;color:var(--deep);font-weight:600;margin:0 0 7px}
+.hh-page-rule{width:40px;height:2px;background:var(--gold);margin:0 0 11px}
+.hh-intro{font-size:10.7px;line-height:14.5px;margin:0 0 9px;max-width:78ch}
+/* the profile band: description and total on top, five facts underneath */
+.hh-profile{background:var(--tint);border-top:1px solid var(--gold);border-bottom:1px solid var(--gold);display:grid;grid-template-columns:minmax(0,1.45fr) minmax(180px,.55fr);gap:14px;align-items:stretch;padding:9px 11px;margin-bottom:8px}
+.hh-profile-copy{min-width:0}
+.hh-profile-copy h3{font-family:var(--f-disp);color:var(--deep);font-size:18.5px;margin:0 0 3px}
+.hh-profile-copy p{font-size:9.2px;line-height:12.2px;margin:0;max-width:78ch}
+.hh-total-card{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;text-align:right;border-left:1px solid var(--gold);padding:2px 3px 2px 14px}
+.hh-total-card span{font-size:7.5px;line-height:1.2;letter-spacing:.13em;text-transform:uppercase;color:var(--gray);font-weight:700}
+.hh-total-card b{font-family:var(--f-disp);font-size:28px;line-height:1.05;color:var(--deep);margin-top:4px;white-space:nowrap}
+.hh-profile-meta{display:grid;grid-column:1/-1;grid-template-columns:1.3fr .85fr .85fr 1fr 1fr;gap:7px 10px;border-top:1px solid #d9e1d9;padding-top:6px}
+.hh-profile-meta>div{min-width:0}
+.hh-profile-meta span{letter-spacing:.11em;text-transform:uppercase;color:var(--gray);font-size:6.8px}
+.hh-profile-meta b{display:block;color:var(--deep);margin-top:1px;white-space:normal;font-size:8.9px;line-height:1.18}
+/* the combined mix: donut on the left, legend on the right */
+.hh-main{display:block}
+.hh-allocation-panel{display:grid;grid-template-columns:49% 51%;gap:20px;align-items:center;border-bottom:1px solid var(--gold);padding:10px 4px 15px;margin:5px 0 12px}
+.hh-chart-side{min-width:0;padding:0}
+.hh-title{font-family:var(--f-disp);color:var(--deep);font-size:18px;margin:0 0 9px}
+.hh-chart-side .hh-title{font-size:15.5px;margin:0 0 10px}
+.hh-donut{display:block;max-width:100%;overflow:visible;width:194px;height:194px;margin:3px auto 9px}
+.hh-legend{display:grid;grid-template-columns:1fr;gap:3px;margin:0;padding:7px 8px 0 0}
+.hh-leg{display:grid;grid-template-columns:9px 1fr 38px;gap:6px;align-items:center;font-size:8.8px;line-height:1.25}
+.hh-dot{width:9px;height:9px}
+/* the account structure table and its reconciliation total */
+.hh-structure{width:100%}
+.hh-structure .hh-title{font-size:15.5px;margin:2px 0 6px}
+.hh-table{width:100%;border-collapse:collapse;line-height:1.2;font-size:8.5px}
+.hh-table th{text-transform:uppercase;letter-spacing:.09em;text-align:left;color:var(--gray);border-bottom:1px solid var(--gold);font-size:7px;padding:0 4px 2px}
+.hh-table td{border-bottom:1px solid var(--hair);vertical-align:top;padding:2.25px 4px}
+.hh-table td:nth-child(1){width:25%}
+.hh-table td:nth-child(2){text-align:right;white-space:nowrap;font-weight:700;width:18%}
+.hh-table td:nth-child(3){font-weight:600;color:var(--deep);width:57%}
+.hh-total{display:flex;justify-content:flex-end;align-items:baseline;gap:9px;border-top:1.5px solid var(--gold);padding-top:4px;margin-top:2px;color:var(--deep)}
+.hh-total span{font-size:8px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+.hh-total b{font-family:var(--f-disp);font-size:16px}
+.hh-note{border-top:1px solid var(--gold);display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px;padding-top:4px}
+.hh-note b{display:block;color:var(--green-dk);text-transform:uppercase;margin-bottom:2px;font-size:8px}
+.hh-note span{display:block;font-size:7.6px;line-height:9.8px}
+/* slides are landscape: profile band on top, mix and account table side by side */
+.doc[data-format="slides"] .hh-intro{display:none}
+.doc[data-format="slides"] .hh-page-title{font-size:28px}
+.doc[data-format="slides"] .hh-main{display:grid;grid-template-columns:44% 56%;gap:22px;align-items:start}
+.doc[data-format="slides"] .hh-allocation-panel{grid-template-columns:52% 48%;gap:10px;border-bottom:0;padding:0;margin:0}
+.doc[data-format="slides"] .hh-donut{width:150px;height:150px}
+.doc[data-format="slides"] .hh-note{display:none}
 </style>
 </head>
-<body data-build="7.0">
+<body data-build="8.8">
 
 <!-- Brand marks live once in the DOM and are cloned wherever needed. -->
 <div id="shield-source" hidden><img class="td-shield-img" src="data:image/png;base64,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" alt="TD" width="520" height="466"></div>
@@ -4024,6 +4102,8 @@ function renderBlock(b){
     case "pagebreak": wrap.appendChild(el("div","blk-cap","— page break —")); break;
     /* an account recommendation: the locked one-page portfolio profile (portfolios.js) */
     case "recommendation": wrap.insertAdjacentHTML("beforeend", recommendationHTML(b)); break;
+    /* "Our recommendations": the household summary in front of the account pages (portfolios.js) */
+    case "householdSummary": wrap.insertAdjacentHTML("beforeend", householdSummaryHTML()); break;
     default:
       /* block types a page adds for itself (Portfolio Builder's summary blocks) */
       if (BLOCK_RENDERERS[b.type]){ BLOCK_RENDERERS[b.type](b, wrap); break; }
@@ -4110,6 +4190,7 @@ function makeMeasurer(doc){
 function newPage(deck, ctx){
   const p = el("div", "page");
   if (ctx && ctx.recommendation) p.classList.add("recommendation-page");
+  if (ctx && ctx.householdSummary) p.classList.add("household-summary-page");
   if (deck.options.watermark){
     const wm = el("div","page-watermark");
     wm.appendChild(wordmark());
@@ -4236,7 +4317,7 @@ function layout(deck, host){
   pages.push({node: coverPage(deck), numbered:false});
 
   const tocCount = deck.options.toc
-    ? Math.max(1, Math.ceil(deck.sections.length / 16))
+    ? Math.max(1, Math.ceil(tocSections(deck).length / 16))
     : 0;
   const tocSlots = [];
   for (let i = 0; i < tocCount; i++){
@@ -4293,18 +4374,28 @@ function layout(deck, host){
   };
 
   deck.sections.forEach((section, si) => {
-    ctx = {section: section.runningTitle || section.title || "", recommendation: !!section.recommendation};
+    const ourRecs = section.recommendation || section.recommendationOverview;
+    ctx = {section: ourRecs ? "OUR RECOMMENDATIONS" : (section.runningTitle || section.title || ""),
+           recommendation: !!section.recommendation, householdSummary: !!section.recommendationOverview};
     if (deck.options.dividers){
       pages.push({node: dividerPage(deck, section, si + 1), numbered:true});
       sectionPages[section.id] = pages.length;   /* provisional; fixed below */
       page = null;
-    } else if ((deck.options.sectionBreak || section.recommendation || (deck.sections[si - 1] || {}).recommendation) && si > 0){
-      page = null;              /* each section opens a page; a recommendation always has its own */
+    } else if ((deck.options.sectionBreak || ourRecs || (deck.sections[si - 1] || {}).recommendation) && si > 0){
+      page = null;              /* each section opens a page; recommendations always have their own */
     }
     let items = (section.blocks || []).slice();
-    if (!deck.options.dividers && !section.recommendation){
+    if (section.recommendationOverview){
+      /* the summary carries its own title, so title and summary never split across pages */
+      items = items.filter(b => b && b.type === "householdSummary");
+    } else if (!deck.options.dividers && section.recommendation){
       items = [Object.assign(newBlock("heading"),
-                {id:"sec-" + section.id, level:2, kicker: section.kicker || "", text: section.title || "", num: si + 1})]
+                {id:"sec-" + section.id, level:2, kicker:"", text: section.title || "Account Recommendation"})]
+              .concat(items);
+    } else if (!deck.options.dividers){
+      items = [Object.assign(newBlock("heading"),
+                {id:"sec-" + section.id, level:2, kicker: section.kicker || "", text: section.title || "",
+                 num: tocSections(deck).indexOf(section) + 1})]
               .concat(items);
     }
 
@@ -4382,6 +4473,10 @@ function layout(deck, host){
   return {pages, sectionPages};
 }
 
+/** The sections listed in the contents: every one except the per-account
+    recommendation pages ("Our recommendations" stands for all of them). */
+function tocSections(deck){ return deck.sections.filter(s => !s.accountRecommendation); }
+
 function fillToc(deck, slots, sectionPages){
   const perPage = 16;
   slots.forEach((p, pi) => {
@@ -4392,7 +4487,7 @@ function fillToc(deck, slots, sectionPages){
       body.appendChild(el("div","toc-rule"));
     }
     const list = el("ol","toc-list");
-    deck.sections.slice(pi * perPage, (pi + 1) * perPage).forEach((s, i) => {
+    tocSections(deck).slice(pi * perPage, (pi + 1) * perPage).forEach((s, i) => {
       const li = el("li","toc-item");
       li.appendChild(el("span","toc-num", String(pi * perPage + i + 1).padStart(2,"0")));
       li.appendChild(el("span","toc-name", esc(s.title || "")));
@@ -5075,6 +5170,7 @@ function hasWords(v, key){
   return false;
 }
 function sectionStatus(sec){
+  if (sec.recommendationOverview) return householdProfileName() ? "done" : "started";
   if (sec.accountRecommendation) return (sec.blocks || []).some(b => b.type === "recommendation" && recProfile(b)) ? "done" : "started";
   const blocks = sec.blocks || [];
   if (gapCount(blocks) && blocks.some(b => !b.seed && hasWords(b))) return "started";
@@ -5279,6 +5375,13 @@ function preflight(){
       fix: () => { showRail("build"); jumpToSection(s); }});
   });
 
+  const eq = householdEquityCheck(deck);
+  if (eq && !eq.inRange){
+    const sum = deck.sections.find(s => s.recommendationOverview);
+    issues.push({t:"Combined equity (" + eq.equity + "%) is outside the " + deck.household.investorProfile +
+      " range of " + eq.min + "%–" + eq.max + "%", fix:() => { const b = sum && sum.blocks[0]; if (b) selectBlock(b.id, true); }});
+  }
+
   layoutProblems().forEach(c => issues.push({
     t:"Something runs off the bottom of page " + c.page + " and would be cut off in the PDF",
     fix:() => c.node.scrollIntoView({block:"start", behavior:"smooth"})}));
@@ -5353,6 +5456,35 @@ const ACCOUNT_TYPES = [
 ];
 
 let portfolioLibrary = [];
+
+/* ── Household investor profiles (the firm's PMP / IPS definitions) ───────
+   Target and permitted equity / fixed-income ranges per profile. The
+   "Our recommendations" summary page shows the chosen one and checks the
+   combined household allocation against it. (From Matt's v8.6 Studio.) */
+const INVESTOR_PROFILES = {
+  "Conservative Income": {objective:"Income with modest growth potential", tolerance:"Low to moderate", horizon:"Medium to long-term",
+    equity:20, equityMin:0, equityMax:40, fixedIncome:80, fixedMin:0, fixedMax:100,
+    description:"Seeks returns primarily from fixed income investments, with some potential for capital growth and dividends from very modest equity exposure."},
+  "Balanced Income": {objective:"Income with modest capital growth", tolerance:"Low to moderate", horizon:"Medium to long-term",
+    equity:35, equityMin:10, equityMax:50, fixedIncome:65, fixedMin:40, fixedMax:90,
+    description:"Seeks returns from a majority of fixed income investments, with some potential for capital growth from a modest exposure to equities."},
+  "Balanced": {objective:"Income and moderate long-term growth", tolerance:"Moderate", horizon:"Long-term",
+    equity:50, equityMin:25, equityMax:75, fixedIncome:50, fixedMin:25, fixedMax:75,
+    description:"Seeks returns from fixed income investments while also pursuing moderate long-term capital growth through equity exposure."},
+  "Balanced Growth": {objective:"Long-term capital growth with income", tolerance:"Moderate to high", horizon:"Long-term",
+    equity:65, equityMin:40, equityMax:80, fixedIncome:35, fixedMin:20, fixedMax:60,
+    description:"Seeks long-term capital growth from equities while retaining the opportunity to earn income from fixed income investments."},
+  "Growth": {objective:"Long-term capital growth", tolerance:"High", horizon:"Long-term",
+    equity:75, equityMin:50, equityMax:90, fixedIncome:25, fixedMin:0, fixedMax:50,
+    description:"Seeks long-term capital growth from equities, with some potential to earn modest returns from fixed income investments."},
+  "Aggressive Growth": {objective:"Maximum long-term capital growth", tolerance:"Very high", horizon:"Long-term",
+    equity:90, equityMin:60, equityMax:100, fixedIncome:10, fixedMin:0, fixedMax:40,
+    description:"Seeks long-term capital growth primarily from equities and may experience substantial portfolio volatility and loss of capital."}
+};
+function investorProfileOptions(selected){
+  return '<option value="">— choose an investor profile —</option>' + Object.keys(INVESTOR_PROFILES).map(x =>
+    `<option${x === selected ? " selected" : ""}>${esc(x)}</option>`).join("");
+}
 
 /* ── Library storage ────────────────────────────────────────────────────── */
 
@@ -5583,7 +5715,7 @@ function money(v){
   return Number.isFinite(n) ? new Intl.NumberFormat("en-CA", {style:"currency", currency:"CAD", maximumFractionDigits:0}).format(n) : t;
 }
 function recSectionTitle(account, amount){
-  return ["What We Recommend", account, amount].filter(Boolean).join(" - ");
+  return [account, amount].filter(Boolean).join("  |  ") || "Account Recommendation";
 }
 function fitLines(v){
   const list = Array.isArray(v) ? v : String(v || "").split(/\n+/);
@@ -5597,7 +5729,7 @@ function makeRecommendationSection(o){
     profile: p ? structuredClone(p) : (o.profile || null)
   });
   if (!rec.howItFits.length && p) rec.howItFits = p.fitTemplate.slice(0, 4);
-  const sec = {id: uid(), kicker:"WHAT WE RECOMMEND", summary:"", recommendation:true, accountRecommendation:true,
+  const sec = {id: uid(), kicker:"OUR RECOMMENDATIONS", summary:"", recommendation:true, accountRecommendation:true,
     accountName: String(o.account || "").trim(), accountAmount: money(o.amount), portfolioId: rec.portfolioId, blocks:[rec]};
   syncRecTitle(sec);
   return sec;
@@ -5621,9 +5753,138 @@ function migrateRecommendations(d){
     rec.howItFits = fitLines(rec.howItFits);
     const lib = portfolioById(rec.portfolioId);
     if (lib) rec.profile = structuredClone(lib);
-    if (!sec.kicker) sec.kicker = "WHAT WE RECOMMEND";
+    if (!sec.kicker || sec.kicker === "WHAT WE RECOMMEND") sec.kicker = "OUR RECOMMENDATIONS";
     if (sec.accountName || sec.accountAmount) syncRecTitle(sec);
   });
+}
+
+/* ── "Our recommendations": the household summary page ─────────────────
+   One page in front of the account pages: the household investor profile,
+   the total, the combined asset mix (each account's model weighted by its
+   amount) and the account structure. It is a section with one
+   "householdSummary" block, added automatically once there is an account
+   recommendation, and kept just before the first one. */
+
+function householdProfileName(){
+  const h = (typeof deck !== "undefined" && deck && deck.household) || {};
+  return INVESTOR_PROFILES[h.investorProfile] ? h.investorProfile : "";
+}
+function amountValue(v){ const n = Number(String(v || "").replace(/[^0-9.]/g, "")); return Number.isFinite(n) ? n : 0; }
+function householdRecommendations(d){
+  return (d.sections || []).filter(s => s.accountRecommendation).map(s => {
+    const b = (s.blocks || []).find(x => x.type === "recommendation") || {};
+    return {section: s, block: b, profile: recProfile(b), amount: amountValue(s.accountAmount)};
+  });
+}
+/** The combined allocation: each account's model mix weighted by its amount. */
+function householdMix(d){
+  /* only accounts with a portfolio chosen count towards the mix */
+  const sums = {}, recs = householdRecommendations(d).filter(r => r.profile && r.amount);
+  const total = recs.reduce((n, r) => n + r.amount, 0);
+  recs.forEach(r => {
+    allocationPairs(r.profile).forEach(x => { sums[x.name] = (sums[x.name] || 0) + r.amount * x.value / 100; });
+  });
+  return ALLOCATION_ORDER.map(name => ({name, value: total ? Math.round((sums[name] || 0) / total * 1000) / 10 : 0}))
+    .filter(x => x.value > 0.04);
+}
+/** Combined equity against the chosen profile's permitted range, or null when either is missing. */
+function householdEquityCheck(d){
+  const p = INVESTOR_PROFILES[(d.household || {}).investorProfile];
+  const mix = householdMix(d);
+  if (!p || !mix.length) return null;
+  const equity = Math.round(mix.filter(x => /equity/i.test(x.name)).reduce((n, x) => n + x.value, 0) * 10) / 10;
+  return {equity, min: p.equityMin, max: p.equityMax, inRange: equity >= p.equityMin && equity <= p.equityMax};
+}
+function householdDonut(pairs){
+  const total = pairs.reduce((n, x) => n + x.value, 0) || 100, C = 2 * Math.PI * 45;
+  let off = 0, arcs = "";
+  pairs.forEach((x, i) => {
+    const len = C * x.value / total;
+    arcs += `<circle cx="50" cy="50" r="45" fill="none" stroke="${BRAND.sequence[i % BRAND.sequence.length]}" stroke-width="18" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}"/>`;
+    off += len;
+  });
+  return `<svg class="hh-donut" viewBox="0 0 100 100" role="img" aria-label="Total household asset allocation">` +
+    `<circle cx="50" cy="50" r="45" fill="none" stroke="#E4E9E2" stroke-width="18"/>${arcs}<circle cx="50" cy="50" r="31" fill="#fff"/></svg>`;
+}
+/** render.js draws a "householdSummary" block with this. */
+function householdSummaryHTML(){
+  const recs = householdRecommendations(deck), pairs = householdMix(deck);
+  const name = householdProfileName(), profile = INVESTOR_PROFILES[name] || null;
+  const total = recs.reduce((n, r) => n + r.amount, 0);
+  const legend = pairs.map((x, i) => `<div class="hh-leg"><i class="hh-dot" style="background:${BRAND.sequence[i % BRAND.sequence.length]}"></i>` +
+    `<span>${escProfile(x.name)}</span><b>${x.value}%</b></div>`).join("");
+  const rows = recs.map(r => `<tr><td>${escProfile(r.section.accountName || "Account")}</td><td>${escProfile(r.section.accountAmount || "")}</td>` +
+    `<td>${escProfile(r.profile ? preferredPortfolioTitle(r.profile) : "Choose a portfolio")}</td></tr>`).join("");
+  const meta = profile
+    ? `<div><span>Objective</span><b>${escProfile(profile.objective)}</b></div>` +
+      `<div><span>Volatility level</span><b>${escProfile(profile.tolerance)}</b></div>` +
+      `<div><span>Time horizon</span><b>${escProfile(profile.horizon)}</b></div>` +
+      `<div><span>Target equity</span><b>${profile.equity}% <small>(${profile.equityMin}%–${profile.equityMax}%)</small></b></div>` +
+      `<div><span>Target fixed income</span><b>${profile.fixedIncome}% <small>(${profile.fixedMin}%–${profile.fixedMax}%)</small></b></div>`
+    : `<div><span>Status</span><b>Profile required</b></div>`;
+  return `<div class="hh-wrap">
+    <div class="hh-page-kicker">Our Recommendations</div><div class="hh-page-title">Our recommendations</div><div class="hh-page-rule"></div>
+    <p class="hh-intro">Based on the objectives, time horizon and investor profile discussed, these account recommendations are designed to operate as one coordinated household portfolio.</p>
+    <div class="hh-profile">
+      <div class="hh-profile-copy"><div class="rec-label">Investor Profile</div>
+        <h3>${escProfile(name ? name + " Investor" : "Choose an Investor Profile")}</h3>
+        <p>${escProfile(profile ? profile.description : "Select the household investor profile: click this page and choose it in the panel on the right.")}</p></div>
+      <div class="hh-total-card"><span>Total Household Portfolio</span><b>${money(total)}</b></div>
+      <div class="hh-profile-meta">${meta}</div>
+    </div>
+    <div class="hh-main">
+      <div class="hh-allocation-panel">
+        <div class="hh-chart-side"><div class="hh-title">Total Household Asset Allocation</div>${householdDonut(pairs.length ? pairs : [{name:"Allocation unavailable", value:100}])}</div>
+        <div class="hh-legend">${legend || '<div class="hh-leg"><span>Add account recommendations with amounts and portfolios to calculate the household mix.</span></div>'}</div>
+      </div>
+      <div class="hh-structure"><div class="hh-title">Recommended Account Structure</div>
+        <table class="hh-table"><thead><tr><th>Account</th><th>Amount</th><th>Portfolio</th></tr></thead><tbody>${rows}</tbody></table>
+        <div class="hh-total"><span>Total Household Portfolio</span><b>${money(total)}</b></div></div>
+    </div>
+    <div class="hh-note"><div><b>Coordinated</b><span>Each account has a defined role within one household strategy.</span></div>
+      <div><b>Diversified</b><span>The combined allocation uses the six approved asset categories.</span></div>
+      <div><b>Aligned</b><span>The assigned models are assessed together against the selected investor profile.</span></div></div>
+  </div>`;
+}
+/** Add the summary section when there are account pages, and keep it right before the first one. */
+function ensureHouseholdSummary(d){
+  d.household = Object.assign({investorProfile:""}, d.household);
+  if (!INVESTOR_PROFILES[d.household.investorProfile]) d.household.investorProfile = "";
+  let overview = d.sections.find(s => s.recommendationOverview);
+  const firstRec = d.sections.findIndex(s => s.accountRecommendation);
+  if (firstRec < 0) return;
+  if (!overview){
+    overview = {id: uid(), recommendationOverview:true, blocks:[]};
+    d.sections.splice(firstRec, 0, overview);
+  }
+  overview.title = overview.tocTitle = overview.runningTitle = "Our recommendations";
+  overview.kicker = "OUR RECOMMENDATIONS";
+  if (!(overview.blocks || []).some(b => b && b.type === "householdSummary")) overview.blocks = [{id: uid(), type:"householdSummary"}];
+  const oi = d.sections.indexOf(overview), fr = d.sections.findIndex(s => s.accountRecommendation);
+  if (oi > fr){ d.sections.splice(oi, 1); d.sections.splice(fr, 0, overview); }
+}
+/** Inspector for the summary block: just the household investor profile. */
+function buildHouseholdSummaryInspector(body){
+  body.appendChild(el("p", "insp-note", "Household settings for the Our recommendations page. The total, mix and table come from the account pages."));
+  const wrap = el("label", "field");
+  wrap.innerHTML = "<span>Investor profile</span>";
+  const sel = document.createElement("select");
+  sel.innerHTML = investorProfileOptions(householdProfileName());
+  sel.onchange = () => {
+    snapshot(); setInvestorProfile(sel.value); render(); buildInspector();
+    toast(sel.value ? "Investor profile changed to " + sel.value + "." : "Choose an investor profile.");
+  };
+  wrap.appendChild(sel); body.appendChild(wrap);
+  const p = INVESTOR_PROFILES[sel.value];
+  const chk = householdEquityCheck(deck);
+  if (chk) body.appendChild(el("p", "insp-note", (chk.inRange ? "✓ " : "⚠ ") + "Combined equity is " + chk.equity + "% — the " +
+    esc(sel.value) + " range is " + chk.min + "%–" + chk.max + "%." + (chk.inRange ? "" : " Change a portfolio or the profile.")));
+  if (p){
+    body.appendChild(el("p", "insp-note", esc(p.description)));
+    body.appendChild(el("div", "lib-checks", `<div><b>Objective:</b> ${esc(p.objective)}</div><div><b>Volatility level:</b> ${esc(p.tolerance)}</div>` +
+      `<div><b>Time horizon:</b> ${esc(p.horizon)}</div><div><b>Target equity:</b> ${p.equity}% · permitted range ${p.equityMin}%–${p.equityMax}%</div>` +
+      `<div><b>Target fixed income:</b> ${p.fixedIncome}% · permitted range ${p.fixedMin}%–${p.fixedMax}%</div>`));
+  }
 }
 
 /* ── Copilot help for "How it fits" ─────────────────────────────────────── */
@@ -5651,11 +5912,14 @@ function portfolioOptions(selected){
   return '<option value="">— choose a portfolio —</option>' + sortedPortfolios().map(p =>
     `<option value="${esc(p.portfolioId)}"${p.portfolioId === selected ? " selected" : ""}>${esc(p.portfolioName)}</option>`).join("");
 }
-function accountOptions(selected){
-  const list = ACCOUNT_TYPES.slice();
-  if (selected && !list.includes(selected)) list.unshift(selected);
-  return '<option value="">— choose an account —</option>' + list.map(a =>
-    `<option${a === selected ? " selected" : ""}>${esc(a)}</option>`).join("");
+/** A free-text account box ("Matt's TFSA") with the usual account types offered as suggestions. */
+function accountInput(id, listId){
+  return `<input${id ? ` id="${id}"` : ""} list="${listId}" placeholder="e.g., Matt's TFSA" autocomplete="off">` +
+    `<datalist id="${listId}">${ACCOUNT_TYPES.map(a => `<option value="${esc(a)}"></option>`).join("")}</datalist>`;
+}
+/** Set the household investor profile (kept on the deck, shown on the summary page). */
+function setInvestorProfile(name){
+  deck.household = Object.assign({}, deck.household, {investorProfile: INVESTOR_PROFILES[name] ? name : ""});
 }
 
 /** The add-a-recommendation dialog. Editing an existing one happens in the right-hand panel. */
@@ -5663,8 +5927,10 @@ function openRecommendationDialog(){
   showModal("Add an account recommendation", `
     <p class="hint">One page per account: the portfolio's approved profile, plus your
     "how it fits" points. Add one for each account you are recommending.</p>
+    <label class="field"><span>Household investor profile</span><select id="rdInvestorProfile">${investorProfileOptions(householdProfileName())}</select></label>
+    <p class="hint" id="rdProfileHelp"></p>
     <div class="form-grid">
-      <label class="field"><span>Account</span><select id="rdAccount">${accountOptions("")}</select></label>
+      <label class="field"><span>Account</span>${accountInput("rdAccount", "rdAccountSuggestions")}</label>
       <label class="field"><span>Amount</span><input id="rdAmount" placeholder="$200,000" inputmode="decimal"></label>
     </div>
     <label class="field"><span>Portfolio</span><select id="rdPortfolio">${portfolioOptions("")}</select></label>
@@ -5679,7 +5945,11 @@ function openRecommendationDialog(){
       <button class="btn btn-ghost" id="rdCancel">Cancel</button>
       <button class="btn btn-primary" id="rdAdd">Add recommendation page</button>
     </div>`);
-  const amt = $("rdAmount");
+  const amt = $("rdAmount"), ip = $("rdInvestorProfile");
+  const profileHelp = () => { $("rdProfileHelp").textContent = ip.value ? INVESTOR_PROFILES[ip.value].description
+    : "Choose the household profile; the summary page checks the combined mix against it."; };
+  profileHelp();
+  ip.onchange = profileHelp;
   amt.onblur = () => { amt.value = money(amt.value); };
   $("rdLib").onclick = (e) => { e.preventDefault(); openPortfolioLibrary(); };
   $("rdCancel").onclick = hideModal;
@@ -5691,12 +5961,15 @@ function openRecommendationDialog(){
     openPortfolioViewer(p, fitLines($("rdFit").value), true);
   };
   $("rdAdd").onclick = () => {
-    const account = $("rdAccount").value, pid = $("rdPortfolio").value;
-    if (!account){ toast("Choose the account."); $("rdAccount").focus(); return; }
+    const account = $("rdAccount").value.trim(), pid = $("rdPortfolio").value;
+    if (!ip.value){ toast("Choose the household investor profile."); ip.focus(); return; }
+    if (!account){ toast("Name the account."); $("rdAccount").focus(); return; }
     if (!pid){ toast("Choose the portfolio."); $("rdPortfolio").focus(); return; }
     snapshot();
+    setInvestorProfile(ip.value);
     const sec = makeRecommendationSection({account, amount: amt.value, portfolioId: pid, howItFits: $("rdFit").value});
     deck.sections.push(sec);
+    ensureHouseholdSummary(deck);
     hideModal();
     selectedId = sec.blocks[0].id;
     syncPanels(); render(); selectBlock(selectedId, true);
@@ -5709,7 +5982,10 @@ function buildRecommendationInspector(b, body){
   const sec = recSectionOf(b.id);
   const field = (label, html) => { const w = el("label", "field"); w.innerHTML = "<span>" + esc(label) + "</span>" + html; body.appendChild(w); return w; };
   body.appendChild(el("p", "insp-note", "The portfolio profile comes from the library and is locked so it always matches the approved wording. Change the account, amount, portfolio or your points here."));
-  const acc = field("Account", `<select>${accountOptions(sec ? sec.accountName : "")}</select>`).querySelector("select");
+  const ip = field("Household investor profile", `<select>${investorProfileOptions(householdProfileName())}</select>`).querySelector("select");
+  ip.onchange = () => { snapshot(); setInvestorProfile(ip.value); render(); };
+  const acc = field("Account", accountInput("", "recAccountSuggestions")).querySelector("input");
+  acc.value = sec ? sec.accountName || "" : "";
   const amt = field("Amount", `<input placeholder="$200,000">`).querySelector("input");
   amt.value = sec ? sec.accountAmount || "" : "";
   const pf = field("Portfolio", `<select>${portfolioOptions(b.portfolioId)}</select>`).querySelector("select");
@@ -5717,7 +5993,7 @@ function buildRecommendationInspector(b, body){
   fit.value = (b.howItFits || []).join("\n");
   const commit = () => {
     snapshot();
-    if (sec){ sec.accountName = acc.value; sec.accountAmount = money(amt.value); syncRecTitle(sec); }
+    if (sec){ sec.accountName = acc.value.trim(); sec.accountAmount = money(amt.value); syncRecTitle(sec); }
     const p = portfolioById(pf.value);
     b.portfolioId = pf.value; if (sec) sec.portfolioId = pf.value;
     if (p) b.profile = structuredClone(p);
@@ -6154,6 +6430,11 @@ function readPresentation(v){
   if (Array.isArray(v.team) && v.team.length) out.team = v.team.map(t => ({name:S(t.name), desig:S(t.desig), title:S(t.title)}));
   if (v.contact && typeof v.contact === "object") out.contact = v.contact;
   if (Array.isArray(v.disclosures) && v.disclosures.length) out.disclosures = v.disclosures.map(S);
+  const ip = S((v.household || {}).investorProfile || v.investorProfile).trim();
+  if (ip){
+    const name = Object.keys(INVESTOR_PROFILES).find(k => k.toLowerCase() === ip.toLowerCase().replace(/\s+investor$/, ""));
+    if (name) out.investorProfile = name; else warn('Unknown investor profile "' + ip + '" — choose it on the Our recommendations page.');
+  }
   return out;
 }
 
@@ -6184,6 +6465,7 @@ function applyPresentation(r, mode){
   } else {
     deck.sections.push(...r.sections);
   }
+  if (r.investorProfile) setInvestorProfile(r.investorProfile);
   selectedId = null;
   syncPanels(); render();
   toast(r.sections.length + " section" + (r.sections.length === 1 ? "" : "s") + " laid out.");
@@ -6294,7 +6576,9 @@ function presentationToJSON(images){
     design: {format: deck.design.format, cover: deck.cover.style === "photo" ? "white" : deck.cover.style,
              look: deck.design.look, accent: deck.design.accent, density: deck.design.density},
     options: Object.fromEntries(OPTION_KEYS.filter(k => k !== "draft").map(k => [k, !!deck.options[k]])),
-    sections: deck.sections.map(s => {
+    household: deck.household && deck.household.investorProfile ? {investorProfile: deck.household.investorProfile} : undefined,
+    /* "Our recommendations" is rebuilt from the account pages, so it is not written out */
+    sections: deck.sections.filter(s => !s.recommendationOverview).map(s => {
       if (s.accountRecommendation){
         const rec = s.blocks.find(b => b.type === "recommendation") || {};
         const p = recProfile(rec);
@@ -6583,6 +6867,7 @@ function setPath(obj, path, value){
   cur[last] = value;
 }
 function blockLabelOf(b){
+  if (b.type === "householdSummary") return "Our recommendations";
   return b.type === "recommendation" ? "Recommendation" : (BLOCK_KINDS.find(k => k.type === b.type) || {}).label || b.type;
 }
 
@@ -6624,6 +6909,7 @@ function render(){
   const edit = $("optEditInline").checked;
   const keepTop = host.scrollTop, keepLeft = host.scrollLeft;
   host.className = "pages doc" + (edit ? " edit-on" : "");
+  ensureHouseholdSummary(deck);
   const result = layout(deck, host);
   $("pageCount").textContent = result.pages.length + (result.pages.length === 1 ? " page" : " pages");
   if (edit){
@@ -6677,6 +6963,8 @@ function decorateBlocks(){
       if (!sec) return;
       btn("+ Block", "Add a block at the top of this section", (b) => showInsertMenu(b, {sectionId: sec.id, top: true}));
       btn("✦ Copilot", "Write this section with Copilot", () => { showRail("copilot"); setPromptKind("section", sec.id); });
+    } else if (w.dataset.type === "householdSummary"){
+      btn("Choose investor profile", "Set the household investor profile", () => selectBlock(bid, false));
     } else if (w.dataset.type === "recommendation"){
       btn("Edit recommendation", "Change the account, amount, portfolio or points", () => selectBlock(bid, false));
       btn("Delete page", "Remove this recommendation page", () => {
@@ -6837,6 +7125,7 @@ function buildTeamEditor(){
 const STATUS_TEXT = {done:"written", started:"part written", empty:"to write"};
 
 function buildOutline(){
+  ensureHouseholdSummary(deck);
   const host = $("outline");
   host.innerHTML = "";
   const p = deckProgress();
@@ -6900,14 +7189,18 @@ function buildOutline(){
     head.onclick = (e) => {
       if (e.target.closest("button")) return;
       currentSectionId = s.id;
-      if (s.accountRecommendation){ const r = s.blocks[0]; if (r) selectBlock(r.id, true); return; }
+      if (s.accountRecommendation || s.recommendationOverview){
+        const r = s.blocks.find(b => b.type === "recommendation" || b.type === "householdSummary");
+        if (r) selectBlock(r.id, true);
+        return;
+      }
       openSectionId = open && e.target.tagName !== "INPUT" ? null : s.id;
       buildOutline(); updateAddWhere();
       jumpToSection(s);
     };
     box.appendChild(head);
 
-    if (open && !s.accountRecommendation){
+    if (open && !s.accountRecommendation && !s.recommendationOverview){
       const list = el("div", "o-blocks");
       if (!(s.blocks || []).length) list.appendChild(el("div", "o-empty", "Empty — add a block below, or paste text on Copilot & JSON."));
       (s.blocks || []).forEach((b, bi) => {
@@ -7204,8 +7497,10 @@ function buildInspector(){
   box.hidden = false;
   $("inspectorTitle").textContent = blockLabelOf(b);
   body.innerHTML = "";
-  const isRec = b.type === "recommendation";
-  ["btnBlockUp", "btnBlockDown", "btnBlockDup", "btnBlockCopilot"].forEach(id => { $(id).hidden = isRec; });
+  const isRec = b.type === "recommendation", isHousehold = b.type === "householdSummary";
+  ["btnBlockUp", "btnBlockDown", "btnBlockDup", "btnBlockCopilot"].forEach(id => { $(id).hidden = isRec || isHousehold; });
+  $("btnBlockDelete").hidden = isHousehold;
+  if (isHousehold){ $("inspectorTitle").textContent = "Our recommendations"; buildHouseholdSummaryInspector(body); return; }
   if (isRec){ buildRecommendationInspector(b, body); return; }
   body.appendChild(el("p", "insp-note insp-sec", "In “" + esc(found.section.title || "section") + "”" + (b.seed ? " · <b>still sample text</b>" : "")));
 
@@ -7666,6 +7961,12 @@ function migrate(d){
   if (dropped) setTimeout(() => toast(dropped + (dropped === 1 ? " picture was a web link" : " pictures were web links") +
     " — removed, this program never loads anything from the internet. Drop the picture file in instead.", 7000), 50);
   migrateRecommendations(d);
+  /* files saved by the v8.x Copilot builds kept the household profile under d.v8 */
+  if (d.v8 && d.v8.investorProfile && !(d.household && d.household.investorProfile)){
+    d.household = Object.assign({}, d.household, {investorProfile: d.v8.investorProfile});
+  }
+  delete d.v8;
+  ensureHouseholdSummary(d);
   return d;
 }
 
@@ -7790,39 +8091,45 @@ function presentEnd(){
 
 
 function showHelp(){
-  showModal("How this works", `
-    <h3>Five steps, left to right</h3>
-    <ol>
-      <li><b>Start</b> — what you are making, who it is for, report or slides.</li>
-      <li><b>Build</b> — the sections. Click any text on the page and type over it. Point at a block for its
-        tools; click it to see its settings on the right. Add sections, blocks and account recommendations here.</li>
-      <li><b>Copilot &amp; JSON</b> — copy a prompt into Copilot, paste its answer back. Text or JSON, the
-        program works out which and shows you a preview first.</li>
-      <li><b>Style</b> — cover, page style, which pages are included, team, disclosures.</li>
-      <li><b>Finish</b> — a check list of anything left to do, the DRAFT tag, Save and Export PDF.</li>
+  showModal("Partner Quick Start", `
+    <p class="lead">Use this guide to build, review and save a client presentation without changing the underlying tool.</p>
+    <h3>Recommended workflow</h3>
+    <ol class="helper-steps">
+      <li><b>Start</b><br>Choose the type of presentation and enter the client, title, advisor and date.</li>
+      <li><b>Build the narrative</b><br>Use the sections in the left sidebar. Select a section to edit it, reorder it or add content.</li>
+      <li><b>Add recommendations</b><br>In Build, add one account recommendation for each account. Enter the account label, amount and approved portfolio.</li>
+      <li><b>Set the household profile</b><br>Select <b>Our recommendations</b> in the left sidebar. Choose the Investor Profile in the right-hand settings panel.</li>
+      <li><b>Review the summary</b><br>Confirm the household total, overall allocation, every account amount and each assigned portfolio.</li>
+      <li><b>Finish and save</b><br>Run the Finish checks, save the <code>.mhwg.json</code> working file, then export the PDF.</li>
     </ol>
-    <h3>Nothing leaves this computer</h3>
-    <p>The program never connects to anything — no internet, no AI, no cloud. Copilot runs where it always
-    does; you carry prompts to it and answers back by copy and paste.</p>
-    <h3>The paste format (for typing or Copilot)</h3>
+    <div class="helper-grid">
+      <div class="helper-card"><b>Editing an account</b><p>Select the account in the left sidebar. Use the right panel to change the account name, amount, portfolio or “How it fits” points.</p></div>
+      <div class="helper-card"><b>Editing the Investor Profile</b><p>Select <b>Our recommendations</b> in the left sidebar. The profile dropdown appears in the right panel, not on the client-facing page.</p></div>
+      <div class="helper-card"><b>Portfolio library</b><p>Use Portfolio library to view approved profiles or add an approved profile from Copilot JSON. Existing saved profiles are retained between versions.</p></div>
+      <div class="helper-card"><b>Saving versus exporting</b><p><b>Save</b> creates the editable working file. <b>Export PDF</b> creates the client-facing output. Keep the working file with the client file.</p></div>
+    </div>
+    <h3>Before sharing the PDF</h3>
     <ul>
-      <li><code># Section</code> and <code>## Sub-heading</code> · <code>- bullet</code> · <code>1. numbered</code></li>
-      <li><code>&gt; one sentence</code> becomes a callout · <code>Label: value</code> becomes a fact row</li>
-      <li><code>$1.2M | Projected at 65 | note</code> becomes a key-number card</li>
-      <li><code>| Option | Cost |</code> becomes a table — or paste cells straight from Excel</li>
-      <li><code>1. Title - detail (Owner: Us, When: 30 days)</code> becomes an action plan</li>
-      <li><code>**bold**</code> and <code>==one highlighted phrase==</code></li>
+      <li>Confirm client names, account labels and dollar amounts.</li>
+      <li>Confirm the household total equals the account reconciliation total.</li>
+      <li>Confirm the selected Investor Profile and the household allocation are appropriate.</li>
+      <li>Confirm every recommended portfolio is the intended approved profile.</li>
+      <li>Review advisor-input markers, disclosures, page overflow warnings and the DRAFT status.</li>
     </ul>
-    <h3>Keyboard</h3>
-    <p><code>Ctrl+Z</code> undo · <code>Ctrl+Y</code> redo · <code>Ctrl+S</code> save · <code>Ctrl+P</code> export ·
-    <code>Enter</code> finishes editing a line · <code>Delete</code> removes the selected block.</p>
-    <h3>Saving</h3>
-    <p><b>Save</b> writes a <code>.mhwg.json</code> working file to Downloads — the file you reopen to change the
-    piece later. The browser also keeps a working copy so nothing is lost if the window closes.</p>
+    <h3>Copilot and source material</h3>
+    <p>Copilot is used through copy and paste. The HTML does not connect directly to Copilot or the internet. Use approved source material, verify all figures, and do not treat generated wording as a substitute for advisor review.</p>
+    <h3>Common fixes</h3>
+    <ul>
+      <li><b>Recommendation missing:</b> add an account recommendation in Build and select an approved portfolio.</li>
+      <li><b>Household allocation looks wrong:</b> verify every account amount and each portfolio allocation profile.</li>
+      <li><b>Page is too long:</b> shorten optional wording first. Do not remove required disclosures.</li>
+      <li><b>Need to continue later:</b> open the saved <code>.mhwg.json</code> working file, not the exported PDF.</li>
+    </ul>
     <div class="modal-actions">
-      <button class="btn btn-ghost" id="btnClearLocal">Clear the working copy from this browser</button>
+      <button class="btn btn-ghost" id="btnClearLocal">Clear browser working copy</button>
       <button class="btn" id="btnHelpJSON">JSON format</button>
-      <button class="btn btn-primary" id="btnHelpWelcome">Show the welcome screen</button></div>`, {wide:true});
+      <button class="btn btn-primary" id="btnHelpWelcome">Show welcome screen</button>
+    </div>`, {wide:true});
   $("btnClearLocal").onclick = () => { try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e){} toast("Working copy cleared from this browser"); };
   $("btnHelpJSON").onclick = showJSONReference;
   $("btnHelpWelcome").onclick = () => showWelcome(false);

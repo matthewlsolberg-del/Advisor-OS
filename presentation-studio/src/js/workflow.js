@@ -65,6 +65,7 @@ function hasWords(v, key){
   return false;
 }
 function sectionStatus(sec){
+  if (sec.recommendationOverview) return householdProfileName() ? "done" : "started";
   if (sec.accountRecommendation) return (sec.blocks || []).some(b => b.type === "recommendation" && recProfile(b)) ? "done" : "started";
   const blocks = sec.blocks || [];
   if (gapCount(blocks) && blocks.some(b => !b.seed && hasWords(b))) return "started";
@@ -268,6 +269,13 @@ function preflight(){
       " for the advisor ([NEEDS ADVISOR INPUT] / [SOURCE CONFLICT])",
       fix: () => { showRail("build"); jumpToSection(s); }});
   });
+
+  const eq = householdEquityCheck(deck);
+  if (eq && !eq.inRange){
+    const sum = deck.sections.find(s => s.recommendationOverview);
+    issues.push({t:"Combined equity (" + eq.equity + "%) is outside the " + deck.household.investorProfile +
+      " range of " + eq.min + "%–" + eq.max + "%", fix:() => { const b = sum && sum.blocks[0]; if (b) selectBlock(b.id, true); }});
+  }
 
   layoutProblems().forEach(c => issues.push({
     t:"Something runs off the bottom of page " + c.page + " and would be cut off in the PDF",

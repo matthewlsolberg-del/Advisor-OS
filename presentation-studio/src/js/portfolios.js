@@ -28,6 +28,35 @@ const ACCOUNT_TYPES = [
 
 let portfolioLibrary = [];
 
+/* ── Household investor profiles (the firm's PMP / IPS definitions) ───────
+   Target and permitted equity / fixed-income ranges per profile. The
+   "Our recommendations" summary page shows the chosen one and checks the
+   combined household allocation against it. (From Matt's v8.6 Studio.) */
+const INVESTOR_PROFILES = {
+  "Conservative Income": {objective:"Income with modest growth potential", tolerance:"Low to moderate", horizon:"Medium to long-term",
+    equity:20, equityMin:0, equityMax:40, fixedIncome:80, fixedMin:0, fixedMax:100,
+    description:"Seeks returns primarily from fixed income investments, with some potential for capital growth and dividends from very modest equity exposure."},
+  "Balanced Income": {objective:"Income with modest capital growth", tolerance:"Low to moderate", horizon:"Medium to long-term",
+    equity:35, equityMin:10, equityMax:50, fixedIncome:65, fixedMin:40, fixedMax:90,
+    description:"Seeks returns from a majority of fixed income investments, with some potential for capital growth from a modest exposure to equities."},
+  "Balanced": {objective:"Income and moderate long-term growth", tolerance:"Moderate", horizon:"Long-term",
+    equity:50, equityMin:25, equityMax:75, fixedIncome:50, fixedMin:25, fixedMax:75,
+    description:"Seeks returns from fixed income investments while also pursuing moderate long-term capital growth through equity exposure."},
+  "Balanced Growth": {objective:"Long-term capital growth with income", tolerance:"Moderate to high", horizon:"Long-term",
+    equity:65, equityMin:40, equityMax:80, fixedIncome:35, fixedMin:20, fixedMax:60,
+    description:"Seeks long-term capital growth from equities while retaining the opportunity to earn income from fixed income investments."},
+  "Growth": {objective:"Long-term capital growth", tolerance:"High", horizon:"Long-term",
+    equity:75, equityMin:50, equityMax:90, fixedIncome:25, fixedMin:0, fixedMax:50,
+    description:"Seeks long-term capital growth from equities, with some potential to earn modest returns from fixed income investments."},
+  "Aggressive Growth": {objective:"Maximum long-term capital growth", tolerance:"Very high", horizon:"Long-term",
+    equity:90, equityMin:60, equityMax:100, fixedIncome:10, fixedMin:0, fixedMax:40,
+    description:"Seeks long-term capital growth primarily from equities and may experience substantial portfolio volatility and loss of capital."}
+};
+function investorProfileOptions(selected){
+  return '<option value="">— choose an investor profile —</option>' + Object.keys(INVESTOR_PROFILES).map(x =>
+    `<option${x === selected ? " selected" : ""}>${esc(x)}</option>`).join("");
+}
+
 /* ── Library storage ────────────────────────────────────────────────────── */
 
 function loadPortfolioLibrary(){
@@ -257,7 +286,7 @@ function money(v){
   return Number.isFinite(n) ? new Intl.NumberFormat("en-CA", {style:"currency", currency:"CAD", maximumFractionDigits:0}).format(n) : t;
 }
 function recSectionTitle(account, amount){
-  return ["What We Recommend", account, amount].filter(Boolean).join(" - ");
+  return [account, amount].filter(Boolean).join("  |  ") || "Account Recommendation";
 }
 function fitLines(v){
   const list = Array.isArray(v) ? v : String(v || "").split(/\n+/);
@@ -271,7 +300,7 @@ function makeRecommendationSection(o){
     profile: p ? structuredClone(p) : (o.profile || null)
   });
   if (!rec.howItFits.length && p) rec.howItFits = p.fitTemplate.slice(0, 4);
-  const sec = {id: uid(), kicker:"WHAT WE RECOMMEND", summary:"", recommendation:true, accountRecommendation:true,
+  const sec = {id: uid(), kicker:"OUR RECOMMENDATIONS", summary:"", recommendation:true, accountRecommendation:true,
     accountName: String(o.account || "").trim(), accountAmount: money(o.amount), portfolioId: rec.portfolioId, blocks:[rec]};
   syncRecTitle(sec);
   return sec;
@@ -295,9 +324,138 @@ function migrateRecommendations(d){
     rec.howItFits = fitLines(rec.howItFits);
     const lib = portfolioById(rec.portfolioId);
     if (lib) rec.profile = structuredClone(lib);
-    if (!sec.kicker) sec.kicker = "WHAT WE RECOMMEND";
+    if (!sec.kicker || sec.kicker === "WHAT WE RECOMMEND") sec.kicker = "OUR RECOMMENDATIONS";
     if (sec.accountName || sec.accountAmount) syncRecTitle(sec);
   });
+}
+
+/* ── "Our recommendations": the household summary page ─────────────────
+   One page in front of the account pages: the household investor profile,
+   the total, the combined asset mix (each account's model weighted by its
+   amount) and the account structure. It is a section with one
+   "householdSummary" block, added automatically once there is an account
+   recommendation, and kept just before the first one. */
+
+function householdProfileName(){
+  const h = (typeof deck !== "undefined" && deck && deck.household) || {};
+  return INVESTOR_PROFILES[h.investorProfile] ? h.investorProfile : "";
+}
+function amountValue(v){ const n = Number(String(v || "").replace(/[^0-9.]/g, "")); return Number.isFinite(n) ? n : 0; }
+function householdRecommendations(d){
+  return (d.sections || []).filter(s => s.accountRecommendation).map(s => {
+    const b = (s.blocks || []).find(x => x.type === "recommendation") || {};
+    return {section: s, block: b, profile: recProfile(b), amount: amountValue(s.accountAmount)};
+  });
+}
+/** The combined allocation: each account's model mix weighted by its amount. */
+function householdMix(d){
+  /* only accounts with a portfolio chosen count towards the mix */
+  const sums = {}, recs = householdRecommendations(d).filter(r => r.profile && r.amount);
+  const total = recs.reduce((n, r) => n + r.amount, 0);
+  recs.forEach(r => {
+    allocationPairs(r.profile).forEach(x => { sums[x.name] = (sums[x.name] || 0) + r.amount * x.value / 100; });
+  });
+  return ALLOCATION_ORDER.map(name => ({name, value: total ? Math.round((sums[name] || 0) / total * 1000) / 10 : 0}))
+    .filter(x => x.value > 0.04);
+}
+/** Combined equity against the chosen profile's permitted range, or null when either is missing. */
+function householdEquityCheck(d){
+  const p = INVESTOR_PROFILES[(d.household || {}).investorProfile];
+  const mix = householdMix(d);
+  if (!p || !mix.length) return null;
+  const equity = Math.round(mix.filter(x => /equity/i.test(x.name)).reduce((n, x) => n + x.value, 0) * 10) / 10;
+  return {equity, min: p.equityMin, max: p.equityMax, inRange: equity >= p.equityMin && equity <= p.equityMax};
+}
+function householdDonut(pairs){
+  const total = pairs.reduce((n, x) => n + x.value, 0) || 100, C = 2 * Math.PI * 45;
+  let off = 0, arcs = "";
+  pairs.forEach((x, i) => {
+    const len = C * x.value / total;
+    arcs += `<circle cx="50" cy="50" r="45" fill="none" stroke="${BRAND.sequence[i % BRAND.sequence.length]}" stroke-width="18" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}"/>`;
+    off += len;
+  });
+  return `<svg class="hh-donut" viewBox="0 0 100 100" role="img" aria-label="Total household asset allocation">` +
+    `<circle cx="50" cy="50" r="45" fill="none" stroke="#E4E9E2" stroke-width="18"/>${arcs}<circle cx="50" cy="50" r="31" fill="#fff"/></svg>`;
+}
+/** render.js draws a "householdSummary" block with this. */
+function householdSummaryHTML(){
+  const recs = householdRecommendations(deck), pairs = householdMix(deck);
+  const name = householdProfileName(), profile = INVESTOR_PROFILES[name] || null;
+  const total = recs.reduce((n, r) => n + r.amount, 0);
+  const legend = pairs.map((x, i) => `<div class="hh-leg"><i class="hh-dot" style="background:${BRAND.sequence[i % BRAND.sequence.length]}"></i>` +
+    `<span>${escProfile(x.name)}</span><b>${x.value}%</b></div>`).join("");
+  const rows = recs.map(r => `<tr><td>${escProfile(r.section.accountName || "Account")}</td><td>${escProfile(r.section.accountAmount || "")}</td>` +
+    `<td>${escProfile(r.profile ? preferredPortfolioTitle(r.profile) : "Choose a portfolio")}</td></tr>`).join("");
+  const meta = profile
+    ? `<div><span>Objective</span><b>${escProfile(profile.objective)}</b></div>` +
+      `<div><span>Volatility level</span><b>${escProfile(profile.tolerance)}</b></div>` +
+      `<div><span>Time horizon</span><b>${escProfile(profile.horizon)}</b></div>` +
+      `<div><span>Target equity</span><b>${profile.equity}% <small>(${profile.equityMin}%–${profile.equityMax}%)</small></b></div>` +
+      `<div><span>Target fixed income</span><b>${profile.fixedIncome}% <small>(${profile.fixedMin}%–${profile.fixedMax}%)</small></b></div>`
+    : `<div><span>Status</span><b>Profile required</b></div>`;
+  return `<div class="hh-wrap">
+    <div class="hh-page-kicker">Our Recommendations</div><div class="hh-page-title">Our recommendations</div><div class="hh-page-rule"></div>
+    <p class="hh-intro">Based on the objectives, time horizon and investor profile discussed, these account recommendations are designed to operate as one coordinated household portfolio.</p>
+    <div class="hh-profile">
+      <div class="hh-profile-copy"><div class="rec-label">Investor Profile</div>
+        <h3>${escProfile(name ? name + " Investor" : "Choose an Investor Profile")}</h3>
+        <p>${escProfile(profile ? profile.description : "Select the household investor profile: click this page and choose it in the panel on the right.")}</p></div>
+      <div class="hh-total-card"><span>Total Household Portfolio</span><b>${money(total)}</b></div>
+      <div class="hh-profile-meta">${meta}</div>
+    </div>
+    <div class="hh-main">
+      <div class="hh-allocation-panel">
+        <div class="hh-chart-side"><div class="hh-title">Total Household Asset Allocation</div>${householdDonut(pairs.length ? pairs : [{name:"Allocation unavailable", value:100}])}</div>
+        <div class="hh-legend">${legend || '<div class="hh-leg"><span>Add account recommendations with amounts and portfolios to calculate the household mix.</span></div>'}</div>
+      </div>
+      <div class="hh-structure"><div class="hh-title">Recommended Account Structure</div>
+        <table class="hh-table"><thead><tr><th>Account</th><th>Amount</th><th>Portfolio</th></tr></thead><tbody>${rows}</tbody></table>
+        <div class="hh-total"><span>Total Household Portfolio</span><b>${money(total)}</b></div></div>
+    </div>
+    <div class="hh-note"><div><b>Coordinated</b><span>Each account has a defined role within one household strategy.</span></div>
+      <div><b>Diversified</b><span>The combined allocation uses the six approved asset categories.</span></div>
+      <div><b>Aligned</b><span>The assigned models are assessed together against the selected investor profile.</span></div></div>
+  </div>`;
+}
+/** Add the summary section when there are account pages, and keep it right before the first one. */
+function ensureHouseholdSummary(d){
+  d.household = Object.assign({investorProfile:""}, d.household);
+  if (!INVESTOR_PROFILES[d.household.investorProfile]) d.household.investorProfile = "";
+  let overview = d.sections.find(s => s.recommendationOverview);
+  const firstRec = d.sections.findIndex(s => s.accountRecommendation);
+  if (firstRec < 0) return;
+  if (!overview){
+    overview = {id: uid(), recommendationOverview:true, blocks:[]};
+    d.sections.splice(firstRec, 0, overview);
+  }
+  overview.title = overview.tocTitle = overview.runningTitle = "Our recommendations";
+  overview.kicker = "OUR RECOMMENDATIONS";
+  if (!(overview.blocks || []).some(b => b && b.type === "householdSummary")) overview.blocks = [{id: uid(), type:"householdSummary"}];
+  const oi = d.sections.indexOf(overview), fr = d.sections.findIndex(s => s.accountRecommendation);
+  if (oi > fr){ d.sections.splice(oi, 1); d.sections.splice(fr, 0, overview); }
+}
+/** Inspector for the summary block: just the household investor profile. */
+function buildHouseholdSummaryInspector(body){
+  body.appendChild(el("p", "insp-note", "Household settings for the Our recommendations page. The total, mix and table come from the account pages."));
+  const wrap = el("label", "field");
+  wrap.innerHTML = "<span>Investor profile</span>";
+  const sel = document.createElement("select");
+  sel.innerHTML = investorProfileOptions(householdProfileName());
+  sel.onchange = () => {
+    snapshot(); setInvestorProfile(sel.value); render(); buildInspector();
+    toast(sel.value ? "Investor profile changed to " + sel.value + "." : "Choose an investor profile.");
+  };
+  wrap.appendChild(sel); body.appendChild(wrap);
+  const p = INVESTOR_PROFILES[sel.value];
+  const chk = householdEquityCheck(deck);
+  if (chk) body.appendChild(el("p", "insp-note", (chk.inRange ? "✓ " : "⚠ ") + "Combined equity is " + chk.equity + "% — the " +
+    esc(sel.value) + " range is " + chk.min + "%–" + chk.max + "%." + (chk.inRange ? "" : " Change a portfolio or the profile.")));
+  if (p){
+    body.appendChild(el("p", "insp-note", esc(p.description)));
+    body.appendChild(el("div", "lib-checks", `<div><b>Objective:</b> ${esc(p.objective)}</div><div><b>Volatility level:</b> ${esc(p.tolerance)}</div>` +
+      `<div><b>Time horizon:</b> ${esc(p.horizon)}</div><div><b>Target equity:</b> ${p.equity}% · permitted range ${p.equityMin}%–${p.equityMax}%</div>` +
+      `<div><b>Target fixed income:</b> ${p.fixedIncome}% · permitted range ${p.fixedMin}%–${p.fixedMax}%</div>`));
+  }
 }
 
 /* ── Copilot help for "How it fits" ─────────────────────────────────────── */
@@ -325,11 +483,14 @@ function portfolioOptions(selected){
   return '<option value="">— choose a portfolio —</option>' + sortedPortfolios().map(p =>
     `<option value="${esc(p.portfolioId)}"${p.portfolioId === selected ? " selected" : ""}>${esc(p.portfolioName)}</option>`).join("");
 }
-function accountOptions(selected){
-  const list = ACCOUNT_TYPES.slice();
-  if (selected && !list.includes(selected)) list.unshift(selected);
-  return '<option value="">— choose an account —</option>' + list.map(a =>
-    `<option${a === selected ? " selected" : ""}>${esc(a)}</option>`).join("");
+/** A free-text account box ("Matt's TFSA") with the usual account types offered as suggestions. */
+function accountInput(id, listId){
+  return `<input${id ? ` id="${id}"` : ""} list="${listId}" placeholder="e.g., Matt's TFSA" autocomplete="off">` +
+    `<datalist id="${listId}">${ACCOUNT_TYPES.map(a => `<option value="${esc(a)}"></option>`).join("")}</datalist>`;
+}
+/** Set the household investor profile (kept on the deck, shown on the summary page). */
+function setInvestorProfile(name){
+  deck.household = Object.assign({}, deck.household, {investorProfile: INVESTOR_PROFILES[name] ? name : ""});
 }
 
 /** The add-a-recommendation dialog. Editing an existing one happens in the right-hand panel. */
@@ -337,8 +498,10 @@ function openRecommendationDialog(){
   showModal("Add an account recommendation", `
     <p class="hint">One page per account: the portfolio's approved profile, plus your
     "how it fits" points. Add one for each account you are recommending.</p>
+    <label class="field"><span>Household investor profile</span><select id="rdInvestorProfile">${investorProfileOptions(householdProfileName())}</select></label>
+    <p class="hint" id="rdProfileHelp"></p>
     <div class="form-grid">
-      <label class="field"><span>Account</span><select id="rdAccount">${accountOptions("")}</select></label>
+      <label class="field"><span>Account</span>${accountInput("rdAccount", "rdAccountSuggestions")}</label>
       <label class="field"><span>Amount</span><input id="rdAmount" placeholder="$200,000" inputmode="decimal"></label>
     </div>
     <label class="field"><span>Portfolio</span><select id="rdPortfolio">${portfolioOptions("")}</select></label>
@@ -353,7 +516,11 @@ function openRecommendationDialog(){
       <button class="btn btn-ghost" id="rdCancel">Cancel</button>
       <button class="btn btn-primary" id="rdAdd">Add recommendation page</button>
     </div>`);
-  const amt = $("rdAmount");
+  const amt = $("rdAmount"), ip = $("rdInvestorProfile");
+  const profileHelp = () => { $("rdProfileHelp").textContent = ip.value ? INVESTOR_PROFILES[ip.value].description
+    : "Choose the household profile; the summary page checks the combined mix against it."; };
+  profileHelp();
+  ip.onchange = profileHelp;
   amt.onblur = () => { amt.value = money(amt.value); };
   $("rdLib").onclick = (e) => { e.preventDefault(); openPortfolioLibrary(); };
   $("rdCancel").onclick = hideModal;
@@ -365,12 +532,15 @@ function openRecommendationDialog(){
     openPortfolioViewer(p, fitLines($("rdFit").value), true);
   };
   $("rdAdd").onclick = () => {
-    const account = $("rdAccount").value, pid = $("rdPortfolio").value;
-    if (!account){ toast("Choose the account."); $("rdAccount").focus(); return; }
+    const account = $("rdAccount").value.trim(), pid = $("rdPortfolio").value;
+    if (!ip.value){ toast("Choose the household investor profile."); ip.focus(); return; }
+    if (!account){ toast("Name the account."); $("rdAccount").focus(); return; }
     if (!pid){ toast("Choose the portfolio."); $("rdPortfolio").focus(); return; }
     snapshot();
+    setInvestorProfile(ip.value);
     const sec = makeRecommendationSection({account, amount: amt.value, portfolioId: pid, howItFits: $("rdFit").value});
     deck.sections.push(sec);
+    ensureHouseholdSummary(deck);
     hideModal();
     selectedId = sec.blocks[0].id;
     syncPanels(); render(); selectBlock(selectedId, true);
@@ -383,7 +553,10 @@ function buildRecommendationInspector(b, body){
   const sec = recSectionOf(b.id);
   const field = (label, html) => { const w = el("label", "field"); w.innerHTML = "<span>" + esc(label) + "</span>" + html; body.appendChild(w); return w; };
   body.appendChild(el("p", "insp-note", "The portfolio profile comes from the library and is locked so it always matches the approved wording. Change the account, amount, portfolio or your points here."));
-  const acc = field("Account", `<select>${accountOptions(sec ? sec.accountName : "")}</select>`).querySelector("select");
+  const ip = field("Household investor profile", `<select>${investorProfileOptions(householdProfileName())}</select>`).querySelector("select");
+  ip.onchange = () => { snapshot(); setInvestorProfile(ip.value); render(); };
+  const acc = field("Account", accountInput("", "recAccountSuggestions")).querySelector("input");
+  acc.value = sec ? sec.accountName || "" : "";
   const amt = field("Amount", `<input placeholder="$200,000">`).querySelector("input");
   amt.value = sec ? sec.accountAmount || "" : "";
   const pf = field("Portfolio", `<select>${portfolioOptions(b.portfolioId)}</select>`).querySelector("select");
@@ -391,7 +564,7 @@ function buildRecommendationInspector(b, body){
   fit.value = (b.howItFits || []).join("\n");
   const commit = () => {
     snapshot();
-    if (sec){ sec.accountName = acc.value; sec.accountAmount = money(amt.value); syncRecTitle(sec); }
+    if (sec){ sec.accountName = acc.value.trim(); sec.accountAmount = money(amt.value); syncRecTitle(sec); }
     const p = portfolioById(pf.value);
     b.portfolioId = pf.value; if (sec) sec.portfolioId = pf.value;
     if (p) b.profile = structuredClone(p);
