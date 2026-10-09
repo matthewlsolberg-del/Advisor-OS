@@ -54,7 +54,7 @@ const VISUAL_TYPES = ["chart", "infographic", "image"];
 
 /* Settings on a block (its style, size, chart type…) are not content. */
 const NOT_CONTENT = new Set(["id","type","seed","style","level","tone","cols","size","frame",
-  "chart","graphic","totalRow","numeric","fromNumbers","h","_off","_len"]);
+  "chart","graphic","totalRow","numeric","fromNumbers","h","_off","_len","source","from","runOn"]);
 /** Does this block actually say something? An empty paragraph does not. */
 function hasWords(v, key){
   if (key && NOT_CONTENT.has(key)) return false;
@@ -268,6 +268,10 @@ function preflight(){
     if (n) issues.push({t:'“' + (s.title || "Untitled") + '” has ' + n + " yellow blank" + (n === 1 ? "" : "s") + " to fill in",
       fix: () => { showRail("build"); jumpToSection(s); }});
   });
+
+  const chk = toCheckIds();
+  if (chk.length) issues.push({t: chk.length + (chk.length === 1 ? " passage" : " passages") + " Copilot wrote still to read over (marked “Copilot wrote this” on the page)",
+    fix: () => { showRail("build"); selectBlock(chk[0], true); }});
 
   layoutProblems().forEach(c => issues.push({
     t:"Something runs off the bottom of page " + c.page + " and would be cut off in the PDF",

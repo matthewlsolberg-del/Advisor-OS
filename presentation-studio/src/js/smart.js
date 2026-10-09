@@ -28,6 +28,17 @@ const cleanFund = (s) => String(s || "").replace(/\s*\/NL\b/g, "").replace(/\s{2
 function mk(type, props){ return Object.assign(newBlock(type), {seed: false}, props); }
 /** A block of pre-written words the advisor (or Copilot) may reword. */
 function slot(type, key, hint, props){ return Object.assign(mk(type, props), {slot: key, slotHint: hint, seed: true}); }
+/** Mark the blocks built from a report: `from` says which report (for "Where did
+    this number come from?", views.js) and charts and tables print a source line. */
+function tagSource(S, from, label){
+  S.forEach(s => (s.blocks || []).forEach(b => {
+    if (!["chart", "table", "stats", "facts"].includes(b.type)) return;
+    if (b.from) return;                     /* already tagged (the "What has changed" page) */
+    b.from = from;
+    if (b.type === "chart" || b.type === "table") b.source = label;
+  }));
+  return S;
+}
 function sec(title, blocks, extra){
   return Object.assign({id: uid(), title, brief: title, kicker: "", summary: "", smart: true, blocks: blocks.filter(Boolean)}, extra || {});
 }
@@ -186,6 +197,9 @@ function buildPortfolioReview(P, notes, opts){
     ]));
   }
 
+  /* an earlier report of the same household: what has changed since (buildChanges) */
+  if (opts && opts.prev) S.splice(1, 0, ...buildChanges(P, opts.prev));
+
   const sug = portfolioSuggestions(P);
   S.push(sec("What we recommend", [
     slot("lead", "recommend_intro", "One sentence introducing the recommendations.", {text: "[[the main change we are recommending, in one sentence]]"}),
@@ -198,7 +212,46 @@ function buildPortfolioReview(P, notes, opts){
       {t: "Put them in place", d: "We complete the paperwork and the trades, and confirm back to you.", who: "Us", when: "Within [[x]] business days"},
       {t: "Next review", d: "We meet again to check progress against the plan.", who: "Together", when: "[[month year]]"}]})
   ]));
-  return S;
+  return tagSource(S, "portfolio", "your portfolio report" + (P.asOf ? ", as at " + P.asOf : ""));
+}
+
+/* ── What has changed since the last report ─────────────────────────────── */
+
+/** Two Croesus reports of one household: P now, Q earlier. Accounts are matched
+    by account number, else by name. Every figure is read, none worked out but
+    the differences. */
+function buildChanges(P, Q){
+  const signed = (n) => (n < 0 ? "−" : "+") + fm$(Math.abs(n));
+  const old = (Q.accounts || []).slice(), rows = [];
+  const match = (a) => old.find(o => (a.number && o.number === a.number) || o.label === a.label);
+  (P.accounts || []).forEach(a => {
+    const o = match(a);
+    if (o) old.splice(old.indexOf(o), 1);
+    rows.push([a.label, o ? fm$(o.value) : "—", fm$(a.value), o && a.value != null && o.value != null ? signed(a.value - o.value) : "—"]);
+  });
+  old.forEach(o => rows.push([o.label, fm$(o.value), "—", "—"]));
+  const tNow = P.total, tThen = Q.total;
+  rows.push(["Total", fm$(tThen), fm$(tNow), tNow != null && tThen != null ? signed(tNow - tThen) : ""]);
+  const blocks = [
+    mk("stats", {cols: 3, items: [
+      {num: fm$(tThen), label: "Then", note: "As at " + (Q.asOf || "[[date]]")},
+      {num: fm$(tNow), label: "Now", note: "As at " + (P.asOf || "[[date]]")},
+      {num: tNow != null && tThen != null ? signed(tNow - tThen) : "[[change]]", label: "Change", note: "Including deposits and withdrawals"}]}),
+    mk("table", {headers: ["Account", "Then", "Now", "Change"], totalRow: true,
+      caption: "Market values. A change includes money put in or taken out, as well as growth. A dash means the account was not there at that date.", rows})
+  ];
+  const A = P.allocation || [], B = Q.allocation || [];
+  if (A.length && B.length){
+    const names = [...new Set(A.map(c => c.name).concat(B.map(c => c.name)))];
+    const pct = (L, n) => { const c = L.find(x => x.name === n); return c ? c.pct : 0; };
+    blocks.push(mk("table", {headers: ["Asset class", "Then", "Now"], totalRow: false,
+      caption: "From the asset allocation in each report.",
+      rows: names.filter(n => pct(A, n) || pct(B, n)).map(n => [n, fmPct(pct(B, n), 1), fmPct(pct(A, n), 1)])}));
+  }
+  blocks.push(slot("paragraph", "portfolio_changes", "What changed between the two reports and why: deposits, withdrawals, markets, changes we made. Keep every figure exactly.",
+    {text: "[[what changed since the last review, and why]]"}));
+  return tagSource([sec("What has changed since " + (Q.asOf || "last time"), blocks)], "portfolio",
+    "your portfolio reports as at " + (Q.asOf || "[[date]]") + " and " + (P.asOf || "[[date]]"));
 }
 
 /* ── Financial plan summary ─────────────────────────────────────────────── */
@@ -328,17 +381,17 @@ function buildPlanSummary(F){
   S.push(sec("What we do next", [
     slot("actions", "plan_actions", "Next steps as an action plan. Start from the suggestions; remove any that do not apply.", {items: planSuggestions(F)})
   ]));
-  return S;
+  return tagSource(S, "plan", "your financial plan" + (F.planName ? ", " + F.planName : "") + (F.date ? ", " + F.date : ""));
 }
 
 /* ── Annual review: the portfolio and the plan together ─────────────────── */
 
-function buildAnnualReview(P, F){
+function buildAnnualReview(P, F, prev){
   const S = [sec("Today's agenda", [mk("bullets", {style: "number", items: [
     "What has changed for you this year", P ? "How the portfolio has done" : null, F ? "Where the plan stands" : null,
     "Our recommendations", "Anything on your mind"].filter(Boolean)}),
     slot("paragraph", "changes", "What changed in the client's life this year, from the advisor's notes.", {text: "[[what has changed for you this year]]"})])];
-  if (P) buildPortfolioReview(P).filter(s => !/What we recommend|What happens next/.test(s.title)).forEach(s => S.push(s));
+  if (P) buildPortfolioReview(P, null, {prev}).filter(s => !/What we recommend|What happens next/.test(s.title)).forEach(s => S.push(s));
   if (F) buildPlanSummary(F).filter(s => /Where you stand|Your goals|Closing the gap|What the plan projects/.test(s.title)).forEach(s => S.push(s));
   const items = (P ? portfolioSuggestions(P) : []).concat(F ? planSuggestions(F) : []).slice(0, 7);
   S.push(sec("Our recommendations", [slot("actions", "recommendations", "The recommendations for the year ahead, as an action plan.",
@@ -356,6 +409,7 @@ function buildRecommendation(P, profileName){
     P && (P.accounts || []).length ? mk("table", {headers: ["Account today", "Type", "Value"], totalRow: true, caption: "Current market values" + (P.asOf ? " as at " + P.asOf : "") + ".",
       rows: P.accounts.map(a => [a.label, a.kind, fm$(a.value)]).concat([["Total", "", fm$(P.total)]])}) : null
   ]));
+  if (P) tagSource(S, "portfolio", "your portfolio report" + (P.asOf ? ", as at " + P.asOf : ""));
   (P && P.accounts && P.accounts.length ? P.accounts : [{label: "[[account]]", value: null}]).forEach(a => {
     const s = makeRecommendationSection({account: a.label, amount: a.value != null ? fm$(a.value) : "", portfolioId: model ? model.portfolioId : "", howItFits: []});
     s.smart = true;
@@ -431,9 +485,10 @@ function ensureHouseholdSummary(d){
 
 function smartSections(kind, facts){
   const P = facts && facts.portfolio, F = facts && facts.plan;
-  if (kind === "portfolio_review") return P ? buildPortfolioReview(P) : null;
+  const prev = facts && facts.portfolioPrev;
+  if (kind === "portfolio_review") return P ? buildPortfolioReview(P, null, {prev}) : null;
   if (kind === "plan_summary") return F ? buildPlanSummary(F) : null;
-  if (kind === "annual_review") return (P || F) ? buildAnnualReview(P, F) : null;
+  if (kind === "annual_review") return (P || F) ? buildAnnualReview(P, F, prev) : null;
   if (kind === "recommendation") return buildRecommendation(P, deck.profile);
   return null;
 }
@@ -462,7 +517,16 @@ function buildDraft(){
     deck.pendingImages = [];
   }
   ensureHouseholdSummary(deck);
-  /* cover wording to suit the piece */
+  setCoverWording(kind);
+  selectedId = null; openSectionId = null;
+  syncPanels(); render();
+}
+
+/** The cover's title, kicker and subtitle to suit the kind of document. Called on
+    every build, and whenever the kind changes (a dropped plan turns a portfolio
+    review into a plan summary), so the cover never keeps the old label. */
+function setCoverWording(kind){
+  const facts = deck.facts || {};
   const P = facts.portfolio, F = facts.plan;
   const names = {portfolio_review: "Your Portfolio Review", plan_summary: "Your Financial Plan", annual_review: "Your Annual Review", recommendation: "Our Recommendations", prospect: "Working Together"};
   const kicker = {portfolio_review: "Portfolio review", plan_summary: "Financial plan summary", annual_review: "Annual review", recommendation: "Investment recommendation", prospect: "Our first conversation"};
@@ -477,9 +541,14 @@ function buildDraft(){
       annual_review: "The year in review, where the plan stands, and the decisions ahead.",
       recommendation: "Your investor profile, the household portfolio, and the portfolio we recommend for each account.",
       prospect: TEMPLATES.prospect.subtitle}[kind];
+  } else {
+    /* the other templates bring their own cover wording */
+    const t = TEMPLATES[kind] || {};
+    const house = !deck.meta.title || Object.values(TITLE_IDEAS).some(l => l.includes(deck.meta.title)) || /^Your .+|^The .+ (Plan|Review|Portfolio Review|Portfolio)$/.test(deck.meta.title);
+    if (house && t.title) deck.meta.title = t.title;
+    deck.meta.kicker = t.kicker || "";
+    deck.meta.subtitle = t.subtitle || "";
   }
-  selectedId = null; openSectionId = null;
-  syncPanels(); render();
 }
 
 /* ── Copilot: fill every slot with one prompt ───────────────────────────── */
@@ -495,6 +564,11 @@ function factsDigest(facts){
     if ((P.allocation || []).length) P.allocation.forEach(c => out.push("- Asset allocation " + c.name + ": " + fmPct(c.pct, 1)));
     else (P.classes || []).forEach(c => out.push("- Asset class " + c.name + ": " + fmPct(c.pct, 2)));
     if (P.income) out.push("- Estimated annual income " + fm$(P.income) + ", yield " + fmPct(P.yield));
+  }
+  const Q = facts && facts.portfolioPrev;
+  if (Q){
+    out.push("EARLIER PORTFOLIO REPORT (as at " + (Q.asOf || "?") + "): total " + fm$(Q.total));
+    (Q.accounts || []).forEach(a => out.push("- Then: account " + a.label + " (" + a.kind + "): " + fm$(a.value)));
   }
   if (F){
     out.push("FINANCIAL PLAN (" + (F.planName || "") + ", " + (F.date || "") + "): net worth " + fm$(F.netWorth) + ", assets " + fm$(F.assets) + ", debts " + fm$(F.liabilities));
@@ -523,7 +597,10 @@ function slotPrompt(){
   const notes = String(deck.notes || "").trim();
   const shape = {};
   slots.forEach(({b}) => { shape[b.slot] = b.type === "actions" ? [{t: "…", d: "…", who: "Us", when: "…"}] : b.type === "bullets" ? ["…"] : "…"; });
-  return `I am an investment advisor finishing a ${piece} for a client. The document is already laid out and the figures are already in it. Write the words for the boxes listed below.
+  const blanks = blankPromptPart();         /* blanks.js: the yellow blanks, numbered b1, b2 … */
+  const answer = {slots: shape};
+  if (blanks.lines.length) answer.blanks = blanks.shape;
+  return `I am an investment advisor finishing a ${piece} for a client. The document is already laid out and the figures are already in it. Write the words for the boxes listed below${blanks.lines.length ? ", and fill in the blanks my notes answer" : ""}.
 
 HOW TO WRITE
 - Plain Canadian English, grade 9 reading level, warm and direct. Short sentences. No jargon, no exclamation marks.
@@ -540,10 +617,15 @@ FACTS FROM THE REPORTS
 ${factsDigest(deck.facts) || "[none]"}
 
 THE BOXES TO WRITE (key — what goes there — current text)
-${slots.map(({s, b}) => "■ " + b.slot + " (in “" + s.title + "”) — " + (b.slotHint || "") + "\n  current: " + JSON.stringify(slotCurrent(b))).join("\n")}
-
-Return ONLY this JSON, with every key filled in, nothing before or after it:
-${JSON.stringify({slots: shape}, null, 2)}`;
+${slots.length ? slots.map(({s, b}) => "■ " + b.slot + " (in “" + s.title + "”) — " + (b.slotHint || "") + "\n  current: " + JSON.stringify(slotCurrent(b))).join("\n") : "[none]"}
+${blanks.lines.length ? `
+THE BLANKS (key — what goes there — where)
+Fill a blank ONLY when my notes or the facts give the answer, in a few words that read naturally in place
+(for example "March 2027", "about $40,000 a year", "retire at 62"). Otherwise leave it as "".
+${blanks.lines.join("\n")}
+` : ""}
+Return ONLY this JSON, ${slots.length ? "with every box filled in, " : ""}nothing before or after it:
+${JSON.stringify(answer, null, 2)}`;
 }
 /** Copilot's answer -> the slots. Returns how many boxes changed. */
 function applySlotAnswer(text){
@@ -552,6 +634,8 @@ function applySlotAnswer(text){
   if (!answers || typeof answers !== "object") throw Error("I could not find the boxes in that answer.");
   let n = 0;
   snapshot();
+  /* the blanks first: they are found by where they sit, before the boxes change */
+  n += applyBlankAnswers(v.blanks);
   slotBlocks().forEach(({b}) => {
     const a = answers[b.slot];
     if (a == null || a === "") return;
@@ -566,6 +650,7 @@ function applySlotAnswer(text){
       b.text = Array.isArray(a) ? a.join(" ") : String(a).trim();
     }
     delete b.seed;
+    markToCheck(b.id);                       /* blanks.js: read it over */
     n++;
   });
   if (!n) undoStack.pop();

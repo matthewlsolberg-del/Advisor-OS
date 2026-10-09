@@ -25,13 +25,25 @@ const BRAND = {
   address:"101, 2810 13th Ave SE, Medicine Hat, AB  T1A 3P9",
   phone:"(403) 504-2780",
   web:"advisors.td.com/medicinehatwealthgroup",
-  tagline:"Your goals. Our guidance. One team.",
+  /* in the team's own words, from advisors.td.com/medicinehatwealthgroup */
+  tagline:"Let's build a strategy that fits your life — today and tomorrow.",
+  /* who signs the cover when nobody has been chosen yet (the choice is remembered, app.js) */
+  defaultAdvisor:"Matthew Solberg, CFP®, CIM®",
 
+  /* Titles and designations as on the team website. group: "advisor" (the
+     grid on the closing page and the "Prepared by" list), "service" (client
+     service team) or "specialist" (TD specialists, shown when that option is on).
+     Neil's designations: the website lists them two ways; this is the shorter
+     listing until he confirms. */
   team:[
-    {name:"Neil Mardian",    desig:"CFP®, CIWM, M.Sc.", title:"Investment Advisor"},
-    {name:"Matthew Solberg", desig:"CFP®, CIM®",   title:"Investment Advisor"},
-    {name:"Brian Widmer",    desig:"CFP®, CIM®",   title:"Investment Advisor"},
-    {name:"Shandie Froese",  desig:"B.Sc., CFP®",       title:"Investment Advisor"}
+    {name:"Neil Mardian",       desig:"CFP®, CIWM, M.Sc.", title:"Senior Portfolio Manager, Senior Investment Advisor", group:"advisor"},
+    {name:"Matthew Solberg",    desig:"CFP®, CIM®",        title:"Senior Investment Advisor", group:"advisor"},
+    {name:"Brian Widmer",       desig:"CFP®, CIM®",        title:"Portfolio Manager, Senior Investment Advisor", group:"advisor"},
+    {name:"Shandie Froese",     desig:"B.Sc., CFP®",       title:"Senior Investment Advisor", group:"advisor"},
+    {name:"Denise Butterfield", desig:"",                  title:"Client Service Associate", group:"service"},
+    {name:"Rachel Forster",     desig:"",                  title:"Client Service Associate", group:"service"},
+    {name:"Jane Mozill",        desig:"",                  title:"Executive Trust Officer, TD Wealth Private Trust", group:"specialist"},
+    {name:"Blaine Wilson",      desig:"",                  title:"Estate Planning Advisor, TD Wealth Insurance Services", group:"specialist"}
   ],
 
   draftTag:"DRAFT — pending branch/firm compliance pre-approval",

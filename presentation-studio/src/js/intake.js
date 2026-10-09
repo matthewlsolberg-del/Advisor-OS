@@ -15,18 +15,32 @@ function doBuild(){ buildDraft(); builtPrint = deckPrint(); }
 
 /* ── What are you making ─────────────────────────────────────────────────── */
 
+/* The three documents made most often get the big cards; the rest sit under "More". */
+const MAIN_KINDS = ["prospect", "portfolio_review", "plan_summary"];
 function buildPieceGrid(){
   const grid = $("pieceGrid");
+  const wasOpen = !!grid.querySelector("details.piece-more[open]");
   grid.innerHTML = "";
   const facts = deck.facts || {};
-  SMART_KINDS.forEach(c => {
+  const card = (c) => {
     const ready = c.uses.length && c.uses.some(u => facts[u]);
-    const card = el("button", "piece-card" + (deck.meta.kind === c.kind ? " is-on" : "") + (ready ? " is-ready" : ""),
+    const b = el("button", "piece-card" + (deck.meta.kind === c.kind ? " is-on" : "") + (ready ? " is-ready" : ""),
       "<b>" + esc(c.name) + (ready ? ' <i class="ready-dot" title="Your report is in">●</i>' : "") + "</b><span>" + esc(c.note) + "</span>");
-    card.type = "button";
-    card.onclick = () => switchPiece(c.kind);
-    grid.appendChild(card);
-  });
+    b.type = "button";
+    b.onclick = () => switchPiece(c.kind);
+    return b;
+  };
+  const main = el("div", "piece-main");
+  MAIN_KINDS.forEach(k => { const c = SMART_KINDS.find(x => x.kind === k); if (c) main.appendChild(card(c)); });
+  grid.appendChild(main);
+  const rest = SMART_KINDS.filter(c => !MAIN_KINDS.includes(c.kind));
+  const more = el("details", "piece-more");
+  if (wasOpen || rest.some(c => c.kind === deck.meta.kind)) more.open = true;
+  more.appendChild(el("summary", "", "More: " + esc(rest.map(c => c.name.toLowerCase()).join(", "))));
+  const box = el("div", "piece-rest");
+  rest.forEach(c => box.appendChild(card(c)));
+  more.appendChild(box);
+  grid.appendChild(more);
 }
 function switchPiece(kind){
   if (deck.meta.kind === kind) return;
@@ -48,8 +62,10 @@ async function intakePdf(file){
     return;
   }
   const kind = detectReport(doc);
-  if (kind === "croesus") setFacts("portfolio", parseCroesus(doc), file.name);
-  else if (kind === "plan") setFacts("plan", parsePlan(doc), file.name);
+  /* each figure's source line is kept, for "Where did this number come from?" (views.js) */
+  const withLines = (f) => Object.assign(f, {sourceLines: compactLines(doc)});
+  if (kind === "croesus") setFacts("portfolio", withLines(parseCroesus(doc)), file.name);
+  else if (kind === "plan") setFacts("plan", withLines(parsePlan(doc)), file.name);
   else unknownReport(file.name, doc.text);
 }
 
@@ -58,14 +74,28 @@ function setFacts(key, facts, fileName){
   snapshot();
   deck.facts = deck.facts || {};
   facts.file = fileName || facts.file || "";
+  /* A second portfolio report of the same household, at another date: the earlier
+     one is kept for a "What has changed" page (smart.js buildChanges). */
+  const cur = deck.facts.portfolio;
+  let kept = "";
+  if (key === "portfolio" && cur && cur.asOf && facts.asOf && cur.asOf !== facts.asOf &&
+      (!cur.household || !facts.household || surnameOf(cur.household) === surnameOf(facts.household))){
+    const tCur = Date.parse(cur.asOf), tNew = Date.parse(facts.asOf);
+    if (tNew < tCur){ deck.facts.portfolioPrev = facts; facts = cur; kept = facts.asOf; }
+    else { deck.facts.portfolioPrev = cur; kept = cur.asOf; }
+  }
   deck.facts[key] = facts;
   if (!deck.meta.client && facts.household) deck.meta.client = facts.household;
   /* if the kind of document does not use this report, pick one that does */
   const k = SMART_KINDS.find(x => x.kind === deck.meta.kind);
-  if (!k || !k.uses.some(u => deck.facts[u])) deck.meta.kind = key === "plan" ? "plan_summary" : "portfolio_review";
+  if (!k || !k.uses.some(u => deck.facts[u])){
+    deck.meta.kind = key === "plan" ? "plan_summary" : "portfolio_review";
+    setCoverWording(deck.meta.kind);          /* the cover follows the kind, built or not */
+  }
   if (auto) doBuild(); else { syncPanels(); render(); }
   const what = key === "plan" ? "Financial plan" : "Portfolio report";
-  toast(what + " read: " + (facts.found || []).join(", ") + (auto ? ". The draft is laid out." : ". Press Build my draft to use it."), 7000);
+  toast(what + " read: " + (facts.found || []).join(", ") + (auto ? ". The draft is laid out." : ". Press Build my draft to use it.") +
+    (kept ? " The report as at " + deck.facts.portfolioPrev.asOf + " is kept for a “What has changed” page." : ""), 7000);
   if ((facts.warnings || []).length) alert(what + " — please check:\n\n" + facts.warnings.join("\n"));
 }
 
@@ -123,6 +153,11 @@ function buildSources(){
     const P = f.portfolio;
     row("Portfolio report" + (P.file ? " · " + P.file : ""), [P.household, P.total != null ? fm$(P.total) : "", P.asOf ? "as at " + P.asOf : ""].filter(Boolean).join(" · ") +
       "\nFound " + (P.found || []).join(", "), "portfolio");
+  }
+  if (f.portfolioPrev){
+    const Q = f.portfolioPrev;
+    row("Earlier portfolio report" + (Q.file ? " · " + Q.file : ""), [Q.total != null ? fm$(Q.total) : "", Q.asOf ? "as at " + Q.asOf : ""].filter(Boolean).join(" · ") +
+      "\nUsed for the “What has changed” page", "portfolioPrev");
   }
   if (f.plan){
     const F = f.plan;
@@ -216,22 +251,23 @@ function updateBlankButton(){
 /* ── Copilot: one prompt, one answer ─────────────────────────────────────── */
 
 function updateSlotStatus(){
-  const n = slotBlocks().length, todo = slotBlocks().filter(x => x.b.seed).length, gaps = gapCount(deck.sections.map(s => s.blocks));
+  const n = slotBlocks().length, todo = slotBlocks().filter(x => x.b.seed).length, gaps = collectBlanks().length;
   $("slotStatus").textContent = n ? n + " boxes for Copilot to write" + (todo < n ? " (" + (n - todo) + " already done)" : "") + " · " + gaps + " yellow blank" + (gaps === 1 ? "" : "s") + " left"
+    : gaps ? gaps + " yellow blank" + (gaps === 1 ? "" : "s") + " for Copilot to fill from your notes"
     : "This draft has no pre-written boxes, so the prompt asks Copilot to write the whole document from your notes.";
 }
 function copySlotPrompt(){
-  const has = slotBlocks().length;
+  const has = slotBlocks().length || collectBlanks().length;
   copyText(has ? slotPrompt() : wholeTextPrompt().replace("NOTES:\n[paste your notes here, or attach the plan, meeting notes and statements]", "NOTES:\n" + (deck.notes || "[paste your notes here]")),
-    "Prompt copied — paste it into Copilot and press Enter. Then paste Copilot's answer in box 3.");
+    "Prompt copied. Paste it into Copilot and press Enter, then copy Copilot's answer and paste it anywhere here (Ctrl+V).", 6000);
 }
 function applySlots(){
   const t = $("slotAnswer").value.trim();
   if (!t){ toast("Paste Copilot's answer into box 3 first."); return; }
-  if (slotBlocks().length && /"slots"|^\s*(```|\{)/.test(t)){
+  if ((slotBlocks().length || deck.blankKeys) && /"slots"|"blanks"|^\s*(```|\{)/.test(t)){
     try {
       const n = applySlotAnswer(t);
-      if (n){ $("slotAnswer").value = ""; updateSlotStatus(); toast(n + " boxes written by Copilot. Read them over — Undo takes them back.", 5000); showRail("build"); }
+      if (n){ $("slotAnswer").value = ""; updateSlotStatus(); toast(n + (n === 1 ? " box" : " boxes and blanks") + " written by Copilot, each marked to read over. Undo takes them all back.", 6000); showRail("build"); }
       else toast("None of the boxes matched — make sure you copied Copilot's whole answer.");
     } catch (e){ alert(e.message); }
     return;
@@ -251,6 +287,15 @@ function wireIntake(){
   $("btnCopySlots").onclick = copySlotPrompt;
   $("btnApplySlots").onclick = applySlots;
   $("slotAnswer").addEventListener("paste", () => setTimeout(applySlots, 60));
+  /* Copilot's answer can be pasted anywhere on the screen, not only in box 3:
+     anything that looks like the answer to the one prompt goes in by itself. */
+  document.addEventListener("paste", (e) => {
+    const t = (e.clipboardData && e.clipboardData.getData("text/plain")) || "";
+    if (!/"(slots|blanks)"\s*:/.test(t) || e.target.id === "slotAnswer" || (e.target.closest && e.target.closest("#modal"))) return;
+    e.preventDefault(); e.stopPropagation();
+    $("slotAnswer").value = t;
+    applySlots();
+  }, true);
   $("btnExtractPortfolio").onclick = () => copyText(extractionPrompt("portfolio"), "Prompt copied — attach the statement in Copilot, paste, and bring the answer back to the box above.");
   $("btnExtractPlan").onclick = () => copyText(extractionPrompt("plan"), "Prompt copied — attach the plan in Copilot, paste, and bring the answer back to the box above.");
 }

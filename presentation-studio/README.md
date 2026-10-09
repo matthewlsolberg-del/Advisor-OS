@@ -10,7 +10,19 @@ and paste. One offline HTML file; nothing leaves the computer.
 in Edge. Partners start with [`docs/QUICK_START.md`](docs/QUICK_START.md). To change it with
 Copilot on the work PC: [`docs/COPILOT_MAINTENANCE.md`](docs/COPILOT_MAINTENANCE.md).
 
-## What's new in v9
+## What's new in v10
+
+- **Fill in the blanks** as one short form; Copilot fills the blanks it can from the notes,
+  and marks what it wrote for a quick "✓ Looks right".
+- **Generous templates, one-click trimming**: ✕ on every bullet, fact and step, block and section.
+- **Pages run on** (no half-empty pages), headings stay with what follows.
+- **Stronger cover** ("Prepared for / by", optional picture), team page with client service and
+  specialists, wording from the MHWG website ("How we work with you", "How we help").
+- **One ✦ Copilot button**, paste the answer anywhere; File menu; three big choices on Start.
+- **Every figure has a source** (report and page); **what changed since last year** from two
+  Croesus reports; a one-page **leave-behind** and an internal **prep sheet**.
+
+## What came in v9
 
 - **Reports read on the computer.** An embedded copy of pdf.js reads PDFs with their layout,
   and `facts.js` pulls the facts out of Croesus portfolio reports (accounts, typed by the
@@ -77,6 +89,8 @@ src/
   js/smart.js         pre-filled drafts from the facts; one-prompt Copilot fill
   js/content.js       ready-written wording: prospect meeting, planning topics
   js/intake.js        the Start tab and the Copilot step
+  js/blanks.js        the "Fill in the blanks" form, Copilot's blank answers, ✓ Looks right marks
+  js/views.js         the leave-behind and prep-sheet views, figure sources
   js/viz.js           charts and infographics as inline SVG
   js/render.js        the layout engine: blocks → measured, paginated pages
   js/examples.js      worked examples per section

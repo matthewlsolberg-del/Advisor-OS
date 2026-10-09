@@ -354,7 +354,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 
 /* ── Print: the studio disappears, the document remains ─────────────────── */
 @media print{
-  .topbar,.rail,.inspector,.canvas-bar,.modal,.toast,.insert-menu,.blk-quickbar{display:none !important}
+  .topbar,.rail,.inspector,.canvas-bar,.modal,.toast,.insert-menu,.blk-quickbar,.view-banner{display:none !important}
   body{overflow:visible;background:#fff}
   .shell{display:block;height:auto}
   .canvas{display:block;background:#fff}
@@ -390,3 +390,52 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 /* "Next blank" above the pages (intake.js) */
 .btn-blank{background:#fff4b8;border-color:#e2cf6a;color:#5a4a00}
 .btn-blank:hover{background:#ffec8a}
+
+/* ── v10: fill in the blanks (blanks.js) ───────────────────────────────── */
+.blank-card{border-color:#e2cf6a;background:#fffdf3}
+.blank-card.is-done{background:#fff;border-color:var(--hair)}
+.blank-form{max-height:48vh;overflow:auto;margin:0 -4px;padding:0 4px}
+.bf-sec{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px;font-weight:600}
+.bf-row{display:block;margin:0 0 8px}
+.bf-label{display:block;font-size:12.5px;color:var(--ink);margin-bottom:3px;font-weight:600}
+.bf-label small{font-weight:400;color:var(--muted)}
+.bf-row input{width:100%;padding:7px 9px;border:1px solid #e2cf6a;border-radius:5px;background:#fff}
+/* what Copilot wrote, marked to read over: on screen only */
+.blk-hit.is-tocheck{box-shadow:inset 3px 0 0 var(--warn)}
+.blk-check{position:absolute;left:-4px;top:-22px;z-index:25;font:11px var(--ui);background:#fff4b8;border:1px solid #e2cf6a;color:#5a4a00;border-radius:4px;padding:2px 7px;cursor:pointer;white-space:nowrap}
+.blk-check:hover{background:#ffec8a}
+@media print{.blk-check{display:none !important}.blk-hit.is-tocheck{box-shadow:none !important}}
+.team-row select{width:100%;margin-bottom:4px;padding:5px 7px;border:1px solid var(--hair);border-radius:4px;background:#fff}
+
+/* ── v10: three big choices on Start, the File menu, toasts at the top ──── */
+#pieceGrid{display:block}
+.piece-main{display:grid;grid-template-columns:1fr;gap:7px}
+.piece-main .piece-card{padding:12px 14px}
+.piece-main .piece-card b{font-size:14.5px;margin-bottom:3px}
+.piece-more{margin-top:9px}
+.piece-more > summary{cursor:pointer;font-size:12px;color:var(--kick);line-height:1.4}
+.piece-rest{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+.file-menu{position:relative}
+.file-drop{position:absolute;right:0;top:calc(100% + 6px);z-index:60;background:#fff;color:var(--ink);border:1px solid #cfd8cf;border-radius:7px;
+  box-shadow:0 10px 28px rgba(0,0,0,.22);padding:5px;min-width:230px;display:flex;flex-direction:column}
+.file-drop button{background:none;border:0;text-align:left;padding:8px 10px;border-radius:5px;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+.file-drop button:hover{background:var(--tint)}
+.btn-copilot{background:#fff4b8;border-color:#e2cf6a;color:#3d3200;font-weight:600}
+.btn-copilot:hover{background:#ffec8a}
+.toast{top:64px;bottom:auto}
+.view-pick{font-size:12px;padding:3px 6px;border:1px solid #cfd8cf;border-radius:5px;background:#fff}
+.view-banner{background:#3B5B72;color:#fff;font-size:12.5px;padding:7px 14px;display:flex;gap:12px;align-items:center;justify-content:center}
+.view-banner button{background:#fff;color:#3B5B72;border:0;border-radius:4px;padding:3px 9px;cursor:pointer;font-weight:600}
+/* one-click trimming: a ✕ on every bullet, fact row and action step (app.js addItemDeletes) */
+.item-del{display:none;position:absolute;left:-30px;top:50%;transform:translateY(-50%);width:20px;height:20px;padding:0;border-radius:50%;
+  border:1px solid #e3b7ad;background:#fff;color:var(--danger);font:11px/18px var(--ui);text-align:center;cursor:pointer;z-index:20}
+.pages.edit-on li:hover > .item-del,.pages.edit-on .fact:hover > .item-del,.pages.edit-on .action:hover > .item-del{display:block}
+.item-del:hover{background:var(--danger);color:#fff}
+.pages li,.pages .fact,.pages .action{position:relative}
+@media print{.item-del{display:none !important}}
+/* "Where these figures came from" in a block's settings (views.js) */
+.prov{margin-top:14px;padding-top:10px;border-top:1px solid var(--hair)}
+.prov-h{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--kick);font-weight:600;margin-bottom:4px}
+.prov-row{display:grid;grid-template-columns:78px 1fr;gap:8px;font-size:11.5px;padding:5px 0;border-bottom:1px dashed var(--hair)}
+.prov-row b{color:var(--deep)}
+.prov-row span{color:var(--gray);word-break:break-word}

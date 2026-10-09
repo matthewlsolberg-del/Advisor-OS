@@ -28,6 +28,8 @@ const shot = async n => { if (shots) await page.screenshot({ path: path.join(sho
 const pageShot = async (i, n) => { if (!shots) return; const p = page.locator("#pages .page").nth(i); await p.scrollIntoViewIfNeeded(); await p.screenshot({ path: path.join(shots, n + ".png") }); };
 const D = () => page.evaluate(() => JSON.parse(JSON.stringify(deck)));
 const titles = async () => (await D()).sections.map(s => s.title);
+/* the less common kinds sit under "More" on the Start tab */
+const openMore = () => page.evaluate(() => { const m = document.querySelector("#pieceGrid details.piece-more"); if (m) m.open = true; });
 
 await page.goto(file);
 await page.waitForTimeout(700);
@@ -79,6 +81,7 @@ const pn = await page.locator("#pages .page").count();
 for (let i = 0; i < Math.min(pn, 12); i++) await pageShot(i, "i04-plan-p" + (i + 1));
 
 console.log("Annual review (both)");
+await openMore();
 await page.click('#pieceGrid .piece-card:has-text("Annual review")');
 await page.waitForTimeout(400);
 ok((await titles()).includes("Your accounts") && (await titles()).includes("Your goals"), "annual review uses both: " + (await titles()).length + " sections");
@@ -111,6 +114,7 @@ ok((await page.textContent("#pages")).includes("Copilot wrote glance."), "a rebu
 console.log("Investment recommendation");
 await page.click('.rail-tab[data-panel="start"]');
 page.once("dialog", dlg => dlg.accept());
+await openMore();
 await page.click('#pieceGrid .piece-card:has-text("Investment recommendation")');
 await page.waitForTimeout(300);
 ok(await page.isVisible("#profileCard"), "investor profile card appears");

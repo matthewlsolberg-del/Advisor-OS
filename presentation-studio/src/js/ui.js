@@ -15,8 +15,8 @@ function toast(msg, ms){
   t._timer = setTimeout(() => { t.hidden = true; }, ms || 2600);
 }
 
-async function copyText(text, msg){
-  try { await navigator.clipboard.writeText(text); toast(msg || "Copied"); }
+async function copyText(text, msg, ms){
+  try { await navigator.clipboard.writeText(text); toast(msg || "Copied", ms); }
   catch {
     /* some locked-down browsers refuse the clipboard: show it, selected, to copy by hand */
     showModal("Copy this", "<p class='hint'>Press <b>Ctrl+C</b> to copy the selected text.</p><textarea id='copyBox' rows='16' class='mono'></textarea>");

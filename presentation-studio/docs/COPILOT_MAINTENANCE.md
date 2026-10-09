@@ -46,8 +46,22 @@ Search (Ctrl+F) for the name in the right-hand column.
 | The approved model portfolios | not in the code | Use **Portfolio library** in the app, then **Export library backup** to share |
 | The Start tab's options and Copilot's three steps | the `<body>` markup, and intake.js | `data-panel="start"` / `function wireIntake` |
 | The "Next blank" button above the pages | intake.js | `function goNextBlank` / `function updateBlankButton` |
+| The "Fill in the blanks" form on Edit, and the ✓ Looks right marks | blanks.js | `function buildBlankForm` / `function decorateToCheck` |
+| Which blanks Copilot is asked to fill from the notes | blanks.js | `function blankPromptPart` / `function applyBlankAnswers` |
+| The one-page leave-behind | views.js | `function leaveBehindDeck` |
+| The advisor's prep sheet (internal, not for the client) | views.js | `function prepSheetDeck` |
+| The "Source:" box in the side panel (which report, which page) | views.js | `function provenanceBox` |
+| The "Source: your portfolio report…" line under tables and charts | smart.js | `function tagSource` |
+| The "What has changed since last time" page (two Croesus reports) | smart.js | `function buildChanges` |
+| The cover's title and kicker per document type | smart.js | `function setCoverWording` |
+| The cover (picture, "Prepared for / by" band) and the closing pages | render.js | `function coverPage` / `function closingPages` |
+| When a section starts a new page, headings kept with what follows | render.js | `function layout` |
+| The ✕ on bullets, facts and actions, and ✕ Remove section | app.js | `function addItemDeletes` / `function removeItem` / `function removeSection` |
+| Chart colours | viz.js | `const BAR_SEQ` |
+| "How we work with you" (the six steps) and "How we help" | content.js | `function HOW_WE_WORK_BLOCKS` / `function HOW_WE_HELP_BLOCKS` |
+| Team groups (advisors, client service, specialists) | brand.js | `const BRAND` (each member's `group`) |
 
-Section sizes: most are 10–45 KB, which fits in one Copilot message. app.js (78 KB) is the
+Section sizes: most are 10–45 KB, which fits in one Copilot message. app.js (88 KB) is the
 largest, so for app.js copy just the one function you need.
 
 ## How to ask Copilot for a change
@@ -99,4 +113,5 @@ for example "if any account is a LIRA, suggest reviewing the unlocking options".
 
 - The `Content-Security-Policy` line at the top: it is what guarantees nothing leaves the PC.
 - Anything below the `DO NOT EDIT` marker.
-- The DRAFT and disclosures behaviour on the Finish tab.
+- The DRAFT and disclosures behaviour on the Finish tab. The disclosures always print on
+  their own back page, the leave-behind included.

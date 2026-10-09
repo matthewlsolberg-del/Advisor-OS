@@ -56,7 +56,7 @@ function editable(tag, cls, text, bid, path){
 }
 
 function renderBlock(b){
-  const wrap = el("div", "blk blk-hit blk-" + b.type);
+  const wrap = el("div", "blk blk-hit blk-" + b.type + (b.runOn ? " is-runon" : ""));
   wrap.dataset.bid = b.id;
   wrap.dataset.type = b.type;
   if (b._off != null){ wrap.dataset.off = b._off; wrap.dataset.len = b._len; }
@@ -220,13 +220,15 @@ function renderBlock(b){
       if (BLOCK_RENDERERS[b.type]){ BLOCK_RENDERERS[b.type](b, wrap); break; }
       wrap.appendChild(el("p","blk-p", esc(JSON.stringify(b))));
   }
+  /* where the figures came from (smart.js sets it on report charts and tables) */
+  if (b.source && (b.type === "chart" || b.type === "table")) wrap.appendChild(el("div","blk-src", "Source: " + esc(b.source)));
   return wrap;
 }
 
 function looksNumericHeader(b, ci){
   const col = (b.rows || []).map(r => r[ci]).filter(v => v != null && v !== "" && v !== "—");
   if (!col.length) return false;
-  return col.every(v => /^[\s$€£+\-(]?[\d.,]+\s*[%kKMB)]*$/.test(String(v).trim()));
+  return col.every(v => /^[\s$€£+\-−(]{0,2}[\d.,]+\s*[%kKMB)]*$/.test(String(v).trim()));
 }
 
 /* ── Splitting a block across a page break ──────────────────────────────── */
@@ -328,6 +330,8 @@ function newPage(deck, ctx){
   p.appendChild(foot);
 
   if (deck.options.draft) p.appendChild(el("div","page-draft", esc(BRAND.draftTag)));
+  /* the prep sheet (views.js): never mistaken for something to hand over */
+  if (deck.internal) p.appendChild(el("div","page-internal","Internal — for the advisor only, not for the client"));
   p._body = body;
   return p;
 }
@@ -360,21 +364,36 @@ function coverPage(deck){
   c.appendChild(body);
   c.appendChild(el("div","cover-gap gap-b"));
 
-  const foot = el("div","cover-foot");
-  const forBox = el("div","cover-for");
+  /* an optional picture between the title and the band; an empty one is a
+     placeholder on screen only (render.js never prints an empty frame) */
+  if (deck.cover.style === "picture"){
+    const pic = el("div", "cover-pic" + (deck.cover.image ? "" : " is-empty"));
+    if (deck.cover.image) pic.style.backgroundImage = "url(" + deck.cover.image + ")";
+    else pic.appendChild(el("span", "", "Team photo or a Medicine Hat picture goes here.<br>Finish &rarr; Look &amp; pages &rarr; Choose the cover picture."));
+    c.appendChild(pic);
+  }
+
+  /* the deep-green band: who it is for, when, and who prepared it */
+  const band = el("div","cover-band");
+  const forBox = el("div","cb-for");
   if (deck.meta.client){
     forBox.appendChild(el("span","cf-label","Prepared for"));
     forBox.appendChild(el("div","cf-name", esc(deck.meta.client)));
   }
-  foot.appendChild(forBox);
-  const meta = el("div","cover-meta");
-  if (deck.meta.advisor) meta.appendChild(el("div","", esc(deck.meta.advisor)));
-  meta.appendChild(el("div","", esc(BRAND.firm)));
-  meta.appendChild(el("div","", esc(BRAND.subbrand)));
-  if (deck.meta.date) meta.appendChild(el("div","", esc(prettyDate(deck.meta.date))));
-  if (deck.options.draft) meta.appendChild(el("div","", esc(BRAND.draftTag)));
-  foot.appendChild(meta);
-  c.appendChild(foot);
+  if (deck.meta.date) forBox.appendChild(el("div","cb-date", esc(prettyDate(deck.meta.date))));
+  band.appendChild(forBox);
+  const by = el("div","cb-by");
+  const who = preparedBy(deck);
+  if (who){
+    by.appendChild(el("span","cf-label","Prepared by"));
+    by.appendChild(el("div","cb-name", esc(who.name)));
+    if (who.title) by.appendChild(el("div","cb-title", esc(who.title)));
+  }
+  by.appendChild(el("div","cb-firm", esc(BRAND.firm) + " &middot; " + esc(BRAND.subbrand)));
+  if (deck.contact && deck.contact.phone) by.appendChild(el("div","cb-phone", esc(deck.contact.phone)));
+  band.appendChild(by);
+  c.appendChild(band);
+  if (deck.options.draft) c.appendChild(el("div","cover-draft", esc(BRAND.draftTag)));
 
   p.appendChild(c);
   return p;
@@ -411,7 +430,11 @@ function prettyDate(iso){
  * Lay the whole deck out into pages inside `host`.
  * Returns {pages, sectionPages} so the table of contents can be numbered.
  */
+/* the deck being laid out right now (a view's copy, or the document itself) */
+let layoutDeck = null;
+
 function layout(deck, host){
+  layoutDeck = deck;
   host.innerHTML = "";
   const doc = host;
   doc.dataset.accent = deck.design.accent || "gold";
@@ -425,7 +448,7 @@ function layout(deck, host){
   const sectionPages = {};
 
   /* front matter -------------------------------------------------------- */
-  pages.push({node: coverPage(deck), numbered:false});
+  if (!deck.noCover) pages.push({node: coverPage(deck), numbered:false});
 
   /* account pages are listed once, under "Our recommendations", not one by one */
   const tocSections = deck.sections.filter(s => !s.accountRecommendation);
@@ -459,7 +482,7 @@ function layout(deck, host){
     const frag = (from, to) => {
       const f = rule.build(b, units.slice(from, to), from === 0);
       f.id = b.id; f._off = from; f._len = to - from;
-      if (b.type === "table" && to < units.length){ f.totalRow = false; f.caption = ""; }
+      if (b.type === "table" && to < units.length){ f.totalRow = false; f.caption = ""; f.source = ""; }
       return f;
     };
     let best = 0;
@@ -467,6 +490,8 @@ function layout(deck, host){
       if (M.height(renderBlock(frag(0, k))) <= room) best = k; else break;
     }
     if (best === 0) return false;
+    /* never leave one line, row or item on its own at the top of the next page */
+    if (units.length - best === 1 && best >= 2) best--;
     place(renderBlock(frag(0, best)), room);
     startPage();
     let start = best;
@@ -486,19 +511,26 @@ function layout(deck, host){
     return true;
   };
 
+  /* Slides always give each section its own slide. On paper, short sections run
+     on (no half-empty pages) unless "Each section starts a new page" is ticked. */
+  const breakEach = deck.options.sectionBreak || deck.design.format === "slides";
+
   deck.sections.forEach((section, si) => {
     const recPart = section.recommendationOverview || section.recommendation;
     ctx = {section: recPart ? "OUR RECOMMENDATIONS" : (section.runningTitle || section.title || ""),
            recommendation: !!section.recommendation, householdSummary: !!section.recommendationOverview};
+    const ownPage = section.recommendation || section.recommendationOverview || (deck.sections[si - 1] || {}).recommendation;
     if (deck.options.dividers){
       pages.push({node: dividerPage(deck, section, si + 1), numbered:true});
       sectionPages[section.id] = pages.length;   /* provisional; fixed below */
       page = null;
-    } else if ((deck.options.sectionBreak || section.recommendation || section.recommendationOverview || (deck.sections[si - 1] || {}).recommendation) && si > 0){
+    } else if ((breakEach || ownPage) && si > 0){
       page = null;              /* each section opens a page; a recommendation always has its own */
     }
     let items = (section.blocks || []).slice();
-    if (!deck.options.dividers && !section.recommendation && !section.recommendationOverview){
+    if (section.noHeading){
+      /* a view's page (views.js) brings its own heading */
+    } else if (!deck.options.dividers && !section.recommendation && !section.recommendationOverview){
       items = [Object.assign(newBlock("heading"),
                 {id:"sec-" + section.id, level:2, kicker: section.kicker || "", text: section.title || "", num: si + 1})]
               .concat(items);
@@ -510,21 +542,46 @@ function layout(deck, host){
     }
     /* the household summary carries its own title, so title and summary never split */
 
+    /* Running on: the section starts part way down the page. It moves to a fresh
+       page when little room is left, or when it is short enough to keep whole
+       on the next page but would be split here. */
+    let pre = null;
+    if (page && used > 0 && !deck.options.dividers && items.length && items[0].type === "heading"){
+      items[0] = Object.assign({}, items[0], {runOn: true});
+      pre = items.map(b => { const node = renderBlock(b); return {node, h: M.height(node)}; });
+      /* the last block's bottom margin need not fit on the page */
+      const gap = parseFloat(getComputedStyle(doc).getPropertyValue("--gap")) || 15;
+      const total = pre.reduce((n, x) => n + x.h, 0) - gap, room = LIMIT - used;
+      if (room < LIMIT * 0.22 || (total > room && total <= LIMIT * 0.6)){
+        page = null;
+        items[0] = Object.assign({}, items[0], {runOn: false});
+        pre = null;
+      }
+    }
+
     items.forEach((b, bi) => {
       if (b.type === "pagebreak"){ page = null; return; }
       if (!page) { startPage(); if (!sectionPages[section.id]) sectionPages[section.id] = pages.length; }
       if (!sectionPages[section.id]) sectionPages[section.id] = pages.length;
 
-      let node = renderBlock(b);
-      let h = M.height(node);
+      let node, h;
+      if (pre && pre[bi]){ node = pre[bi].node; h = pre[bi].h; }
+      else { node = renderBlock(b); h = M.height(node); }
 
       if (h <= LIMIT - used){
-        /* a heading should never be the last thing on a page */
+        /* a heading is never the last thing on a page: it keeps with what follows */
         const isHeading = b.type === "heading";
         if (isHeading && bi < items.length - 1){
-          const nextH = M.height(renderBlock(items[bi + 1]));
+          const nextH = pre && pre[bi + 1] ? pre[bi + 1].h : M.height(renderBlock(items[bi + 1]));
           const room = LIMIT - used - h;
-          if (room < Math.min(nextH, 90)){ startPage(); node = renderBlock(b); h = M.height(node); }
+          /* a list or paragraph can start here and carry on; a chart or picture cannot */
+          const next = items[bi + 1], splits = SPLITTABLE[next.type] && SPLITTABLE[next.type].units(next).length > 1;
+          if (splits ? room < Math.min(nextH, 130) : (room < nextH && nextH <= LIMIT - h)){
+            startPage();
+            if (bi === 0) sectionPages[section.id] = pages.length;
+            if (b.runOn) b = Object.assign({}, b, {runOn: false});
+            node = renderBlock(b); h = M.height(node);
+          }
         }
         place(node, h);
         return;
@@ -536,6 +593,7 @@ function layout(deck, host){
       const room = LIMIT - used;
       if (rule && room > 70 && splitAcross(b, rule, room)) return;
       if (used > 0) startPage();
+      if (b.runOn) b = Object.assign({}, b, {runOn: false});
       node = renderBlock(b);
       h = M.height(node);
       if (h > LIMIT && rule && splitAcross(b, rule, LIMIT)) return;
@@ -615,34 +673,60 @@ function fillToc(deck, slots, sectionPages){
   });
 }
 
+/** Team members of one group: "advisor", "service" or "specialist" (brand.js). */
+function teamGroup(deck, group){
+  return (deck.team && deck.team.length ? deck.team : BRAND.team).filter(m => (m.group || "advisor") === group && m.name);
+}
+/** The cover's "Prepared by": the advisor as chosen, with their title from the team list. */
+function preparedBy(deck){
+  const who = String(deck.meta.advisor || "").trim();
+  if (!who) return null;
+  const m = (deck.team || []).find(x => x.name && who.toLowerCase().startsWith(x.name.toLowerCase()));
+  return {name: who, title: m && m.title && who !== BRAND.firm ? m.title : ""};
+}
+
 function closingPages(deck, M, LIMIT){
   const out = [];
-  const deckPage = () => {
-    const p = newPage(deck, {section:"Your team"});
+  const deckPage = (section) => {
+    const p = newPage(deck, {section});
     out.push(p);
     return p;
   };
-  let p = deckPage(), used = 0;
+  let p = null, used = 0;
   const put = (node) => {
     const h = M.height(node) + 3;   /* small allowance: margins between these pieces collapse unevenly */
-    if (h > LIMIT - used && used > 0){ p = deckPage(); used = 0; }
+    if (h > LIMIT - used && used > 0){ const sec = p._section; p = deckPage(sec); p._section = sec; used = 0; }
     p._body.appendChild(node);
     used += h;
   };
-
-  if (deck.options.team){
-    put(el("h2","closing-h","Your Wealth Management Team"));
-    put(el("p","closing-sub", esc(BRAND.tagline)));
-    put(el("div","closing-rule"));
-    const grid = el("div","team-grid");
-    (deck.team && deck.team.length ? deck.team : BRAND.team).forEach(m => {
+  const grid = (members, cls) => {
+    const g = el("div", "team-grid " + (cls || ""));
+    members.forEach(m => {
       const c = el("div","team-cell");
       c.appendChild(el("div","t-name", esc(m.name)));
       if (m.desig) c.appendChild(el("div","t-desig", esc(m.desig)));
       if (m.title) c.appendChild(el("div","t-title", esc(m.title)));
-      grid.appendChild(c);
+      g.appendChild(c);
     });
-    put(grid);
+    return g;
+  };
+
+  if (deck.options.team){
+    p = deckPage("Your team"); p._section = "Your team"; used = 0;
+    put(el("h2","closing-h","Your Wealth Management Team"));
+    put(el("p","closing-sub", esc(BRAND.tagline)));
+    put(el("div","closing-rule"));
+    put(grid(teamGroup(deck, "advisor")));
+    const service = teamGroup(deck, "service");
+    if (service.length){
+      put(el("div","team-sub","Your client service team"));
+      put(grid(service, "is-small"));
+    }
+    const specialists = teamGroup(deck, "specialist");
+    if (deck.options.specialists && specialists.length){
+      put(el("div","team-sub","TD specialists we bring in"));
+      put(grid(specialists, "is-small"));
+    }
 
     const contact = el("div","contact");
     contact.appendChild(el("div","c-firm", esc(deck.contact.firm || BRAND.firm)));
@@ -654,13 +738,11 @@ function closingPages(deck, M, LIMIT){
   }
 
   if (deck.options.disclosures){
-    /* on a slide, the disclosures get a slide of their own */
-    if (deck.design.format === "slides" && used > 0){ p = deckPage(); used = 0; }
-    put(el("div","disc-h","Important disclosures"));
+    /* the disclosures have a back page of their own */
+    p = deckPage("Important disclosures"); p._section = "Important disclosures"; used = 0;
+    put(el("div","disc-h is-page","Important disclosures"));
     if (deck.options.draft) put(el("div","disc-draft", esc("[" + BRAND.draftTag + "]")));
     (deck.disclosures || []).forEach(d => put(el("p","disc-p", esc(d))));
   }
   return out;
 }
-
-;

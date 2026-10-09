@@ -21,6 +21,36 @@
 
 /* ── 1. Prospect meeting ─────────────────────────────────────────────────── */
 
+/* "How we work with you": the six steps from the team website's What We Do
+   page (step names as on the site; the one-line descriptions are ours). */
+function HOW_WE_WORK_BLOCKS(){ return [
+  {type: "lead", text: "Working with us follows six clear steps, so you always know what comes next."},
+  {type: "actions", items: [
+    {t: "Initial Discovery", d: "We get to know you: your goals, your family, what worries you, and what you have today.", who: "", when: ""},
+    {t: "Personal Wealth Strategy Meeting", d: "We present a strategy built around you: your plan, your investor profile and our recommendations.", who: "", when: ""},
+    {t: "Welcome to TD Wealth Private Investment Advice", d: "We open your accounts, move your assets over and look after the paperwork.", who: "", when: ""},
+    {t: "Meet your Team", d: "You meet the people who look after you day to day, so you always know who to call.", who: "", when: ""},
+    {t: "Ongoing Proactive Service", d: "We watch your portfolio and your plan, and reach out when something needs attention.", who: "", when: ""},
+    {t: "Regular Review Meetings", d: "We meet regularly to review progress, update your plan and adjust as life changes.", who: "", when: ""}]},
+  {type: "facts", items: [
+    {k: "Meetings", v: "[[How often we meet, and how]]"},
+    {k: "Reporting", v: "[[The statements and reports you receive]]"}]},
+  {type: "paragraph", text: "You are not hiring one advisor. You are hiring a team, with a dedicated client service group behind it, so there is always someone who knows your file."}
+]; }
+/* "How we can help": the services listed on the team website. */
+function HOW_WE_HELP_BLOCKS(){ return [
+  {type: "lead", text: "A comprehensive approach that reaches beyond investment advice. We coordinate every part of your financial life, and bring in TD specialists where they add value."},
+  {type: "bullets", style: "check", items: [
+    "**Investment management:** portfolios built around your investor profile, monitored and rebalanced.",
+    "**Retirement planning:** when you can retire, and a tax-efficient income that lasts.",
+    "**Tax strategies:** using every account and credit available to you, in the right order.",
+    "**Business succession:** planning the sale or transfer of your business, and life after it.",
+    "**Private banking:** banking, lending and credit arranged alongside your investments.",
+    "**Estate and trust:** wills, trusts and executor support, with TD Wealth Private Trust.",
+    "**Asset protection:** insurance and structures that protect what you have built.",
+    "**Philanthropic planning:** giving to the causes you care about, tax-efficiently."]}
+]; }
+
 TEMPLATES.prospect = {
   title: "Working Together",
   subtitle: "What we heard, where you stand today, what we would recommend, and what happens next.",
@@ -81,17 +111,6 @@ TEMPLATES.prospect = {
         "**Protection:** insurance sized to what your family would actually need.",
         "**Estate:** wills, powers of attorney and beneficiaries kept up to date and working together."]}
     )},
-    {title: "How we work", blocks: blocks(
-      {type: "infographic", graphic: "steps", title: "Our process",
-        items: [{t: "Discover", d: "Understand the whole picture"}, {t: "Plan", d: "Model the options"},
-                {t: "Implement", d: "Put the plan to work"}, {t: "Review", d: "Adjust as life changes"}]},
-      {type: "facts", items: [
-        {k: "Your team", v: "[[Your advisor and day-to-day contact]]"},
-        {k: "Meetings", v: "[[How often we meet, and how]]"},
-        {k: "Reporting", v: "[[The statements and reports you receive]]"},
-        {k: "Reaching us", v: "[[Phone and email for the team]]"}]},
-      {type: "paragraph", text: "You are not hiring one advisor. You are hiring a team, with a dedicated service group behind it, so there is always someone who knows your file."}
-    )},
     {title: "What happens next", blocks: blocks(
       {type: "actions", items: [
         {t: "Send us your documents", d: "Your recent statements and the items on the list that follows.", who: "You", when: "[[By when]]"},
@@ -109,7 +128,8 @@ TEMPLATES.prospect = {
         "Mortgage and loan balances, rates and renewal dates",
         "Your wills, powers of attorney and personal directives, if you have them",
         "Corporate financial statements, if you own a business"]}
-    )}
+    )},
+    {title: "How we work with you", blocks: blocks(...HOW_WE_WORK_BLOCKS())}
   ]
 };
 TITLE_IDEAS.prospect = ["Working Together", "Our First Conversation", "Where We Would Start", "What We Heard"];
@@ -117,13 +137,22 @@ SMART_KINDS.unshift({kind: "prospect", name: "Prospect meeting", note: "What we 
 
 /* ── 2. Planning topics (Edit → + Add) ───────────────────────────────────── */
 
+/** A copy of one prospect-meeting section, found by its title. */
+function prospectSection(title){
+  const src = TEMPLATES.prospect.sections.find(x => x.title === title);
+  return {title, blocks: blocks(...src.blocks.map(b => structuredClone(b)))};
+}
+
 /* [id, name in the list, group, () => {title, blocks}]. app.js adds these to
    the "+ Add" list (SECTION_PRESETS), shown under their group. */
 const PLANNING_TOPICS = [
-  ["t_situation", "Your situation today", "Prospect meeting", () => ({title: "Your situation today", blocks: blocks(...TEMPLATES.prospect.sections[2].blocks.map(b => structuredClone(b)))})],
-  ["t_recommend", "What we would recommend", "Prospect meeting", () => ({title: "What we would recommend", blocks: blocks(...TEMPLATES.prospect.sections[4].blocks.map(b => structuredClone(b)))})],
-  ["t_bring", "What to bring", "Prospect meeting", () => ({title: "What to bring", blocks: blocks(...TEMPLATES.prospect.sections[9].blocks.map(b => structuredClone(b)))})],
-  ["t_beyond", "Planning beyond the investments", "Prospect meeting", () => ({title: "Planning beyond the investments", blocks: blocks(...TEMPLATES.prospect.sections[6].blocks.map(b => structuredClone(b)))})],
+  ["t_situation", "Your situation today", "Prospect meeting", () => prospectSection("Your situation today")],
+  ["t_recommend", "What we would recommend", "Prospect meeting", () => prospectSection("What we would recommend")],
+  ["t_bring", "What to bring", "Prospect meeting", () => prospectSection("What to bring")],
+  ["t_beyond", "Planning beyond the investments", "Prospect meeting", () => prospectSection("Planning beyond the investments")],
+
+  ["t_howwework", "How we work with you (six steps)", "About us", () => ({title: "How we work with you", blocks: blocks(...HOW_WE_WORK_BLOCKS())})],
+  ["t_howwehelp", "How we can help", "About us", () => ({title: "How we can help", blocks: blocks(...HOW_WE_HELP_BLOCKS())})],
 
   ["t_rrif", "RRSP to RRIF", "Retirement", () => ({title: "Turning your RRSP into income", blocks: blocks(
     {type: "lead", text: "An RRSP has to become a source of income by the end of the year you turn 71. Most people convert it to a RRIF, and the timing and order of withdrawals can make a real difference to the tax you pay."},

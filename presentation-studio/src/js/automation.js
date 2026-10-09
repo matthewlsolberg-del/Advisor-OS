@@ -322,7 +322,7 @@ function readPresentation(v){
   const sections = [];
   v.sections.forEach((s, i) => sections.push(...normalizeSection(s, i, warn)));
   const out = {sections, meta, design, cover, options, warnings};
-  if (Array.isArray(v.team) && v.team.length) out.team = v.team.map(t => ({name:S(t.name), desig:S(t.desig), title:S(t.title)}));
+  if (Array.isArray(v.team) && v.team.length) out.team = v.team.map(t => ({name:S(t.name), desig:S(t.desig), title:S(t.title), group:S(t.group) || "advisor"}));
   if (v.contact && typeof v.contact === "object") out.contact = v.contact;
   if (Array.isArray(v.disclosures) && v.disclosures.length) out.disclosures = v.disclosures.map(S);
   return out;
