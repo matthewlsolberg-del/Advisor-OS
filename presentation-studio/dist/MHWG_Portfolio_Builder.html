@@ -2243,20 +2243,48 @@ function pdfDecodeString(s){
 
 function extractTextOps(content){
   /* Pull the text-showing operators out of a content stream and rebuild lines
-     from the positioning operators. Good enough for prose. Inside a TJ array
-     a big negative kern (below about -200) is how most PDFs draw a space.
-     The ' and " operators move to the next line and then show their string,
-     which comes before them, so the line break goes in front of that string. */
+     from the positioning operators. Good enough for prose and for the
+     label-and-figure rows of a report.
+       · A move to a new baseline starts a new line. A move along the same
+         baseline (the value after its label, the next cell of a table row,
+         even in a new BT…ET block) is a space, so "Net worth:  $1,234,567"
+         stays on one line instead of losing its label.
+       · Strings are scanned by hand because PDF allows balanced parentheses
+         inside them unescaped: "(Shortfall: ($12,400))" is one string, and
+         a regex alone dropped the label and the minus-sign brackets.
+       · Inside a TJ array a big negative kern (below about -200) is how most
+         PDFs draw a space.
+       · The ' and " operators move to the next line and then show their
+         string, which comes before them, so the break goes in front of it. */
   let out = "", buf = "", inArray = false, last = 0;
+  let nums = [];                  /* numeric operands since the last operator */
+  let lineY = 0, scaleY = 1, leading = 0;   /* text line position (y only) */
+  let y = null;                   /* baseline of the text now in buf */
   const push = () => { if (buf.trim()) out += buf.trim() + "\n"; buf = ""; };
-  const re = /\((?:\\.|[^\\()])*\)|<[0-9A-Fa-f\s]*>|\[|\]|[-+]?(?:\d+\.?\d*|\.\d+)|T\*|\bT[dDmJj]\b|\bTL\b|\bET\b|['"]/g;
+  const moveTo = (ny) => {
+    if (buf.trim() && y !== null && Math.abs(ny - y) > 1) push();
+    else if (buf && !/\s$/.test(buf)) buf += " ";
+    y = ny;
+  };
+  const arg = (k, n) => { const v = nums[nums.length - n + k]; return isFinite(v) ? v : 0; };
+  const re = /\(|<[0-9A-Fa-f\s]*>|\[|\]|[-+]?(?:\d+\.?\d*|\.\d+)|T\*|\bT[dDmJjL]\b|\bBT\b|\bET\b|['"]/g;
   let m;
   while ((m = re.exec(content))){
     const tok = m[0];
-    if (tok[0] === "("){
+    if (tok === "("){
+      let j = m.index + 1, depth = 1;
+      for (; j < content.length; j++){
+        const c = content[j];
+        if (c === "\\") j++;
+        else if (c === "(") depth++;
+        else if (c === ")" && --depth === 0) break;
+      }
       last = buf.length;
-      buf += pdfDecodeString(tok.slice(1, -1));
-    } else if (tok[0] === "<"){
+      buf += pdfDecodeString(content.slice(m.index + 1, j));
+      re.lastIndex = j + 1;
+      continue;
+    }
+    if (tok[0] === "<"){
       last = buf.length;
       /* one byte per two hex digits, unless it carries a UTF-16BE mark */
       let hex = tok.slice(1, -1).replace(/\s/g,"");
@@ -2272,16 +2300,33 @@ function extractTextOps(content){
           if (code >= 32) buf += String.fromCharCode(code);
         }
       }
-    } else if (tok === "["){ inArray = true;
-    } else if (tok === "]"){ inArray = false;
-    } else if (/^[-+.\d]/.test(tok)){
-      if (inArray && parseFloat(tok) < -200 && buf && !/\s$/.test(buf)) buf += " ";
-    } else if (tok === "Td" || tok === "TD" || tok === "T*" || tok === "Tm" || tok === "ET"){
-      push();
+      continue;
+    }
+    if (tok === "["){ inArray = true; continue; }
+    if (tok === "]"){ inArray = false; continue; }
+    if (/^[-+.\d]/.test(tok)){
+      if (inArray){
+        if (parseFloat(tok) < -200 && buf && !/\s$/.test(buf)) buf += " ";
+      } else nums.push(parseFloat(tok));
+      continue;
+    }
+    if (tok === "BT"){ lineY = 0; scaleY = 1; }
+    else if (tok === "Td" || tok === "TD"){
+      lineY += arg(1, 2) * scaleY;
+      if (tok === "TD") leading = -arg(1, 2);
+      moveTo(lineY);
+    } else if (tok === "Tm"){
+      scaleY = arg(3, 6) || 1; lineY = arg(5, 6);
+      moveTo(lineY);
+    } else if (tok === "TL"){ leading = arg(0, 1);
+    } else if (tok === "T*"){
+      push(); lineY -= leading * scaleY; y = lineY;
     } else if (tok === "'" || tok === '"'){
       const shown = buf.slice(last);
       buf = buf.slice(0, last); push(); buf = shown;
+      lineY -= leading * scaleY; y = lineY;
     }
+    nums = [];
   }
   push();
   return out;
