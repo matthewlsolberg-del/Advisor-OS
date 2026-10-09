@@ -8,7 +8,6 @@
 
 
 const AUTOSAVE_KEY = "mhwg.presentation.working-copy";
-const WELCOMED_KEY = "mhwg.presentation.welcomed";
 
 /* ── State ──────────────────────────────────────────────────────────────── */
 
@@ -25,7 +24,7 @@ function todayISO(){
   return new Date(t.getTime() - t.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 function newDeck(kind){
-  const t = TEMPLATES[kind] || TEMPLATES.plan_summary;
+  const t = TEMPLATES[kind] || {title:"Our Recommendations", subtitle:"", kicker:"Investment recommendation", sections:[]};
   return {
     version: 1,
     meta:{ kind, title:t.title, subtitle:t.subtitle, kicker:t.kicker, client:"", advisor:"", date:todayISO(), docTitle:"" },
@@ -41,9 +40,12 @@ function newDeck(kind){
     team: structuredClone(BRAND.team),
     contact:{firm:BRAND.firm, address:BRAND.address, phone:BRAND.phone, web:BRAND.web},
     disclosures: BRAND.disclosures.slice(),
-    guideNumbers: null,   /* key figures, fed into every prompt */
+    facts: {},            /* what was read from dropped reports: {portfolio, plan} (facts.js) */
+    notes: "",            /* the advisor's own notes / dictation, given to Copilot */
+    profile: "",          /* household investor profile, for investment recommendations */
+    guideNumbers: null,
     drafts: {},
-    sources: {}           /* sources.message.note: the one takeaway, fed into every prompt */
+    sources: {}
   };
 }
 
@@ -255,46 +257,17 @@ function syncPanels(){
   $("fldDisclosures").value = (deck.disclosures || []).join("\n\n");
   $$('input[name="accent"]').forEach(r => r.checked = r.value === deck.design.accent);
   $$('input[name="density"]').forEach(r => r.checked = r.value === deck.design.density);
-  $("fldMessage").value = ((deck.sources || {}).message || {}).note || "";
   buildPieceGrid();
   buildSwatches();
   buildTitlePicker();
   buildAdvisorPicker();
   buildTeamEditor();
   buildOutline();
-  buildNumbers();
+  syncIntake();
   buildPromptPicker();
   buildCheckList();
 }
 
-/* Start: what are we making */
-function buildPieceGrid(){
-  const grid = $("pieceGrid");
-  grid.innerHTML = "";
-  PIECE_CARDS.forEach(c => {
-    const card = el("button", "piece-card" + (deck.meta.kind === c.kind ? " is-on" : ""),
-      "<b>" + esc(c.name) + "</b><span>" + esc(c.note) + "</span>");
-    card.onclick = () => switchPiece(c.kind);
-    grid.appendChild(card);
-  });
-}
-function switchPiece(kind){
-  if (deck.meta.kind === kind) return;
-  const name = (PIECE_CARDS.find(c => c.kind === kind) || {}).name || kind;
-  if (!deckIsStarter() && !confirm("Switch to " + name + "?\n\nThe sections you have now are replaced with this template's. (Undo brings them back.)")) return;
-  snapshot();
-  /* only the sections and cover wording change; client, figures, team and settings stay */
-  const fresh = newDeck(kind);
-  ["kind", "subtitle", "kicker"].forEach(k => { deck.meta[k] = fresh.meta[k]; });
-  if (!deck.meta.title || Object.values(TITLE_IDEAS).some(list => list.includes(deck.meta.title)) || /^The .+ (Plan|Review|Portfolio Review)$/.test(deck.meta.title))
-    deck.meta.title = titleIdeas(kind, deck.meta.client)[0] || fresh.meta.title;
-  const recs = deck.sections.filter(s => s.accountRecommendation);
-  deck.sections = fresh.sections.concat(recs);
-  if (deck.guideNumbers && deck.guideNumbers.every(r => !(r.v || "").trim())) deck.guideNumbers = null;
-  selectedId = null; openSectionId = null;
-  syncPanels(); render();
-  toast(name + " — sections loaded");
-}
 
 /* the little picture-swatches for format, cover and page style */
 function swatchRow(host, items, current, cls, onPick){
@@ -353,7 +326,7 @@ function buildTeamEditor(){
 
 /* ── Build: the outline ─────────────────────────────────────────────────── */
 
-const STATUS_TEXT = {done:"written", started:"part written", empty:"to write"};
+const STATUS_TEXT = {done:"done", started:"to check", empty:"to write"};
 
 function buildOutline(){
   const host = $("outline");
@@ -557,58 +530,16 @@ function updateAddWhere(){
 
 /* ── Copilot tab: key figures and the prompt picker ─────────────────────── */
 
-function buildNumbers(){
-  const host = $("numRows");
-  if (!deck.guideNumbers) deck.guideNumbers = (NUMBER_ROWS[deck.meta.kind] || NUMBER_ROWS.blank).map(r => Object.assign({}, r));
-  const rows = deck.guideNumbers;
-  host.innerHTML = "";
-  rows.forEach((r, i) => {
-    const card = el("div", "num-row");
-    const inp = (key, ph) => { const n = document.createElement("input"); n.value = r[key] || ""; n.placeholder = ph;
-      n.oninput = () => { r[key] = n.value; markDirty(); showPrompt(); }; card.appendChild(n); };
-    inp("k", "Label"); inp("v", "Value"); inp("note", "Note (as at…, illustrative)");
-    card.appendChild(inspBtn("✕", () => { snapshot(); rows.splice(i, 1); buildNumbers(); markDirty(); }, "btn-danger"));
-    host.appendChild(card);
-  });
-  const sel = $("numSection"), keep = sel.value;
-  sel.innerHTML = deck.sections.filter(s => !s.accountRecommendation).map(s => '<option value="' + esc(s.id) + '">' + esc(s.title || "Untitled") + "</option>").join("");
-  if (keep) sel.value = keep;
-}
-function numbersToPage(kind){
-  const rows = (deck.guideNumbers || []).filter(r => (r.k || "").trim() && (r.v || "").trim());
-  if (kind === "stats" && rows.length < 2){ toast("Fill in at least two figures."); return; }
-  if (!rows.length){ toast("Fill in at least one figure."); return; }
-  const block = kind === "stats"
-    ? Object.assign(newBlock("stats"), {fromNumbers:"stats", cols: rows.length <= 4 ? rows.length : rows.length <= 6 ? 3 : 4,
-        items: rows.map(r => ({num:r.v, label:r.k, note:r.note || ""}))})
-    : Object.assign(newBlock("facts"), {fromNumbers:"facts",
-        items: rows.map(r => ({k:r.k, v:r.v + ((r.note || "").trim() ? " (" + r.note.trim() + ")" : "")}))});
-  /* pressing again updates the cards already on the page instead of adding a second set */
-  let existing = null;
-  deck.sections.forEach(s => (s.blocks || []).forEach((b, i) => { if (b.fromNumbers === kind) existing = {s, i}; }));
-  snapshot();
-  if (existing){
-    block.id = existing.s.blocks[existing.i].id;
-    existing.s.blocks[existing.i] = block;
-    syncPanels(); render(); jumpToSection(existing.s);
-    toast("Updated the figures already in “" + (existing.s.title || "section") + "”");
-    return;
-  }
-  const sec = deck.sections.find(s => s.id === $("numSection").value) || deck.sections.find(s => !s.accountRecommendation);
-  if (!sec){ toast("Add a section first."); return; }
-  sec.blocks.unshift(block);
-  syncPanels(); render(); jumpToSection(sec);
-  toast("Added to “" + (sec.title || "section") + "”");
-}
 
 function setPromptKind(kind, sectionId){
   const r = document.querySelector('input[name="promptKind"][value="' + kind + '"]');
   if (r) r.checked = true;
   if (sectionId){ $("promptSection").value = sectionId; currentSectionId = sectionId; }
+  const more = $("promptKind").closest("details"); if (more) more.open = true;
   buildPromptPicker();
   if (kind === "section") $("promptSection").scrollIntoView({block:"center", behavior:"smooth"});
 }
-function promptKind(){ return (document.querySelector('input[name="promptKind"]:checked') || {}).value || "text"; }
+function promptKind(){ return (document.querySelector('input[name="promptKind"]:checked') || {}).value || "section"; }
 function buildPromptPicker(){
   const kind = promptKind();
   const secSel = $("promptSection"), keep = secSel.value;
@@ -724,6 +655,17 @@ function buildInspector(){
   $("inspectorTitle").textContent = blockLabelOf(b);
   body.innerHTML = "";
   const isRec = b.type === "recommendation";
+  if (b.type === "householdSummary"){
+    ["btnBlockUp", "btnBlockDown", "btnBlockDup", "btnBlockCopilot", "btnBlockDelete"].forEach(id => { $(id).hidden = true; });
+    $("inspectorTitle").textContent = "Our recommendations";
+    body.appendChild(el("p", "insp-note", "The household summary is worked out from the account pages that follow it. Set the investor profile here."));
+    const sel = inspSelect([{id: "", name: "— choose —"}].concat(Object.keys(INVESTOR_PROFILES).map(n => ({id: n, name: n}))), deck.profile || "", v => { setProfile(v); buildInspector(); });
+    body.appendChild(insp("Household investor profile", sel));
+    const p = INVESTOR_PROFILES[deck.profile];
+    if (p) body.appendChild(el("p", "insp-note", esc(p.description) + "<br><b>Equity</b> " + p.equity + "% (" + p.equityMin + "–" + p.equityMax + "%) · <b>Fixed income</b> " + p.fixedIncome + "% (" + p.fixedMin + "–" + p.fixedMax + "%)"));
+    return;
+  }
+  ["btnBlockDelete"].forEach(id => { $(id).hidden = false; });
   ["btnBlockUp", "btnBlockDown", "btnBlockDup", "btnBlockCopilot"].forEach(id => { $(id).hidden = isRec; });
   if (isRec){ buildRecommendationInspector(b, body); return; }
   body.appendChild(el("p", "insp-note insp-sec", "In “" + esc(found.section.title || "section") + "”" + (b.seed ? " · <b>still sample text</b>" : "")));
@@ -1100,15 +1042,7 @@ async function handleFiles(files){
       } else if (name.endsWith(".json")){
         openAnyJSON(await readTextFile(f));
       } else if (name.endsWith(".pdf")){
-        const text = await readPdfText(f);
-        if (!text.trim()){
-          alert("No text came out of that PDF — it is probably a scan or an image-only export.\n\nCopy the text out of the PDF viewer and paste it, or take a screenshot and drop that in as a picture.");
-        } else {
-          $("pasteBox").value = text;
-          showRail("copilot");
-          $("pasteCard").scrollIntoView({block:"center"});
-          alert("The PDF's text is in the paste box for you to check before it goes in.\n\n" + PDF_CAVEAT);
-        }
+        await intakePdf(f);
       } else if (/\.(png|jpe?g|gif|webp|svg)$/.test(name)){
         const b = newBlock("image");
         b.src = await readImage(f); b.caption = "";
@@ -1174,6 +1108,12 @@ function migrate(d){
   d.sections = (d.sections || []).map(s => Object.assign({id:uid(), title:"", blocks:[]}, s));
   d.sections.forEach(s => { s.blocks = (s.blocks || []).filter(Boolean); });
   d.guideNumbers = Array.isArray(d.guideNumbers) ? d.guideNumbers : null;
+  d.facts = d.facts && typeof d.facts === "object" ? d.facts : {};
+  d.notes = typeof d.notes === "string" ? d.notes : "";
+  d.profile = d.profile || (d.v8 && d.v8.investorProfile) || "";      /* v8.x kept it under v8 */
+  delete d.v8;
+  /* v8.x summary pages carried no block; give them the one that draws the page */
+  d.sections.forEach(s => { if (s.recommendationOverview && !(s.blocks || []).some(b => b.type === "householdSummary")) s.blocks = [{id: uid(), type: "householdSummary"}]; });
   d.drafts = d.drafts && typeof d.drafts === "object" ? d.drafts : {};
   d.sources = d.sources && typeof d.sources === "object" ? d.sources : {};
   delete d.wizard;
@@ -1309,106 +1249,49 @@ function presentEnd(){
 
 
 function showHelp(){
-  showModal("How this works", `
-    <h3>Five steps, left to right</h3>
-    <ol>
-      <li><b>Start</b> — what you are making, who it is for, report or slides.</li>
-      <li><b>Build</b> — the sections. Click any text on the page and type over it. Point at a block for its
-        tools; click it to see its settings on the right. Add sections, blocks and account recommendations here.</li>
-      <li><b>Copilot &amp; JSON</b> — copy a prompt into Copilot, paste its answer back. Text or JSON, the
-        program works out which and shows you a preview first.</li>
-      <li><b>Style</b> — cover, page style, which pages are included, team, disclosures.</li>
-      <li><b>Finish</b> — a check list of anything left to do, the DRAFT tag, Save and Export PDF.</li>
+  showModal("How Presentation Studio works", `
+    <ol class="help-steps">
+      <li><b>Start</b> — pick what you are making and drop in what you have: the <b>Croesus portfolio report</b>,
+        the <b>financial plan</b> PDF, screenshots, Word files. Reports are read on this computer and the draft
+        lays itself out — every figure straight from the report. Add your notes (Windows + H to dictate).</li>
+      <li><b>Edit</b> — click any text on the page and type over it. The yellow <mark class="blank">[[blanks]]</mark>
+        are yours to fill. Point at a block for its tools; click it for all its settings.</li>
+      <li><b>Copilot</b> — press <b>Copy the prompt</b>, paste it into Copilot, paste Copilot's answer back. It writes
+        the words around the figures, from your notes. <b>✦ Copilot</b> on any block does just that block.</li>
+      <li><b>Finish</b> — the checklist (blanks left, anything cut off), the DRAFT tag, Save and Export PDF.</li>
     </ol>
     <h3>Nothing leaves this computer</h3>
-    <p>The program never connects to anything — no internet, no AI, no cloud. Copilot runs where it always
-    does; you carry prompts to it and answers back by copy and paste.</p>
-    <h3>The paste format (for typing or Copilot)</h3>
+    <p>The page cannot connect to anything. Copilot is used only by copy and paste.</p>
+    <h3>Account types from Croesus</h3>
+    <p>The letter at the end of the account number: <b>A/B</b> non-registered (CAD/USD, or corporate), <b>S</b> RRSP /
+      LIRA / spousal RRSP, <b>J</b> TFSA, <b>V</b> RESP. The account-type text in the report wins when there is one.</p>
+    <h3>Typing shortcuts</h3>
     <ul>
-      <li><code># Section</code> and <code>## Sub-heading</code> · <code>- bullet</code> · <code>1. numbered</code></li>
-      <li><code>&gt; one sentence</code> becomes a callout · <code>Label: value</code> becomes a fact row</li>
-      <li><code>$1.2M | Projected at 65 | note</code> becomes a key-number card</li>
-      <li><code>| Option | Cost |</code> becomes a table — or paste cells straight from Excel</li>
-      <li><code>1. Title - detail (Owner: Us, When: 30 days)</code> becomes an action plan</li>
-      <li><code>**bold**</code> and <code>==one highlighted phrase==</code></li>
+      <li><code># Section</code> · <code>## Sub-heading</code> · <code>- bullet</code> · <code>1. numbered</code> ·
+        <code>&gt; callout</code> · <code>Label: value</code> · <code>$1.2M | Label | note</code> · <code>| a | b |</code> tables</li>
+      <li><code>**bold**</code> · <code>==one highlighted phrase==</code> · <code>[[a blank to fill]]</code></li>
     </ul>
-    <h3>Keyboard</h3>
-    <p><code>Ctrl+Z</code> undo · <code>Ctrl+Y</code> redo · <code>Ctrl+S</code> save · <code>Ctrl+P</code> export ·
-    <code>Enter</code> finishes editing a line · <code>Delete</code> removes the selected block.</p>
-    <h3>Saving</h3>
-    <p><b>Save</b> writes a <code>.mhwg.json</code> working file to Downloads — the file you reopen to change the
-    piece later. The browser also keeps a working copy so nothing is lost if the window closes.</p>
+    <p><code>Ctrl+Z</code> undo · <code>Ctrl+S</code> save · <code>Ctrl+P</code> export · <code>Enter</code> finishes a line</p>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="btnClearLocal">Clear the working copy from this browser</button>
       <button class="btn" id="btnHelpJSON">JSON format</button>
-      <button class="btn btn-primary" id="btnHelpWelcome">Show the welcome screen</button></div>`, {wide:true});
+      <button class="btn btn-primary" id="btnHelpOk">Got it</button></div>`, {wide:true});
   $("btnClearLocal").onclick = () => { try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e){} toast("Working copy cleared from this browser"); };
   $("btnHelpJSON").onclick = showJSONReference;
-  $("btnHelpWelcome").onclick = () => showWelcome(false);
+  $("btnHelpOk").onclick = hideModal;
 }
 
-/** The front door: what are you making, who for, and how will you fill it in. */
-function showWelcome(isNew){
-  let kind = isNew ? "plan_summary" : deck.meta.kind;
-  showModal(isNew ? "New presentation" : "Welcome to Presentation Studio", `
-    <div class="welcome">
-      <p class="lede">Make a polished, on-brand client presentation. Pick what you are making,
-        then choose how you want to fill it in — you can mix all three.</p>
-      <h3>1 · What are you making?</h3>
-      <div class="piece-grid wide" id="wcKinds"></div>
-      <label class="field"><span>Prepared for (optional)</span><input id="wcClient" placeholder="Robert &amp; Anne Kowalchuk"></label>
-      <h3>2 · How do you want to fill it in?</h3>
-      <div class="route-grid">
-        <button class="route-btn big" data-route="type"><i>&#9998;</i><b>I'll type it</b>
-          <span>The template's sections appear with sample text. Click any text on the page and type over it.</span></button>
-        <button class="route-btn big" data-route="copilot"><i>&#10022;</i><b>Copilot writes it</b>
-          <span>Copy one prompt into Copilot with your notes, paste its answer back. Laid out for you.</span></button>
-        <button class="route-btn big" data-route="json"><i>{&#8202;}</i><b>I have JSON</b>
-          <span>A whole presentation from Copilot, a script or a coder, in one paste.</span></button>
-      </div>
-      <p class="hint center">${isNew ? "Unsaved changes to the current piece are lost — Cancel and Save first if you need them." : "Already started? <a href='#' id='wcOpen'>Open a saved file</a> or just close this."}</p>
-    </div>`, {wide:true});
-  const kinds = $("wcKinds");
-  const drawKinds = () => {
-    kinds.innerHTML = "";
-    PIECE_CARDS.forEach(c => {
-      const b = el("button", "piece-card" + (c.kind === kind ? " is-on" : ""), "<b>" + esc(c.name) + "</b><span>" + esc(c.note) + "</span>");
-      b.onclick = () => { kind = c.kind; drawKinds(); };
-      kinds.appendChild(b);
-    });
-  };
-  drawKinds();
-  if (!isNew) $("wcClient").value = deck.meta.client || "";
-  if ($("wcOpen")) $("wcOpen").onclick = (e) => { e.preventDefault(); $("btnOpen").click(); };
-  $$("#modalBody .route-btn").forEach(btn => btn.onclick = () => {
-    try { localStorage.setItem(WELCOMED_KEY, "1"); } catch (e){}
-    const client = $("wcClient").value.trim();
-    if (isNew || kind !== deck.meta.kind || !deckIsStarter()){
-      if (!isNew && !deckIsStarter() && kind !== deck.meta.kind && !confirm("Replace the current sections with the new template?")) return;
-      snapshot();
-      const d = newDeck(kind);
-      if (!isNew){ d.team = deck.team; d.contact = deck.contact; d.design = deck.design; d.cover = deck.cover; }
-      deck = d;
-      redoStack = [];
-    }
-    deck.meta.client = client;
-    if (client) deck.meta.title = titleIdeas(kind, client)[0] || deck.meta.title;
-    selectedId = null; currentSectionId = null; openSectionId = null;
-    hideModal();
-    syncPanels();
-    if (isNew) markClean("not saved yet");
-    render(); autosave();
-    const route = btn.dataset.route;
-    if (route === "type"){ showRail("build"); toast("Click any text on the page and type over it."); }
-    else if (route === "copilot"){ showRail("copilot"); setPromptKind("text"); }
-    else { goJSON(); }
-  });
-}
-function goJSON(){
-  showRail("copilot");
-  setPromptKind("json");
-  $("pasteCard").scrollIntoView({block:"center", behavior:"smooth"});
-  $("pasteBox").focus();
+/** New: a fresh template on the Start tab. Undo brings the previous piece back. */
+function newPresentation(){
+  if (!deckIsStarter() && !confirm("Start a new presentation?\n\nSave this one first if you need it. (Undo brings it back.)")) return;
+  snapshot();
+  const keep = {team: deck.team, contact: deck.contact, design: deck.design, cover: deck.cover};
+  deck = Object.assign(newDeck("portfolio_review"), keep);
+  selectedId = null; currentSectionId = null; openSectionId = null;
+  syncPanels(); render();
+  builtPrint = deckPrint();
+  markClean("not saved yet");
+  showRail("start");
 }
 
 /* ── Wiring ─────────────────────────────────────────────────────────────── */
@@ -1419,11 +1302,10 @@ function showRail(name){
   const panel = document.querySelector('.panel[data-panel="' + name + '"]');
   if (panel) panel.scrollTop = 0;
   if (name === "finish") buildCheckList();
-  if (name === "copilot") showPrompt();
+  if (name === "copilot"){ showPrompt(); updateSlotStatus(); }
 }
 function go(target){
-  if (target === "copilot-json") goJSON();
-  else showRail(target);
+  showRail(target);
 }
 
 function wire(){
@@ -1434,7 +1316,7 @@ function wire(){
   $("docTitle").oninput = () => { deck.meta.docTitle = $("docTitle").value; markDirty(); };
   $("btnUndo").onclick = undo;
   $("btnRedo").onclick = redo;
-  $("btnNew").onclick = () => showWelcome(true);
+  $("btnNew").onclick = newPresentation;
   $("btnOpen").onclick = () => pickFile(".json", async f => openAnyJSON(await readTextFile(f)));
   $("btnSave").onclick = saveDeck;
   $("btnSave2").onclick = saveDeck;
@@ -1512,14 +1394,7 @@ function wire(){
   $("canvas").addEventListener("drop", e => { e.preventDefault(); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
 
   /* copilot & json */
-  $("fldMessage").oninput = () => {
-    deck.sources = deck.sources || {};
-    deck.sources.message = {note: $("fldMessage").value};
-    markDirty(); showPrompt();
-  };
-  $("btnAddNum").onclick = () => { snapshot(); (deck.guideNumbers = deck.guideNumbers || []).push({k:"", v:"", note:""}); buildNumbers(); markDirty(); };
-  $("btnNumStats").onclick = () => numbersToPage("stats");
-  $("btnNumFacts").onclick = () => numbersToPage("facts");
+  wireIntake();
   $$('input[name="promptKind"]').forEach(r => r.onchange = buildPromptPicker);
   $("promptSection").onchange = () => { currentSectionId = $("promptSection").value; showPrompt(); };
   $("promptTool").onchange = showPrompt;
@@ -1669,17 +1544,15 @@ function boot(){
     const saved = localStorage.getItem(AUTOSAVE_KEY);
     if (saved) restored = JSON.parse(saved);
   } catch (e){}
-  deck = restored && restored.sections ? migrate(restored) : newDeck("plan_summary");
+  deck = restored && restored.sections ? migrate(restored) : newDeck("portfolio_review");
   $$("[data-wordmark]").forEach(n => n.appendChild(wordmark()));
   wire();
   syncPanels();
   markClean(restored ? "restored from this browser" : "not saved yet");
   render();
   if (restored) showRail("build");
+  builtPrint = restored ? "" : deckPrint();     /* a fresh template fills itself when a report is dropped */
   /* web fonts change every measurement, so lay out again once they are in */
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
-  let welcomed = false;
-  try { welcomed = !!localStorage.getItem(WELCOMED_KEY); } catch (e){}
-  if (!restored && !welcomed) showWelcome(false);
 }
 document.addEventListener("DOMContentLoaded", boot);

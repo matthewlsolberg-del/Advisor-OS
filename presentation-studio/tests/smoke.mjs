@@ -31,16 +31,17 @@ const modalOpen = () => page.evaluate(() => !document.getElementById("modal").hi
 await page.goto(file);
 await page.waitForTimeout(800);
 
-console.log("Welcome screen");
-ok(await modalOpen(), "welcome screen shows on first open");
-await shot("01-welcome");
-await page.click('#wcKinds .piece-card:has-text("Portfolio review")');
-await page.fill("#wcClient", "Robert & Anne Kowalchuk");
-await page.click('.route-btn[data-route="type"]');
+console.log("Start tab (no reports dropped: the plain template)");
+ok(!(await modalOpen()) && await page.isVisible('.panel[data-panel="start"].is-active'), "opens on the Start tab, no pop-up");
+await shot("01-start");
+await page.click('#pieceGrid .piece-card:has-text("Portfolio review")');
+await page.fill("#fldClient", "Robert & Anne Kowalchuk");
+await page.locator("#fldClient").blur();
+await page.click("#btnBuild");
 let d = await deck();
 ok(d.meta.kind === "portfolio_review", "template chosen: portfolio review");
 ok(d.meta.title === "The Kowalchuk Portfolio Review", "surname title suggested: " + d.meta.title);
-ok(await page.isVisible('.panel[data-panel="build"].is-active'), "lands on Build");
+ok(await page.isVisible('.panel[data-panel="build"].is-active'), "Build my draft lands on Edit");
 await shot("02-build");
 
 console.log("Typing on the page");
@@ -71,7 +72,9 @@ ok(!d.sections.some(s => s.blocks.some(b => b.type === "callout" && b.title === 
 
 console.log("Copilot tab: text answer");
 await page.click('.rail-tab[data-panel="copilot"]');
+await page.evaluate(() => { $("pasteBox").closest("details").open = true; });
 await shot("04-copilot");
+await page.check('input[name="promptKind"][value="text"]');
 const prompt = await page.textContent("#promptPreview");
 ok(prompt.includes("# How your money is invested"), "whole-piece prompt lists the sections");
 ok(!prompt.includes("Kowalchuk"), "client name is not put into the prompt");
@@ -106,6 +109,7 @@ const json = {
   ]
 };
 await page.click('.rail-tab[data-panel="copilot"]');
+await page.evaluate(() => { $("pasteBox").closest("details").open = true; });
 await page.fill("#pasteBox", "Here is your JSON:\n```json\n" + JSON.stringify(json, null, 2) + "\n```");
 await page.click("#btnSmartPaste");
 ok(await modalOpen(), "JSON preview shows");
@@ -167,7 +171,7 @@ await shot("10-library");
 await page.evaluate(() => hideModal());
 
 console.log("Other tabs");
-for (const [tab, n] of [["start", "11-start"], ["style", "12-style"], ["finish", "13-finish"]]) {
+for (const [tab, n] of [["start", "11-start"], ["copilot", "12-copilot"], ["finish", "13-finish"]]) {
   await page.click(`.rail-tab[data-panel="${tab}"]`);
   await page.waitForTimeout(150);
   await shot(n);

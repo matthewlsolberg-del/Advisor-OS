@@ -257,7 +257,7 @@ function money(v){
   return Number.isFinite(n) ? new Intl.NumberFormat("en-CA", {style:"currency", currency:"CAD", maximumFractionDigits:0}).format(n) : t;
 }
 function recSectionTitle(account, amount){
-  return ["What We Recommend", account, amount].filter(Boolean).join(" - ");
+  return [account, amount].filter(Boolean).join("  |  ") || "Account Recommendation";
 }
 function fitLines(v){
   const list = Array.isArray(v) ? v : String(v || "").split(/\n+/);
@@ -271,7 +271,7 @@ function makeRecommendationSection(o){
     profile: p ? structuredClone(p) : (o.profile || null)
   });
   if (!rec.howItFits.length && p) rec.howItFits = p.fitTemplate.slice(0, 4);
-  const sec = {id: uid(), kicker:"WHAT WE RECOMMEND", summary:"", recommendation:true, accountRecommendation:true,
+  const sec = {id: uid(), kicker:"OUR RECOMMENDATIONS", summary:"", recommendation:true, accountRecommendation:true,
     accountName: String(o.account || "").trim(), accountAmount: money(o.amount), portfolioId: rec.portfolioId, blocks:[rec]};
   syncRecTitle(sec);
   return sec;
@@ -295,7 +295,7 @@ function migrateRecommendations(d){
     rec.howItFits = fitLines(rec.howItFits);
     const lib = portfolioById(rec.portfolioId);
     if (lib) rec.profile = structuredClone(lib);
-    if (!sec.kicker) sec.kicker = "WHAT WE RECOMMEND";
+    if (!sec.kicker || sec.kicker === "WHAT WE RECOMMEND") sec.kicker = "OUR RECOMMENDATIONS";
     if (sec.accountName || sec.accountAmount) syncRecTitle(sec);
   });
 }

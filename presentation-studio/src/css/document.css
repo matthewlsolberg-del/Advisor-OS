@@ -411,6 +411,8 @@
 
 /* Copilot's gap markers: loud on screen and in print, so nobody misses one */
 mark.needs{background:#FFE8B3;color:#5c3a06;font-weight:600;padding:0 2px;border-radius:2px}
+mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border-radius:3px;border-bottom:1.5px dashed #D99E14}
+@media print{mark.blank{background:#FFF3C4}}
 
 /* ── Page style: Classic ─────────────────────────────────────────────────────
    The original inside pages (Oct 2): tighter margins, boxed key numbers, a
@@ -635,3 +637,115 @@ mark.needs{background:#FFE8B3;color:#5c3a06;font-weight:600;padding:0 2px;border
 .recommendation-page .rec-fit{margin-top:4px;padding-top:4px}
 .recommendation-page .rec-fit li{font-size:8.8px;line-height:11.4px;margin-bottom:0}
 .recommendation-page .rec-asat{font-size:7.5px;margin-top:3px}
+
+
+/* ── Recommendation pages and the household summary (carried from v8.7, in its order) ── */
+/* v7.1 readability patch: stronger recommendation account heading, free-form account labels,
+   and slightly larger portfolio-profile text while preserving the fixed one-page layout. */
+.recommendation-page .blk-heading:first-child .blk-h2{font-size:34px;line-height:1.02;font-weight:700;letter-spacing:-.015em;margin-bottom:6px}
+.recommendation-page .blk-heading:first-child .blk-kicker{font-size:10.2px;font-weight:700;letter-spacing:.18em}
+.recommendation-page .rec-summary{font-size:11.2px;line-height:14.1px;margin-bottom:5px}
+.recommendation-page .rec-commentary-block b{font-size:10.4px;line-height:1.15}
+.recommendation-page .rec-commentary-block span{font-size:9.8px;line-height:12.2px}
+.recommendation-page .rec-stat-label{font-size:8.4px}
+.recommendation-page .rec-stat-value{font-size:11.2px}
+.recommendation-page .rec-legend-row{font-size:8.5px;line-height:11.8px}
+.recommendation-page .rec-holdings-title{font-size:13.6px;margin-bottom:4px}
+.recommendation-page .rec-holdings-head{font-size:8.4px;padding-bottom:3px}
+.recommendation-page .rec-holding{font-size:8.7px;line-height:11px;padding:0}
+.recommendation-page .rec-fit h3{font-size:13.6px}
+.recommendation-page .rec-fit li{font-size:9.3px;line-height:11.7px;margin-bottom:0}
+.recommendation-page .rec-asat{font-size:7.8px;margin-top:2px}
+
+/* v7.2 recommendation hierarchy: section label, then account and amount. */
+.recommendation-page .blk-heading:first-child{margin-bottom:7px}
+.recommendation-page .blk-heading:first-child .blk-h2{font-size:30px;line-height:1.04;font-weight:700;letter-spacing:-.01em;margin-bottom:5px;padding-bottom:7px;border-bottom:1px solid var(--gold)}
+
+/* V8 household recommendations overview */
+.household-summary-page .page-inner{top:72px;bottom:48px}
+.household-summary-page .blk-heading:first-child{margin-bottom:10px}
+.household-summary-page .blk-heading:first-child .blk-h2{font-size:31px;line-height:1.04}
+.hh-wrap{font-family:var(--f-text);color:var(--ink)}
+.hh-intro{font-size:11.3px;line-height:15.5px;margin:0 0 9px}
+.hh-profile{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;background:var(--tint);border-top:1px solid var(--gold);border-bottom:1px solid var(--gold);padding:10px 12px;margin-bottom:10px}
+.hh-profile h3{font-family:var(--f-disp);font-size:19px;color:var(--deep);margin:0 0 4px}.hh-profile p{font-size:9.8px;line-height:13px;margin:0}
+.hh-profile-meta{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px}.hh-profile-meta span{font-size:7.4px;letter-spacing:.11em;text-transform:uppercase;color:var(--gray)}.hh-profile-meta b{display:block;font-size:10.2px;color:var(--deep);margin-top:1px}
+.hh-main{display:grid;grid-template-columns:40% 60%;gap:18px}.hh-title{font-family:var(--f-disp);font-size:15px;color:var(--deep);margin:0 0 6px}
+.hh-donut{width:176px;height:176px;display:block;margin:0 auto}.hh-legend{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;margin-top:4px}.hh-leg{display:grid;grid-template-columns:8px 1fr auto;gap:4px;align-items:center;font-size:8.1px}.hh-dot{width:8px;height:8px}
+.hh-table{width:100%;border-collapse:collapse;font-size:9px}.hh-table th{text-transform:uppercase;letter-spacing:.09em;font-size:7.3px;text-align:left;color:var(--gray);border-bottom:1px solid var(--gold);padding:0 4px 4px}.hh-table td{border-bottom:1px solid var(--hair);padding:3.5px 4px;vertical-align:top}.hh-table td:nth-child(2){text-align:right;white-space:nowrap;font-weight:700}.hh-table td:nth-child(3){font-weight:600;color:var(--deep)}.hh-total{margin-top:5px;text-align:right;font-size:9.7px;color:var(--deep);font-weight:700}
+.hh-note{margin-top:8px;border-top:1px solid var(--gold);padding-top:6px;display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.hh-note b{display:block;color:var(--green-dk);font-size:8.7px;text-transform:uppercase;margin-bottom:2px}.hh-note span{display:block;font-size:8.4px;line-height:11px}
+.recommendation-page .blk-heading:first-child .blk-h2{font-size:27px!important}.recommendation-page .blk-heading:first-child{margin-bottom:6px!important}
+
+/* V8.2 household recommendation page: full-page, unclipped, deliberate hierarchy */
+.household-summary-page .page-inner{top:74px;bottom:50px}
+.household-summary-page .blk-heading:first-child{margin-bottom:14px}
+.household-summary-page .blk-heading:first-child .blk-h2{font-size:34px;line-height:1.04;margin-bottom:8px}
+.hh-wrap{min-height:760px;display:flex;flex-direction:column}
+.hh-intro{font-size:12px;line-height:17px;margin:0 0 14px;max-width:72ch}
+.hh-profile{grid-template-columns:1fr;padding:15px 17px;margin-bottom:16px;gap:10px}
+.hh-profile h3{font-size:23px;margin-bottom:6px}.hh-profile p{font-size:11px;line-height:15.5px;max-width:78ch}
+.hh-profile-meta{grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;border-top:1px solid #d9e1d9;padding-top:9px}
+.hh-profile-meta>div{min-width:0}.hh-profile-meta span{font-size:7.6px}.hh-profile-meta b{font-size:10.5px;white-space:normal}
+.hh-main{display:block}.hh-allocation-panel{display:grid;grid-template-columns:48% 52%;gap:22px;align-items:center;border-bottom:1px solid var(--gold);padding:2px 0 14px;margin-bottom:14px}
+.hh-chart-side{min-width:0}.hh-donut{width:236px;height:236px;max-width:100%;overflow:visible;margin:0 auto}
+.hh-legend{grid-template-columns:1fr;gap:5px;margin:0;padding-right:8px}.hh-leg{font-size:10px;grid-template-columns:10px 1fr 42px;gap:7px}.hh-dot{width:10px;height:10px}
+.hh-structure{width:100%}.hh-title{font-size:18px;margin-bottom:9px}.hh-table{font-size:10.8px}.hh-table th{font-size:8px;padding:0 6px 6px}.hh-table td{padding:6px}.hh-table td:nth-child(1){width:25%}.hh-table td:nth-child(2){width:18%}.hh-table td:nth-child(3){width:57%}.hh-total{font-size:11px;margin-top:7px}
+.hh-note{margin-top:auto;padding-top:11px;gap:18px}.hh-note b{font-size:9.5px}.hh-note span{font-size:9.5px;line-height:13px}
+
+/* V8.4: editable household Investor Profile plus V8.3 readability refinements */
+.household-summary-page .page-inner{top:74px;bottom:48px}
+.hh-profile-picker{display:flex;align-items:center;gap:10px;margin:0 0 7px}
+.hh-profile-picker select{font-family:var(--f-disp);font-size:23px;line-height:1.1;color:var(--deep);font-weight:600;background:#fff;border:1px solid #b9c9bc;border-radius:5px;padding:5px 34px 5px 9px;max-width:100%;cursor:pointer}
+.hh-profile-picker select:hover,.hh-profile-picker select:focus{border-color:var(--shield);outline:2px solid rgba(66,191,25,.18)}
+.hh-profile-edit-hint{font-size:8.5px;color:var(--gray);white-space:nowrap}
+.hh-allocation-panel{grid-template-columns:52% 48%;gap:30px;padding:12px 8px 22px;margin:4px 0 18px;align-items:center}
+.hh-chart-side{padding:4px 0 6px}.hh-chart-side .hh-title{margin:0 0 16px;font-size:19px}
+.hh-donut{width:252px;height:252px;max-width:100%;overflow:visible;margin:0 auto}
+.hh-legend{gap:7px;padding:18px 12px 0 0}.hh-leg{font-size:10.4px;line-height:1.35;grid-template-columns:11px 1fr 44px;gap:8px}.hh-dot{width:11px;height:11px}
+.hh-profile-meta{grid-template-columns:1.45fr 1fr 1fr .8fr .95fr}
+.recommendation-page .rec-summary{font-size:11.45px;line-height:14.8px}
+.recommendation-page .rec-commentary-block b{font-size:10.65px;line-height:1.18}
+.recommendation-page .rec-commentary-block span{font-size:10.2px;line-height:12.8px}
+.recommendation-page .rec-stat-label{font-size:8.65px}.recommendation-page .rec-stat-value{font-size:11.45px}
+.recommendation-page .rec-holdings-title{font-size:14px}.recommendation-page .rec-holdings-head{font-size:8.7px}
+.recommendation-page .rec-holding{font-size:9.05px;line-height:11.35px;padding:.25px 0}
+.recommendation-page .rec-fit h3{font-size:14px}.recommendation-page .rec-fit li{font-size:9.65px;line-height:12.15px}
+.recommendation-page .rec-asat{font-size:8px}
+@media print{.hh-profile-picker select{appearance:none;border:0;background:transparent;padding:0;font-size:23px}.hh-profile-edit-hint{display:none}}
+
+/* V8.5: single-page summary and sidebar-only household settings */
+.household-summary-page .page-inner{top:78px;bottom:50px}
+.hh-wrap{min-height:0!important;display:block}
+.hh-page-kicker{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--kick);font-weight:700;margin:0 0 5px}
+.hh-page-title{font-family:var(--f-disp);font-size:32px;line-height:1.04;color:var(--deep);font-weight:600;margin:0 0 7px}
+.hh-page-rule{width:40px;height:2px;background:var(--gold);margin:0 0 11px}
+.hh-intro{font-size:10.7px;line-height:14.5px;margin:0 0 9px;max-width:78ch}
+.hh-profile{display:grid;grid-template-columns:1.14fr .86fr;gap:12px;padding:9px 11px;margin-bottom:9px}
+.hh-profile h3{font-size:19px;margin:0 0 3px}.hh-profile p{font-size:9.4px;line-height:12.5px;margin:0}
+.hh-profile-meta{grid-template-columns:1fr 1fr;gap:5px 12px;border-top:0;padding-top:0}.hh-profile-meta span{font-size:7.1px}.hh-profile-meta b{font-size:9.5px}
+.hh-profile-picker,.hh-profile-edit-hint{display:none!important}
+.hh-allocation-panel{grid-template-columns:49% 51%;gap:20px;padding:4px 4px 9px;margin:0 0 8px}
+.hh-chart-side{padding:0}.hh-chart-side .hh-title{font-size:15.5px;margin:0 0 5px}.hh-donut{width:204px;height:204px;margin:0 auto;overflow:visible}
+.hh-legend{gap:3px;padding:10px 8px 0 0}.hh-leg{font-size:8.8px;line-height:1.25;grid-template-columns:9px 1fr 38px;gap:6px}.hh-dot{width:9px;height:9px}
+.hh-structure .hh-title{font-size:15.5px;margin-bottom:5px}.hh-table{font-size:8.8px;line-height:1.2}.hh-table th{font-size:7px;padding:0 4px 3px}.hh-table td{padding:2.6px 4px}.hh-total{font-size:9.2px;margin-top:4px}
+.hh-note{margin-top:6px;padding-top:5px;gap:12px}.hh-note b{font-size:8px}.hh-note span{font-size:7.9px;line-height:10.2px}
+
+/* V8.6: PMP IPS profiles, prominent top total, bottom reconciliation total */
+.hh-profile{grid-template-columns:minmax(0,1.45fr) minmax(180px,.55fr);gap:14px;align-items:stretch;padding:9px 11px;margin-bottom:8px}
+.hh-profile-copy{min-width:0}.hh-profile-copy h3{font-size:18.5px;margin:0 0 3px}.hh-profile-copy p{font-size:9.2px;line-height:12.2px}
+.hh-total-card{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;text-align:right;border-left:1px solid var(--gold);padding:2px 3px 2px 14px}
+.hh-total-card span{font-size:7.5px;line-height:1.2;letter-spacing:.13em;text-transform:uppercase;color:var(--gray);font-weight:700}
+.hh-total-card b{font-family:var(--f-disp);font-size:28px;line-height:1.05;color:var(--deep);margin-top:4px;white-space:nowrap}
+.hh-profile-meta{grid-column:1/-1;grid-template-columns:1.3fr .85fr .85fr 1fr 1fr;gap:7px 10px;border-top:1px solid #d9e1d9;padding-top:6px}
+.hh-profile-meta span{font-size:6.8px}.hh-profile-meta b{font-size:8.9px;line-height:1.18}
+.hh-allocation-panel{padding:2px 4px 7px;margin:0 0 6px}.hh-donut{width:194px;height:194px}.hh-legend{padding-top:7px}
+.hh-table{font-size:8.5px}.hh-table td{padding:2.25px 4px}.hh-table th{padding-bottom:2px}
+.hh-total{display:flex;justify-content:flex-end;align-items:baseline;gap:9px;border-top:1.5px solid var(--gold);padding-top:4px;margin-top:2px;color:var(--deep)}
+.hh-total span{font-size:8px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}.hh-total b{font-family:var(--f-disp);font-size:16px}
+.hh-note{margin-top:4px;padding-top:4px}.hh-note span{font-size:7.6px;line-height:9.8px}
+
+/* V8.7: final recommendation-summary spacing */
+.hh-allocation-panel{padding-top:10px;padding-bottom:15px;margin-top:5px;margin-bottom:12px}
+.hh-chart-side .hh-title{margin-bottom:10px}
+.hh-donut{margin-top:3px;margin-bottom:9px}
+.hh-structure .hh-title{margin-top:2px;margin-bottom:6px}

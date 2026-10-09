@@ -65,6 +65,7 @@ function hasWords(v, key){
   return false;
 }
 function sectionStatus(sec){
+  if (sec.recommendationOverview) return "done";
   if (sec.accountRecommendation) return (sec.blocks || []).some(b => b.type === "recommendation" && recProfile(b)) ? "done" : "started";
   const blocks = sec.blocks || [];
   if (gapCount(blocks) && blocks.some(b => !b.seed && hasWords(b))) return "started";
@@ -250,7 +251,7 @@ function preflight(){
     const st = sectionStatus(s);
     if (st !== "done"){
       issues.push({
-        t: '“' + (s.title || "Untitled") + '” is ' + (st === "empty" ? "still empty" : "part written"),
+        t: '“' + (s.title || "Untitled") + '” ' + (st === "empty" ? "is still empty" : s.smart ? "has pre-written words to read over (or let Copilot write them)" : "is part written"),
         fix: () => { showRail("build"); jumpToSection(s); }
       });
     }
@@ -264,8 +265,7 @@ function preflight(){
 
   deck.sections.forEach(s => {
     const n = gapCount(s.blocks);
-    if (n) issues.push({t:'“' + (s.title || "Untitled") + '” still has ' + n + " note" + (n === 1 ? "" : "s") +
-      " for the advisor ([NEEDS ADVISOR INPUT] / [SOURCE CONFLICT])",
+    if (n) issues.push({t:'“' + (s.title || "Untitled") + '” has ' + n + " yellow blank" + (n === 1 ? "" : "s") + " to fill in",
       fix: () => { showRail("build"); jumpToSection(s); }});
   });
 

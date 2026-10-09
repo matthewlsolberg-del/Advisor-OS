@@ -20,6 +20,15 @@ const nfmt = (n) => {
   return String(Math.round(n * 100) / 100);
 };
 
+/** A number with its unit the way people write it: $276K, $1.5M, $4,200, 12%, 3 years. */
+const withUnit = (n, unit) => {
+  const u = String(unit || "").trim();
+  if (!u) return nfmt(n);
+  if (u.startsWith("$")) return (n < 0 ? "-$" : "$") + nfmt(Math.abs(n)) + u.slice(1);
+  if (u === "%") return nfmt(n) + "%";
+  return nfmt(n) + " " + u;
+};
+
 /* A "nice" axis top: 1, 2, 2.5 or 5 × a power of ten. */
 function niceMax(v){
   if (!(v > 0)) return 1;
@@ -158,7 +167,7 @@ function valueAxis(sc, y, padL, padR, unit){
   let g = "";
   sc.ticks.forEach(t => {
     g += `<line x1="${padL}" x2="${VIZ_W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="#E4E9E2" stroke-width="1"/>` +
-         `<text x="${padL - 9}" y="${y(t) + 4}" font-size="10.5" fill="#8b978d" text-anchor="end">${nfmt(t)}${unit && t === sc.max ? " " + svgEsc(unit) : ""}</text>`;
+         `<text x="${padL - 9}" y="${y(t) + 4}" font-size="10.5" fill="#8b978d" text-anchor="end">${svgEsc(t === sc.max ? withUnit(t, unit) : nfmt(t))}</text>`;
   });
   return g;
 }
@@ -244,11 +253,15 @@ function lineChart(labels, series, unit){
     const pts = s.values.map((v, i) => [x(i), y(Number(v) || 0)]);
     lines += `<polyline fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" ` +
              `points="${pts.map(p => p.join(",")).join(" ")}"/>`;
-    pts.forEach(p => { lines += `<circle cx="${p[0]}" cy="${p[1]}" r="3.2" fill="#fff" stroke="${col}" stroke-width="2"/>`; });
+    /* dots only while they can be told apart */
+    if (pts.length <= 26) pts.forEach(p => { lines += `<circle cx="${p[0]}" cy="${p[1]}" r="3.2" fill="#fff" stroke="${col}" stroke-width="2"/>`; });
   });
   const base = `<line x1="${padL}" x2="${VIZ_W - padR}" y1="${y(0)}" y2="${y(0)}" stroke="#002B1A" stroke-width="1.2"/>`;
-  const slotW = labels.length < 2 ? plotW : plotW / (labels.length - 1);
-  const foot = chartFoot(labels, series, x, slotW, padT + plotH, padL);
+  /* a long run (51 years, 24 months) shows about a dozen evenly spaced labels */
+  const step = Math.max(1, Math.ceil(labels.length / 12));
+  const shown = labels.map((l, i) => (i % step === 0 || i === labels.length - 1) && !(i !== labels.length - 1 && labels.length - 1 - i < step / 2) ? l : "");
+  const slotW = labels.length < 2 ? plotW : plotW / (labels.length - 1) * step;
+  const foot = chartFoot(shown, series, x, slotW, padT + plotH, padL);
   return chartFrame(foot.H, g + base + lines + foot.svg);
 }
 
@@ -298,7 +311,7 @@ function donutChart(labels, values, unit){
     rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${SEQ[i % SEQ.length]}"/>` +
             svgLines(d.lines, lx, yy, lh, `font-size="12" fill="${INK}"`) +
             `<text x="${VIZ_W - 4}" y="${yy}" font-size="12" fill="#002B1A" text-anchor="end" font-weight="600">` +
-            `${unit === "%" ? nfmt(pct) + "%" : nfmt(nums[i]) + (unit ? " " + svgEsc(unit) : "")}</text>`;
+            `${unit === "%" ? nfmt(pct) + "%" : svgEsc(withUnit(nums[i], unit))}</text>`;
     yy += 21 + (d.lines.length - 1) * lh;
   });
   return chartFrame(H, arcs + rows);
@@ -323,7 +336,7 @@ function hBarChart(labels, values, unit){
     out += svgLines(lines, padL - 12, mid + 4 - (lines.length - 1) * lh / 2, lh, `font-size="12" fill="#3C4339" text-anchor="end"`) +
            `<rect x="${padL}" y="${mid - 8.5}" width="${plotW}" height="17" fill="#F4F8F5"/>` +
            `<rect x="${bx}" y="${mid - 8.5}" width="${Math.max(1, w)}" height="17" fill="${SEQ[i % SEQ.length]}"/>` +
-           `<text x="${tx}" y="${mid + 4}" font-size="11.5" fill="#002B1A" font-weight="600"${nums[i] < 0 ? ' text-anchor="end"' : ""}>${nfmt(nums[i])}${unit ? " " + svgEsc(unit) : ""}</text>`;
+           `<text x="${tx}" y="${mid + 4}" font-size="11.5" fill="#002B1A" font-weight="600"${nums[i] < 0 ? ' text-anchor="end"' : ""}>${svgEsc(withUnit(nums[i], unit))}</text>`;
     y += rowH;
   });
   if (lo < 0) out += `<line x1="${zx}" x2="${zx}" y1="${padT}" y2="${y}" stroke="#002B1A" stroke-width="1.2"/>`;

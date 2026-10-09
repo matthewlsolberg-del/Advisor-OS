@@ -22,12 +22,15 @@ SRC = ROOT / "src"
 # Load order matters: each module uses what the ones before it define.
 TARGETS = [
     {
-        "out": "MHWG_Presentation_Studio.html", "page": "index.html", "version": "7.0",
+        "out": "MHWG_Presentation_Studio.html", "page": "index.html", "version": "9.0",
         "css": ["css/studio.css"],
+        "vendor": ["vendor/pdf.worker.min.js", "vendor/pdf.min.js"],   # pdf.js, at the very bottom
         "scripts": [
             "brand.js",       # house standards, block factory, templates
             "prompts.js",     # the Copilot prompt pack
-            "parse.js",       # paste format, Word and PDF reading
+            "parse.js",       # paste format, Word reading
+            "pdfread.js",     # PDFs read with their layout (uses the embedded pdf.js)
+            "facts.js",       # Croesus reports and financial plans -> facts
             "viz.js",         # charts and infographics as SVG
             "render.js",      # blocks to pages (the layout engine)
             "ui.js",          # toasts, modal, clipboard, files
@@ -35,7 +38,9 @@ TARGETS = [
             "docxout.js",     # the Word draft
             "workflow.js",    # status, paste-with-preview, the Finish check
             "portfolios.js",  # portfolio library and account recommendations
+            "smart.js",       # pre-filled drafts from the facts, Copilot fills the words
             "automation.js",  # Presentation JSON, smart paste, per-block Copilot
+            "intake.js",      # the Start tab (reports in) and the one-button Copilot step
             "app.js",         # the studio itself
         ],
     },
@@ -73,6 +78,11 @@ def build(t, standard):
         "{{VERSION}}": t["version"],
         "{{SCRIPTS}}": js,
     }
+    if t.get("vendor"):
+        vendor = "\n".join(read(v) for v in t["vendor"])
+        if "</script" in vendor.lower():
+            sys.exit("build: a vendored script contains '</script'")
+        parts["{{VENDOR}}"] = vendor
     for key, value in parts.items():
         if key not in html:
             sys.exit("build: " + t["page"] + " is missing " + key)

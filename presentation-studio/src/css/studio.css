@@ -361,3 +361,28 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
   .pages{display:block;padding:0;overflow:visible}
   #presentHost,#presentView,#measure{display:none !important}
 }
+
+/* ── v9: the Start tab, the one-button Copilot step ─────────────────────── */
+.btn-big{padding:12px 16px;font-size:15px;border-radius:7px}
+.mt16{margin-top:16px}
+kbd{font-family:var(--ui);font-size:11px;border:1px solid #c9d1c9;border-bottom-width:2px;border-radius:4px;padding:0 5px;background:#fff}
+.dropzone.big{padding:22px 14px;border-width:2px}
+.dropzone.big strong{font-size:15px}
+.source-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.source-row{display:flex;gap:9px;align-items:flex-start;border:1px solid #cfe6c6;background:#f3faf0;border-radius:6px;padding:8px 9px}
+.source-row > div{flex:1;min-width:0}
+.source-row b{display:block;color:var(--deep);font-size:12.5px;word-break:break-word}
+.source-row small{display:block;color:var(--gray);font-size:11px;line-height:1.4;white-space:pre-line}
+.source-row i.ok{font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--shield);color:#0d1f0a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:0 0 20px}
+.piece-card .ready-dot{font-style:normal;color:var(--shield);font-size:10px;vertical-align:1px}
+.piece-card.is-ready{border-color:#b6dca9}
+#fldNotes{font-family:var(--ui);font-size:13px;line-height:1.5}
+#btnBuild{margin-top:4px}
+.copilot-hero{border-color:#b6dca9;background:linear-gradient(#fff,#f7fbf5)}
+.big-steps{margin:0;padding-left:22px}
+.big-steps > li{margin:4px 0 14px;font-size:13px;line-height:1.5}
+.big-steps > li::marker{font-weight:700;color:var(--deep)}
+.big-steps .hint{display:block}
+.big-steps textarea{margin:6px 0}
+.help-steps{padding-left:20px}.help-steps li{margin:6px 0}
+mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border-radius:3px;border-bottom:1.5px dashed #D99E14}

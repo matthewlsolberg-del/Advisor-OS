@@ -159,7 +159,7 @@ function renderBlock(b){
         body.appendChild(editable("div","a-t", a.t, b.id, "items." + i + ".t"));
         body.appendChild(editable("div","a-d", a.d, b.id, "items." + i + ".d"));
         const meta = [a.who, a.when].filter(Boolean).join(" · ");
-        if (meta) body.appendChild(el("div","a-meta", esc(meta)));
+        if (meta) body.appendChild(el("div","a-meta", richToHtml(meta)));
         r.appendChild(body);
         g.appendChild(r);
       });
@@ -301,6 +301,7 @@ function makeMeasurer(doc){
 function newPage(deck, ctx){
   const p = el("div", "page");
   if (ctx && ctx.recommendation) p.classList.add("recommendation-page");
+  if (ctx && ctx.householdSummary) p.classList.add("household-summary-page");
   if (deck.options.watermark){
     const wm = el("div","page-watermark");
     wm.appendChild(wordmark());
@@ -426,8 +427,10 @@ function layout(deck, host){
   /* front matter -------------------------------------------------------- */
   pages.push({node: coverPage(deck), numbered:false});
 
+  /* account pages are listed once, under "Our recommendations", not one by one */
+  const tocSections = deck.sections.filter(s => !s.accountRecommendation);
   const tocCount = deck.options.toc
-    ? Math.max(1, Math.ceil(deck.sections.length / 16))
+    ? Math.max(1, Math.ceil(tocSections.length / 16))
     : 0;
   const tocSlots = [];
   for (let i = 0; i < tocCount; i++){
@@ -484,20 +487,28 @@ function layout(deck, host){
   };
 
   deck.sections.forEach((section, si) => {
-    ctx = {section: section.runningTitle || section.title || "", recommendation: !!section.recommendation};
+    const recPart = section.recommendationOverview || section.recommendation;
+    ctx = {section: recPart ? "OUR RECOMMENDATIONS" : (section.runningTitle || section.title || ""),
+           recommendation: !!section.recommendation, householdSummary: !!section.recommendationOverview};
     if (deck.options.dividers){
       pages.push({node: dividerPage(deck, section, si + 1), numbered:true});
       sectionPages[section.id] = pages.length;   /* provisional; fixed below */
       page = null;
-    } else if ((deck.options.sectionBreak || section.recommendation || (deck.sections[si - 1] || {}).recommendation) && si > 0){
+    } else if ((deck.options.sectionBreak || section.recommendation || section.recommendationOverview || (deck.sections[si - 1] || {}).recommendation) && si > 0){
       page = null;              /* each section opens a page; a recommendation always has its own */
     }
     let items = (section.blocks || []).slice();
-    if (!deck.options.dividers && !section.recommendation){
+    if (!deck.options.dividers && !section.recommendation && !section.recommendationOverview){
       items = [Object.assign(newBlock("heading"),
                 {id:"sec-" + section.id, level:2, kicker: section.kicker || "", text: section.title || "", num: si + 1})]
               .concat(items);
+    } else if (!deck.options.dividers && section.recommendation && !section.recommendationOverview){
+      /* an account page: the account and amount as its heading, then the locked profile */
+      items = [Object.assign(newBlock("heading"),
+                {id:"sec-" + section.id, level:2, kicker:"", text: section.title || "Account Recommendation"})]
+              .concat(items);
     }
+    /* the household summary carries its own title, so title and summary never split */
 
     items.forEach((b, bi) => {
       if (b.type === "pagebreak"){ page = null; return; }
@@ -583,7 +594,7 @@ function fillToc(deck, slots, sectionPages){
       body.appendChild(el("div","toc-rule"));
     }
     const list = el("ol","toc-list");
-    deck.sections.slice(pi * perPage, (pi + 1) * perPage).forEach((s, i) => {
+    deck.sections.filter(s => !s.accountRecommendation).slice(pi * perPage, (pi + 1) * perPage).forEach((s, i) => {
       const li = el("li","toc-item");
       li.appendChild(el("span","toc-num", String(pi * perPage + i + 1).padStart(2,"0")));
       li.appendChild(el("span","toc-name", esc(s.title || "")));

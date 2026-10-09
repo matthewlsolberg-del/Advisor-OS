@@ -400,6 +400,11 @@ function smartPaste(text){
     let v;
     try { v = parseJSONLoose(t); }
     catch (e){ showModal("That JSON did not read", "<pre class='prompt-preview'>" + esc(e.message) + "</pre>"); return false; }
+    if (v && !Array.isArray(v) && /^(portfolio|plan)-facts$/.test(v.kind || "")) return useFactsAnswer(t);
+    if (v && !Array.isArray(v) && v.slots && slotBlocks().length){
+      const n = applySlotAnswer(t);
+      toast(n + " boxes written by Copilot."); return true;
+    }
     if (v && !Array.isArray(v) && v.portfolioName && !v.sections){
       openPortfolioLibrary();
       $("libAdd").open = true; $("libJson").value = t; $("libCheck").click();
