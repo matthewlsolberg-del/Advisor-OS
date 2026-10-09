@@ -29,6 +29,8 @@ TARGETS = [
             "prompts.js",     # the Copilot prompt pack
             "parse.js",       # paste format, Word and PDF reading
             "pdfread.js",     # PDF text with positions (Croesus, financial plans)
+            "croesus.js",     # Croesus portfolio report → accounts, returns, holdings
+            "planread.js",    # financial plan PDF → net worth, goals, insights
             "viz.js",         # charts and infographics as SVG
             "render.js",      # blocks to pages (the layout engine)
             "ui.js",          # toasts, modal, clipboard, files

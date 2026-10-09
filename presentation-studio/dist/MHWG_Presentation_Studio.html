@@ -3402,6 +3402,665 @@ async function readPdf(file){
 }
 
 ;
+/* ═══════════════════════════════════════════════════════════════════════════
+   croesus.js — read a Croesus portfolio report (PDF) into plain figures
+   ───────────────────────────────────────────────────────────────────────────
+   Input:  the result of readPdf(file) (pdfread.js): pages → lines → cells.
+   Output: readCroesus(pdf) → {
+     household, householdCode, advisor, asOf, currency,
+     totalValue, netInvested, netInvestmentChange,
+     periods:  [{label:"1 Year", value:17.79}, …]        money-weighted, net
+     inception: "05/04/2017",
+     years:    [{year:"2026", value:16.37}, …]            calendar-year returns
+     months:   [{date:"10/07/2026", value, cashFlow, ret}, …]
+     accounts: [{number, typeText, type, group, owner, currency, value, label}, …]
+     classes:  [{name:"Canadian Equity", value, pct}, …]   Croesus' own asset classes
+     holdings: [{account, description, symbol, cls, sub, quantity, bookCost, marketValue,
+                 pct, gain, income, yield}, …]
+     totals:   {bookCost, marketValue, gain, income, yield},
+     fx:       "USD 1.000 = CAD 1.425500",
+     found:    ["5 accounts", …],   missing: ["…"], warnings: []
+   }
+   Every figure is the text printed in the report turned into a number — no
+   rounding, no arithmetic — so it always matches the source. Pieces the
+   report does not have are simply absent, and `missing` says which.
+
+   Account letters (the last character of the account number), used only when
+   the report's own account-type text does not settle it:
+     A / B  non-registered, CAD / USD (can also be a corporate account)
+     S      RRSP, LIRA or spousal RRSP
+     J      TFSA          V   RESP          E   margin (non-registered)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Small helpers ─────────────────────────────────────────────────────── */
+
+/** "$ 1,234.56" → 1234.56 · "(15.19)" → -15.19 · "0.64 %" → 0.64 · "n/d" → null */
+function croesusNumber(t){
+  let s = String(t == null ? "" : t).trim();
+  if (!s || /^n\/?d$/i.test(s)) return null;
+  const neg = /^\(.*\)$/.test(s) || /^-|\$\s*-/.test(s);
+  s = s.replace(/[()$%\s,]/g, "").replace(/^-/, "");
+  if (!/^\d+(\.\d+)?$/.test(s)) return null;
+  const n = parseFloat(s);
+  return neg ? -n : n;
+}
+const isFigure = (t) => croesusNumber(t) !== null || /^n\/?d$/i.test(String(t).trim());
+
+/** Account numbers look like 7XBN90S: letters and digits, ending in a letter. */
+const ACCOUNT_RE = /^[0-9A-Z]{5,10}$/;
+const looksLikeAccount = (t) => ACCOUNT_RE.test(t) && /\d/.test(t) && /[A-Z]$/.test(t);
+
+/** "MR. MATTHEW L SOLBERG" → "Matthew Solberg" */
+function tidyPersonName(raw){
+  return String(raw || "")
+    .replace(/\b(MR|MRS|MS|MISS|DR|MESSRS)\.?\s+/gi, "")
+    .split(/\s+/).filter(w => w && !/^[A-Z]\.?$/i.test(w))          /* drop middle initials */
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .map(w => w.replace(/(^|[-'])(\w)/g, (m, a, b) => a + b.toUpperCase()))
+    .join(" ").trim();
+}
+const firstName = (full) => String(full || "").split(" ")[0] || "";
+
+/* ── What kind of account is it? ───────────────────────────────────────── */
+
+/* group: how the review rolls accounts up — Registered, Tax-free, Non-registered,
+   Corporate, Education. type: the short name shown on the page. */
+const ACCOUNT_TEXT_RULES = [
+  [/spousal/i,                                        "Spousal RRSP", "Registered"],
+  [/locked.?in|\blira\b|\blrsp\b/i,                   "LIRA",         "Registered"],
+  [/retirement income fund|\brrif\b/i,                "RRIF",         "Registered"],
+  [/life income fund|\blif\b/i,                       "LIF",          "Registered"],
+  [/retirement savings|\brrsp\b|\brsp\b/i,            "RRSP",         "Registered"],
+  [/tax.?free savings|\btfsa\b/i,                     "TFSA",         "Tax-free"],
+  [/first home|\bfhsa\b/i,                            "FHSA",         "Tax-free"],
+  [/education|\bresp\b/i,                             "RESP",         "Education"],
+  [/disability|\brdsp\b/i,                            "RDSP",         "Registered"],
+  [/corporat|holding/i,                               "Corporate",    "Corporate"],
+  [/margin/i,                                         "Non-registered (margin)", "Non-registered"],
+  [/cash|non.?reg|individual|joint|investment/i,      "Non-registered", "Non-registered"]
+];
+const ACCOUNT_LETTERS = {
+  A: ["Non-registered (CAD)", "Non-registered"],
+  B: ["Non-registered (USD)", "Non-registered"],
+  S: ["RRSP / LIRA / spousal RRSP", "Registered"],
+  J: ["TFSA", "Tax-free"],
+  V: ["RESP", "Education"],
+  E: ["Non-registered (margin)", "Non-registered"]
+};
+
+function classifyAccount(number, typeText, owner){
+  let type = "", group = "";
+  for (const [re, t, g] of ACCOUNT_TEXT_RULES){
+    if (re.test(typeText || "")){ type = t; group = g; break; }
+  }
+  const letter = String(number || "").slice(-1).toUpperCase();
+  if (!type && ACCOUNT_LETTERS[letter]) [type, group] = ACCOUNT_LETTERS[letter];
+  /* a non-registered account in a company's name is a corporate account */
+  if (group === "Non-registered" && /\b(inc|ltd|limited|corp|corporation|holdings?|enterprises?)\b\.?/i.test(owner || "")){
+    type = "Corporate"; group = "Corporate";
+  }
+  if (!type){ type = typeText || "Account"; group = "Other"; }
+  return {type, group};
+}
+
+/** "MR. MATTHEW SOLBERG OR MRS. KELSEY SOLBERG" → {owner:"Joint", people:["Matthew","Kelsey"]} */
+function accountOwner(name){
+  const parts = String(name || "").split(/\s+(?:OR|AND|&)\s+/i).map(tidyPersonName).filter(Boolean);
+  if (parts.length > 1) return {owner: "Joint", people: parts, display: parts.map(firstName).join(" & ")};
+  if (/\b(inc|ltd|limited|corp|holdings?)\b/i.test(name || "")) return {owner: tidyPersonName(name), people: [], display: tidyPersonName(name)};
+  return {owner: parts[0] || "", people: parts, display: firstName(parts[0])};
+}
+
+/** The name people use for an account: "Matthew's RRSP", "Joint Non-registered (margin)". */
+function accountLabel(a){
+  if (a.group === "Corporate") return (a.ownerInfo.display || "Corporate") + " — Corporate account";
+  if (a.ownerInfo.owner === "Joint") return "Joint " + a.type.replace(/^Non-registered/, "non-registered");
+  const who = a.ownerInfo.display;
+  return who ? who + "'s " + a.type : a.type;
+}
+
+/* ── The report itself ─────────────────────────────────────────────────── */
+
+/** Is this PDF a Croesus portfolio report? */
+function looksLikeCroesus(pdf){
+  const t = pdf.text || "";
+  return /PORTFOLIO (EVALUATION|PERFORMANCE)|ACCOUNT DETAILS/i.test(t) && /Market Value/i.test(t) &&
+    /As of [A-Z][a-z]+ \d{1,2}, \d{4}/.test(t);
+}
+
+function readCroesus(pdf){
+  const R = {periods: [], years: [], months: [], accounts: [], classes: [], holdings: [],
+             totals: {}, found: [], missing: [], warnings: []};
+  const allLines = [];
+  pdf.pages.forEach((p, pi) => p.lines.forEach(l => allLines.push(Object.assign({page: pi}, l))));
+  const text = pdf.text || "";
+
+  /* header: advisor, household (code), as-of date, currency */
+  const hh = allLines.find(l => /\(([0-9A-Z]{3,8})\)\s*$/.test(l.text) && !/PORTFOLIO|Page/i.test(l.text));
+  if (hh){
+    const m = /^(.*?)\s*\(([0-9A-Z]{3,8})\)\s*$/.exec(hh.text);
+    R.household = m[1].trim(); R.householdCode = m[2];
+    const i = allLines.indexOf(hh);
+    const prev = allLines[i - 1];
+    if (prev && prev.page === hh.page && !/TD Wealth|PORTFOLIO/i.test(prev.text)) R.advisor = prev.text.trim();
+  }
+  const asOf = /As of ([A-Z][a-z]+ \d{1,2}, \d{4})/.exec(text);
+  if (asOf) R.asOf = asOf[1];
+  const cur = /PORTFOLIO [A-Z ()]+\((CAD|USD)\)/.exec(text);
+  R.currency = cur ? cur[1] : "CAD";
+
+  /* the summary figures, wherever they sit on the line */
+  const figureAfter = (re) => {
+    for (const l of allLines){
+      const k = l.cells.findIndex(c => re.test(c.text));
+      if (k >= 0 && l.cells[k + 1] && croesusNumber(l.cells[k + 1].text) !== null) return croesusNumber(l.cells[k + 1].text);
+    }
+    return null;
+  };
+  R.totalValue = figureAfter(/^Total Portfolio Value as of/i);
+  R.netInvested = figureAfter(/^Net Investment as of/i);
+  R.netInvestmentChange = figureAfter(/^Net Investment Variation/i);
+  if (R.totalValue == null){
+    const tv = /Total Portfolio Value:?\s*\$?\s*([\d,]+(?:\.\d+)?)/i.exec(text);
+    if (tv) R.totalValue = croesusNumber(tv[1]);
+  }
+
+  /* performance per period: "6 Months 11.02", "Since Inception 14.57" */
+  const PERIOD_RE = /^(\d+\s+(?:Months?|Years?)|Year to Date|Month to Date|Quarter to Date|Since Inception)$/i;
+  const seenPeriod = new Set();
+  allLines.forEach((l, li) => {
+    l.cells.forEach((c, k) => {
+      if (!PERIOD_RE.test(c.text) || seenPeriod.has(c.text.toLowerCase())) return;
+      const next = l.cells[k + 1];
+      const v = next && croesusNumber(next.text);
+      if (v === null || v === undefined || Math.abs(v) > 1000) return;
+      seenPeriod.add(c.text.toLowerCase());
+      R.periods.push({label: c.text.replace(/\s+/g, " "), value: v});
+      if (/inception/i.test(c.text)){
+        const below = allLines[li + 1];
+        const d = below && below.cells.find(x => /^\(\d{2}\/\d{2}\/\d{4}\)$/.test(x.text));
+        if (d) R.inception = d.text.slice(1, -1);
+      }
+    });
+  });
+
+  /* calendar-year returns: a cell that is just a year, then a percentage */
+  const perYearAt = allLines.findIndex(l => /PERFORMANCE PER YEAR/i.test(l.text));
+  if (perYearAt >= 0){
+    const page = allLines[perYearAt].page;
+    allLines.slice(perYearAt).filter(l => l.page === page).forEach(l => {
+      l.cells.forEach((c, k) => {
+        if (!/^(19|20)\d\d$/.test(c.text)) return;
+        const v = l.cells[k + 1] && croesusNumber(l.cells[k + 1].text);
+        if (v === null || v === undefined || Math.abs(v) > 500) return;
+        if (!R.years.some(y => y.year === c.text)) R.years.push({year: c.text, value: v});
+      });
+    });
+  }
+
+  /* month-end values: "09/30/2026  636,317.83  2,345.00  0.09" */
+  allLines.forEach(l => {
+    l.cells.forEach((c, k) => {
+      if (!/^\d{2}\/\d{2}\/\d{4}$/.test(c.text)) return;
+      const nums = l.cells.slice(k + 1, k + 4).map(x => croesusNumber(x.text));
+      if (nums.length < 3 || nums.some(n => n === null)) return;
+      if (R.months.some(m => m.date === c.text)) return;
+      R.months.push({date: c.text, value: nums[0], cashFlow: nums[1], ret: nums[2]});
+    });
+  });
+
+  /* accounts: the ACCOUNT DETAILS table (it can appear twice; read it once) */
+  const detailHeads = allLines.filter(l => l.cells[0] && /^Account Number$/i.test(l.cells[0].text));
+  detailHeads.forEach(head => {
+    const col = (re) => { const c = head.cells.find(x => re.test(x.text)); return c ? c.x : null; };
+    const xType = col(/Account Type/i), xName = col(/^Name$/i), xCur = col(/Currency/i);
+    let i = allLines.indexOf(head) + 1;
+    for (; i < allLines.length; i++){
+      const l = allLines[i];
+      if (l.page !== head.page) break;
+      if (!looksLikeAccount(l.cells[0].text)){ if (R.accounts.length && !/^\s*$/.test(l.text)) break; else continue; }
+      const number = l.cells[0].text;
+      if (R.accounts.some(a => a.number === number)) continue;
+      const near = (x) => l.cells.find(c => x != null && Math.abs(c.x - x) < 12);
+      const value = croesusNumber(l.cells[l.cells.length - 1].text);
+      const typeText = (near(xType) || l.cells[1] || {}).text || "";
+      const owner = (near(xName) || l.cells[2] || {}).text || "";
+      const currency = (near(xCur) || {}).text || R.currency;
+      const ownerInfo = accountOwner(owner);
+      const kind = classifyAccount(number, typeText, owner);
+      const a = {number, typeText, type: kind.type, group: kind.group, owner, ownerInfo, currency, value};
+      a.label = accountLabel(a);
+      R.accounts.push(a);
+    }
+  });
+
+  readCroesusHoldings(allLines, R);
+
+  /* exchange rate */
+  const fx = /(USD\s+1\.0+)\s*=\s*(CAD\s+[\d.]+)/.exec(text.replace(/\s{2,}/g, " "));
+  if (fx) R.fx = fx[1] + " = " + fx[2];
+
+  /* what was found, and what was not */
+  if (R.accounts.length) R.found.push(R.accounts.length + " account" + (R.accounts.length === 1 ? "" : "s"));
+  else R.missing.push("the account list (ACCOUNT DETAILS)");
+  if (R.totalValue != null) R.found.push("total value " + fmtMoney(R.totalValue, 2) + (R.asOf ? " as of " + R.asOf : ""));
+  else R.missing.push("the total portfolio value");
+  if (R.periods.length) R.found.push("returns for " + R.periods.length + " periods");
+  else R.missing.push("performance by period");
+  if (R.years.length) R.found.push(R.years.length + " calendar-year returns");
+  if (R.holdings.length) R.found.push(R.holdings.length + " holdings in " + R.classes.length + " asset classes");
+  else R.missing.push("the holdings (PORTFOLIO EVALUATION)");
+  if (R.accounts.length && R.totalValue != null){
+    const sum = R.accounts.reduce((n, a) => n + (a.value || 0), 0);
+    if (Math.abs(sum - R.totalValue) > 1) R.warnings.push("The accounts add up to " + fmtMoney(sum, 2) +
+      ", not the report's total of " + fmtMoney(R.totalValue, 2) + ". Check the account list.");
+  }
+  return R;
+}
+
+/* The PORTFOLIO EVALUATION table: asset-class headings, holdings, "Total …" rows.
+   Columns are matched by position: each figure belongs to the column whose
+   right edge it lines up with (figures are right-aligned under their heading). */
+function readCroesusHoldings(allLines, R){
+  const KEYS = [
+    ["accum", /accum/i], ["currentYield", /current/i], ["quantity", /quantity/i], ["acb", /^acb$/i],
+    ["bookCost", /book/i], ["invested", /invested/i], ["price", /price/i], ["marketValue", /market value/i],
+    ["pct", /%|total$/i], ["gain", /unrealized|g\/l/i], ["income", /annual|income/i], ["marketYield", /yield/i]
+  ];
+  let cols = null, xDesc = null, xSymbol = null;
+  const stack = [];             /* open headings: [{name, depth}] */
+  let inTable = false, last = null;
+
+  const readFigures = (cells) => {
+    const out = {};
+    cells.forEach(c => {
+      if (!isFigure(c.text)) return;
+      let best = null, gap = 9;
+      cols.forEach(col => { const g = Math.abs(col.x2 - c.x2); if (g < gap){ gap = g; best = col; } });
+      if (best && !(best.key in out)) out[best.key] = croesusNumber(c.text);
+    });
+    return out;
+  };
+
+  for (let i = 0; i < allLines.length; i++){
+    const l = allLines[i], first = l.cells[0].text;
+
+    /* the column header (repeated on every page of the table) */
+    if (/^Account$/i.test(first) && l.cells.some(c => /Description/i.test(c.text))){
+      const second = allLines[i + 1] && allLines[i + 1].page === l.page ? allLines[i + 1] : null;
+      const heads = l.cells.concat(second && !looksLikeAccount(second.cells[0].text) ? second.cells : []);
+      const groups = [];
+      heads.forEach(h => {
+        if (/^(Account|Description|Symbol)$/i.test(h.text)) return;
+        const g = groups.find(x => Math.abs(x.x2 - h.x2) < 4);
+        if (g) g.label += " " + h.text; else groups.push({x2: h.x2, label: h.text});
+      });
+      const used = new Set();
+      cols = [];
+      groups.sort((a, b) => a.x2 - b.x2).forEach(g => {
+        const k = KEYS.find(([key, re]) => !used.has(key) && re.test(g.label));
+        if (k){ used.add(k[0]); cols.push({key: k[0], x2: g.x2, label: g.label}); }
+      });
+      const d = l.cells.find(c => /^Description$/i.test(c.text)), s = l.cells.find(c => /^Symbol$/i.test(c.text));
+      xDesc = d ? d.x : null; xSymbol = s ? s.x : null;
+      inTable = true;
+      if (second && !looksLikeAccount(second.cells[0].text)) i++;
+      continue;
+    }
+    if (!inTable || !cols) continue;
+    /* the table ends at the exchange rates; a page footer pauses it until the
+       next page's column header (the page heading lines in between are skipped) */
+    if (/^(EXCHANGE RATES|ACCOUNT DETAILS|Total Portfolio Value|DISCLAIMER)/i.test(first) || /Page:\s*\d/.test(l.text)){
+      inTable = false;
+      continue;
+    }
+
+    if (looksLikeAccount(first)){
+      /* a holding */
+      const text = l.cells.filter(c => !isFigure(c.text) && c !== l.cells[0] && !/^[*x]$/.test(c.text));
+      let description = "", symbol = "";
+      text.forEach(c => {
+        if (xSymbol != null && c.x >= xSymbol - 4) symbol = symbol || c.text;
+        else if (xSymbol != null && c.x2 > xSymbol + 2){
+          /* description ran into the symbol column: its last word is the symbol */
+          const m = /^(.*\S)\s+(\S+)$/.exec(c.text);
+          if (m){ description = m[1]; symbol = m[2]; } else description = c.text;
+        } else description = description ? description + " " + c.text : c.text;
+      });
+      const f = readFigures(l.cells.slice(1));
+      const top = stack[0] ? stack[0].name : "", sub = stack.length > 1 ? stack[stack.length - 1].name : "";
+      last = {account: first, description: description.replace(/\s+/g, " ").trim(), symbol, cls: top, sub,
+        quantity: f.quantity ?? null, bookCost: f.bookCost ?? null, marketValue: f.marketValue ?? null,
+        pct: f.pct ?? null, gain: f.gain ?? null, income: f.income ?? null, yield: f.currentYield ?? null};
+      R.holdings.push(last);
+      continue;
+    }
+
+    if (/^Total\b/i.test(first)){
+      const name = first.replace(/^Total\s*/i, "").trim();
+      const f = readFigures(l.cells.slice(1));
+      if (!name){
+        R.totals = {bookCost: f.bookCost ?? null, marketValue: f.marketValue ?? null, gain: f.gain ?? null,
+                    income: f.income ?? null, yield: f.marketYield ?? f.currentYield ?? null};
+      } else {
+        const at = stack.map(s => s.name.toLowerCase()).lastIndexOf(name.toLowerCase());
+        if (at === 0) R.classes.push({name, value: f.marketValue ?? null, pct: f.pct ?? null,
+                                     income: f.income ?? null, gain: f.gain ?? null});
+        if (at >= 0) stack.length = at;
+      }
+      last = null;
+      continue;
+    }
+
+    /* one text cell: a heading, or the second line of the last holding's description */
+    if (l.cells.length === 1 && !isFigure(first)){
+      if (last && xDesc != null && l.cells[0].x >= xDesc - 4){ last.description += " " + first; continue; }
+      stack.push({name: first});
+      last = null;
+    }
+  }
+  /* a class that has a single holding has no Total row of its own in some
+     reports: fall back to adding up its holdings (marked as computed) */
+  const named = new Set(R.classes.map(c => c.name));
+  R.holdings.forEach(h => {
+    if (h.cls && !named.has(h.cls)){
+      named.add(h.cls);
+      const hs = R.holdings.filter(x => x.cls === h.cls);
+      R.classes.push({name: h.cls, value: hs.reduce((n, x) => n + (x.marketValue || 0), 0),
+        pct: hs.reduce((n, x) => n + (x.pct || 0), 0), computed: true});
+    }
+  });
+}
+
+/** 638534.59 → "$638,534.59" (dp 2) or "$638,535" (dp 0) */
+function fmtMoney(n, dp){
+  if (n == null || !isFinite(n)) return "";
+  const d = dp == null ? 0 : dp;
+  const s = Math.abs(n).toLocaleString("en-CA", {minimumFractionDigits: d, maximumFractionDigits: d});
+  return (n < 0 ? "−$" : "$") + s;
+}
+/** 17.79 → "17.79%", -15.19 → "−15.19%" */
+function fmtPct(n){
+  if (n == null || !isFinite(n)) return "";
+  return (n < 0 ? "−" : "") + Math.abs(n).toFixed(2) + "%";
+}
+
+;
+/* ═══════════════════════════════════════════════════════════════════════════
+   planread.js — read a TD financial plan (Voyant-style "Wealth Plan" PDF)
+   ───────────────────────────────────────────────────────────────────────────
+   Input:  readPdf(file) (pdfread.js).   Output: readPlan(pdf) → {
+     clients, preparedBy, date, planName, province,
+     people:   [{name, age, birthYear, retireAge, retireYear, lifeExpectancy, lifeYear}],
+     children: [{name, age, birthYear}],
+     netWorth, assets, liabilities, assetMix: [{name, pct}],
+     insights: {savingsNeed, savingsNeedNote, requiredReturn, affordableSpending,
+                lumpSum, lumpSumYear, insurance:[{person, amount, survivor}]},
+     goals:    [{name, amount, met, of}],          "met for 16 of 16 years"
+     retirement: {shortfallYears, years},
+     education: [{child, start, end, perYear, totalSpend, fromRESP, fromCashflow, shortfall}],
+     income:   [{name, value}],  savings: [{name, value}],  pensions, property, debt,
+     estate:   {year, netWorth, finalTaxes, afterTaxes},
+     projection: [{year, netWorth}],
+     assumptions: [{name, value}],
+     found, missing, warnings
+   }
+   Figures are taken exactly as printed. Plans differ — some leave out the
+   education or estate pages, some name things differently — so every part is
+   optional and `found` / `missing` say what was read. The parser never fills
+   a gap with a guess.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const money$ = (t) => { const m = /-?\$\s?-?[\d,]+(?:\.\d+)?/.exec(String(t || "")); return m ? croesusNumber(m[0]) : null; };
+
+/** Does this PDF look like a financial plan? */
+function looksLikePlan(pdf){
+  const t = pdf.text || "";
+  return /Wealth Plan|Financial Plan|Retirement Summary|Plan Analysis Synopsis|Goal Funding/i.test(t) &&
+    /Net Worth/i.test(t) && /Retirement/i.test(t);
+}
+
+function readPlan(pdf){
+  const P = {people: [], children: [], assetMix: [], insights: {insurance: []}, goals: [], retirement: {},
+             education: [], income: [], savings: [], pensions: [], property: [], debt: [], estate: null,
+             projection: [], assumptions: [], found: [], missing: [], warnings: []};
+  const L = [];
+  pdf.pages.forEach((p, pi) => p.lines.forEach(l => L.push(Object.assign({page: pi}, l))));
+  const text = pdf.text || "";
+  const flat = text.replace(/\s+/g, " ");
+
+  /* helpers over the lines -------------------------------------------- */
+  const lineIdx = (re, from) => { for (let i = from || 0; i < L.length; i++) if (re.test(L[i].text)) return i; return -1; };
+  /** the money figure in the cell right after a label on the same line */
+  const rightOf = (re) => {
+    for (const l of L){
+      const k = l.cells.findIndex(c => re.test(c.text));
+      if (k < 0) continue;
+      const inCell = money$(l.cells[k].text.replace(re, ""));
+      if (inCell !== null) return inCell;
+      for (let j = k + 1; j < l.cells.length; j++){ const v = money$(l.cells[j].text); if (v !== null) return v; }
+    }
+    return null;
+  };
+  /** the money figure printed under a label (same column, within a few lines) */
+  const below = (re, from, to) => {
+    for (let i = from || 0; i < (to || L.length); i++){
+      const c = L[i].cells.find(x => re.test(x.text));
+      if (!c) continue;
+      for (let j = i + 1; j < Math.min(i + 4, L.length); j++){
+        const hit = L[j].cells.find(x => Math.abs(x.x - c.x) < 25 && money$(x.text) !== null);
+        if (hit) return money$(hit.text);
+      }
+    }
+    return null;
+  };
+
+  /* cover ------------------------------------------------------------- */
+  const cover = pdf.pages[0] ? pdf.pages[0].lines.map(l => l.text) : [];
+  const titleAt = cover.findIndex(t => /^(Wealth|Financial|Retirement) Plan$/i.test(t.trim()));
+  if (titleAt >= 0 && cover[titleAt + 1]) P.clients = cover[titleAt + 1].trim();
+  const prep = cover.findIndex(t => /^Prepared by$/i.test(t.trim()));
+  if (prep >= 0 && cover[prep + 1]) P.preparedBy = cover[prep + 1].trim();
+  const date = /Date\s*:\s*([A-Z][a-z]+ \d{1,2}, \d{4})/.exec(text);
+  if (date) P.date = date[1];
+  const plan = /\n(?:TD Wealth\s+)?([A-Z][A-Za-z ]*?Plan(?: \d{4})?)\s*\|\s*[A-Z][a-z]+ \d{1,2}, \d{4}\s*\|/.exec(text);
+  if (plan) P.planName = plan[1].replace(/^TD Wealth\s+/, "").trim();
+
+  /* the people: "Members" table, else the household list -------------- */
+  const mem = lineIdx(/^Name\s+Birth Year\s+Age\s+Life Expectancy/i);
+  if (mem >= 0){
+    for (let i = mem + 1; i < L.length; i++){
+      const c = L[i].cells.map(x => x.text);
+      if (c.length < 3 || !/^\d{4}$/.test(c[1])) break;
+      P.people.push({name: c[0], birthYear: +c[1], age: +c[2], lifeExpectancy: +c[3] || null});
+      if (c[4] && !P.province) P.province = c[4];
+    }
+  }
+  const others = lineIdx(/^Name\s+Birth Year\s+Age\s+Person Type/i);
+  if (others >= 0){
+    for (let i = others + 1; i < L.length; i++){
+      const c = L[i].cells.map(x => x.text);
+      if (c.length < 3 || !/^\d{4}$/.test(c[1])) break;
+      if (/child|dependant/i.test(c[3] || "")) P.children.push({name: c[0], birthYear: +c[1], age: +c[2]});
+    }
+  }
+  if (!P.people.length){
+    const hh = lineIdx(/^Name\s+End of Year Age\s+Birth Year/i);
+    if (hh >= 0){
+      for (let i = hh + 1; i < L.length; i++){
+        const c = L[i].cells.map(x => x.text);
+        if (c.length < 3 || !/^\d{4}$/.test(c[2])) break;
+        P.people.push({name: c[0], age: +c[1], birthYear: +c[2]});
+      }
+    }
+  }
+  /* retirement and life expectancy, two people side by side under their
+     names (the Retirement Summary page); match each to its name by position */
+  const isName = (t) => /^[A-Z][a-z]+ [A-Z][a-z'-]+$/.test(t);
+  for (let i = 0; i < L.length; i++){
+    const rcells = L[i].cells.filter(c => /^Retirement Age:\s*\d+/.test(c.text));
+    if (!rcells.length) continue;
+    const names = L.slice(Math.max(0, i - 3), i).reverse().find(l => l.cells.length && l.cells.every(c => isName(c.text)));
+    if (!names) continue;
+    const life = L[i + 1] && L[i + 1].cells.some(c => /^Life Expectancy:/.test(c.text)) ? L[i + 1] : null;
+    const nearest = (line, x) => line.cells.reduce((b, c) => Math.abs(c.x - x) < Math.abs(b.x - x) ? c : b);
+    rcells.forEach(c => {
+      const name = nearest(names, c.x).text;
+      const m = /Retirement Age:\s*(\d+)(?:\s*\((\d{4})\))?/.exec(c.text);
+      const lm = life && /Life Expectancy:\s*(\d+)(?:\s*\((\d{4})\))?/.exec(nearest(life, c.x).text);
+      let person = P.people.find(p => p.name === name);
+      if (!person){ person = {name}; P.people.push(person); }
+      person.retireAge = +m[1]; if (m[2]) person.retireYear = +m[2];
+      if (lm){ person.lifeExpectancy = person.lifeExpectancy || +lm[1]; if (lm[2]) person.lifeYear = +lm[2]; }
+    });
+    break;
+  }
+
+  /* financial summary ------------------------------------------------- */
+  P.assets = rightOf(/^Assets\s*:/i);
+  P.liabilities = rightOf(/^Liabilities\s*:/i);
+  const nwAt = lineIdx(/^Net Worth\b.*Assets\s*:/i);
+  if (nwAt >= 0){
+    for (let i = nwAt; i < nwAt + 4 && i < L.length; i++){
+      const c = L[i].cells.find(x => /^\$[\d,]+$/.test(x.text) && x.x < L[nwAt].cells[1].x);
+      if (c){ P.netWorth = money$(c.text); break; }
+    }
+  }
+  if (P.netWorth == null && P.assets != null && P.liabilities != null){
+    P.warnings.push("Net worth was not printed where expected; it is not filled in (assets and liabilities were read).");
+  }
+  const mixAt = lineIdx(/^Goal Summary\s+Assets$/i);
+  if (mixAt >= 0){
+    for (let i = mixAt + 1; i < Math.min(mixAt + 12, L.length); i++){
+      L[i].cells.forEach((c, k) => {
+        const v = L[i].cells[k + 1];
+        if (v && /^\d+(\.\d+)?%$/.test(v.text) && /^[A-Z][A-Za-z -]+$/.test(c.text)) P.assetMix.push({name: c.text, pct: parseFloat(v.text)});
+      });
+    }
+  }
+
+  /* insights ---------------------------------------------------------- */
+  const I = P.insights;
+  let m = /Save an additional (\$[\d,]+) (annually|per year|monthly)(?: until ([^,.]+?))?[,.]/i.exec(flat);
+  if (m){ I.savingsNeed = money$(m[1]); I.savingsNeedNote = (m[3] || "").trim(); }
+  m = /A ([\d.]+)% return is needed/i.exec(flat);
+  if (m) I.requiredReturn = parseFloat(m[1]);
+  m = /afford to spend (\$[\d,]+) annually/i.exec(flat);
+  if (m) I.affordableSpending = money$(m[1]);
+  /* two columns of prose can interleave here, so allow a few words between */
+  m = /additional lump sum of\b[^$]{0,80}?(\$[\d,]+) in (\d{4})/i.exec(flat);
+  if (m){ I.lumpSum = money$(m[1]); I.lumpSumYear = +m[2]; }
+  const ins = /If (\w+) passed away today, an additional (\$[\d,]+)/gi;
+  while ((m = ins.exec(flat))){
+    if (I.insurance.some(x => x.person === m[1])) continue;
+    const other = P.people.find(p => p.name && !p.name.startsWith(m[1]) && !P.children.some(c => c.name === p.name));
+    I.insurance.push({person: m[1], amount: money$(m[2]), survivor: other ? other.name.split(" ")[0] : ""});
+  }
+
+  /* goals and how well they are funded --------------------------------- */
+  for (let i = 0; i < L.length; i++){
+    const c = L[i].cells;
+    const k = c.findIndex(x => /Goal will be met for \d+ of \d+ Years/i.test(x.text));
+    if (k < 1) continue;
+    const g = /met for (\d+) of (\d+)/i.exec(c[k].text);
+    const amt = L[i + 1] && /^\$[\d,]+\s*\/\s*yr$/i.test(L[i + 1].cells[0].text) ? money$(L[i + 1].cells[0].text) : null;
+    const name = c[0].text;
+    if (!P.goals.some(x => x.name === name)) P.goals.push({name, amount: amt, met: +g[1], of: +g[2]});
+  }
+  m = /shortfall in (\d+) of (\d+) retirement years/i.exec(flat);
+  if (m){ P.retirement.shortfallYears = +m[1]; P.retirement.years = +m[2]; }
+
+  /* education: one block per child ------------------------------------ */
+  for (let i = 0; i < L.length; i++){
+    const head = /^(.+?)'s Education Goals/i.exec(L[i].text);
+    if (!head) continue;
+    const child = head[1];
+    if (P.education.some(e => e.child === child)) continue;
+    const e = {child};
+    const span = L.slice(i, i + 6).map(l => l.text).join(" ");
+    const se = /(\d{4}) \(Age (\d+)\)\s+(\d{4}) \(Age (\d+)\)/.exec(span);
+    if (se){ e.start = +se[1]; e.end = +se[3]; }
+    const py = /(\$[\d,]+) per year/.exec(span);
+    if (py) e.perYear = money$(py[1]);
+    const brk = lineIdx(/^Spending Breakdown/i, i);
+    if (brk >= 0 && brk - i < 30){
+      const end = Math.min(brk + 30, L.length);
+      e.totalSpend = below(/^Total Education Spend:?$/i, brk, end);
+      e.fromRESP = below(/^RESP:$/i, brk, end);
+      e.fromCashflow = below(/^Cashflow:$/i, brk, end);
+      e.shortfall = below(/^Shortfall:$/i, brk, end);
+      e.respBalance = (() => { for (let j = brk; j < end; j++){ const c = L[j].cells; const k = c.findIndex(x => /^Total Current Balance:/.test(x.text)); if (k >= 0 && c[k + 1]) return money$(c[k + 1].text); } return null; })();
+    }
+    P.education.push(e);
+  }
+
+  /* the plan's inputs: income, savings, pensions, property, debt ------- */
+  const listUnder = (re, into) => {
+    const at = lineIdx(re);
+    if (at < 0) return;
+    const hdr = L[at + 1] && /^Description/i.test(L[at + 1].text) ? at + 2 : at + 1;
+    for (let i = hdr; i < L.length; i++){
+      const c = L[i].cells;
+      if (/^Total$/i.test(c[0].text)){ into.total = money$(c[c.length - 1].text); break; }
+      if (L[i].page !== L[at].page && /^(Description|Plan Analysis)/i.test(c[0].text)) continue;
+      const v = money$(c[c.length - 1].text);
+      if (v === null || c.length < 2) continue;
+      if (!/\(/.test(c[0].text) && c.length < 3) continue;           /* a wrapped "type" line */
+      into.push({name: c[0].text.replace(/\s*\(\s*/g, " (").replace(/\s*\)/g, ")").replace(/\s*,\s*/g, ", "),
+                 type: c.length >= 3 ? c[1].text : "", value: v});
+    }
+  };
+  listUnder(/^Income$/i, P.income);
+  listUnder(/^Savings and Investments$/i, P.savings);
+  listUnder(/^Pensions$/i, P.pensions);
+  listUnder(/^Property$/i, P.property);
+  listUnder(/^Debt$/i, P.debt);
+
+  /* estate (the first year column) ------------------------------------ */
+  const ages = lineIdx(/^Age\s*:.*\|/i);
+  if (ages >= 0){
+    const years = L[ages - 1] ? L[ages - 1].cells.map(c => c.text).filter(t => /^\d{4}$/.test(t)) : [];
+    const firstFig = (re) => { const i = lineIdx(re, ages); return i >= 0 ? money$(L[i].cells[1] && L[i].cells[1].text) : null; };
+    P.estate = {year: years[0] ? +years[0] : null, netWorth: firstFig(/^Net Worth Before Death Benefits/i),
+                finalTaxes: firstFig(/^Final Return Taxes Due/i), afterTaxes: firstFig(/^Estate after Taxes and Expenses/i)};
+    if (P.estate.netWorth == null && P.estate.afterTaxes == null) P.estate = null;
+  }
+
+  /* projected net worth by year (the last figure on each row) --------- */
+  const nwHead = L.filter(l => /^Years\s+Tax Free\s+Registered/i.test(l.text));
+  nwHead.forEach(h => {
+    for (let i = L.indexOf(h) + 1; i < L.length; i++){
+      const c = L[i].cells;
+      if (!/^\d{4}$/.test(c[0].text)) { if (/^TD Wealth|^\d+$/.test(c[0].text)) break; continue; }
+      const v = money$(c[c.length - 1].text);
+      if (v !== null && !P.projection.some(p => p.year === +c[0].text)) P.projection.push({year: +c[0].text, netWorth: v});
+    }
+  });
+
+  /* key assumptions ---------------------------------------------------- */
+  [["Inflation", /^Inflation$/i], ["Investment growth rate", /^Investment Growth Rate$/i],
+   ["Savings growth rate", /^Savings Growth Rate$/i], ["Property growth rate", /^Property Growth Rate$/i],
+   ["Salary growth rate", /^Salary Growth Rate$/i]].forEach(([name, re]) => {
+    for (const l of L){
+      const k = l.cells.findIndex(c => re.test(c.text));
+      if (k >= 0 && l.cells[k + 1] && /^[\d.]+%$/.test(l.cells[k + 1].text)){ P.assumptions.push({name, value: l.cells[k + 1].text}); break; }
+    }
+  });
+
+  /* what was found ----------------------------------------------------- */
+  const say = (ok, yes, no) => (ok ? P.found : P.missing).push(ok ? yes : no);
+  say(P.people.length, P.people.length + " planning client" + (P.people.length === 1 ? "" : "s") +
+    (P.children.length ? " and " + P.children.length + " child" + (P.children.length === 1 ? "" : "ren") : ""), "the people in the plan");
+  say(P.netWorth != null, "net worth " + fmtMoney(P.netWorth), "net worth");
+  say(P.goals.length, P.goals.length + " goals with funding status", "goal funding status");
+  say(I.requiredReturn != null || I.savingsNeed != null || I.affordableSpending != null, "the plan's insights", "the insights page");
+  if (P.education.length) P.found.push("education for " + P.education.map(e => e.child).join(" and "));
+  if (P.estate) P.found.push("estate summary");
+  if (P.projection.length) P.found.push("net worth projection to " + P.projection[P.projection.length - 1].year);
+  return P;
+}
+
+;
 /* ==========================================================================
    viz.js — charts and infographics, drawn as inline SVG.
 
