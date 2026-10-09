@@ -71,6 +71,7 @@ src/
 build.py              → dist/MHWG_Presentation_Studio.html and dist/MHWG_Portfolio_Builder.html
 tests/smoke.mjs       Presentation Studio end-to-end test (headless Chromium)
 tests/builder.mjs     Portfolio Builder end-to-end test (offline, checks the math by hand)
+tests/pdf-figures.mjs figures read out of PDFs (plain Node, no browser, no build)
 examples/             sample Presentation JSON
 archive/              the v6.3 file this was rebuilt from
 ```
@@ -81,6 +82,7 @@ Build and test:
 python3 build.py
 NODE_PATH=$(npm root -g) node tests/smoke.mjs [screenshot-dir]     # needs Playwright + Chromium
 NODE_PATH=$(npm root -g) node tests/builder.mjs [screenshot-dir]
+node tests/pdf-figures.mjs [folder-of-real-pdfs]                  # PDF figures; see the file's header
 ```
 
 Edit the files in `src/`, never `dist/` directly, then rebuild. The deck object is the single

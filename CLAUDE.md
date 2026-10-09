@@ -38,6 +38,7 @@ cd presentation-studio
 python3 build.py                      # builds both dist/ files from src/
 NODE_PATH=$(npm root -g) node tests/smoke.mjs     # Studio end-to-end (headless Chromium)
 NODE_PATH=$(npm root -g) node tests/builder.mjs   # Portfolio Builder end-to-end
+node tests/pdf-figures.mjs                         # figures read out of PDFs (no browser)
 ```
 
 - Edit `src/`, never `dist/` by hand; rebuild and commit both.
