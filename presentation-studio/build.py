@@ -28,6 +28,7 @@ TARGETS = [
             "brand.js",       # house standards, block factory, templates
             "prompts.js",     # the Copilot prompt pack
             "parse.js",       # paste format, Word and PDF reading
+            "pdfread.js",     # PDF text with positions (Croesus, financial plans)
             "viz.js",         # charts and infographics as SVG
             "render.js",      # blocks to pages (the layout engine)
             "ui.js",          # toasts, modal, clipboard, files
@@ -43,7 +44,7 @@ TARGETS = [
         "out": "MHWG_Portfolio_Builder.html", "page": "builder.html", "version": "1.0",
         "css": ["css/studio.css", "css/builder.css"],
         "scripts": [
-            "brand.js", "parse.js", "viz.js", "render.js", "ui.js",
+            "brand.js", "parse.js", "pdfread.js", "viz.js", "render.js", "ui.js",
             "portfolios.js",  # the same library and one-page model profiles
             "builder.js",     # households, accounts, investor profiles, the document
         ],
