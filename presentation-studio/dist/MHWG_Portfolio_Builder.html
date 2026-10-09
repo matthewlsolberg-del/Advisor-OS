@@ -337,6 +337,39 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 .welcome .lede{font-size:14px;color:var(--gray);margin:0 0 6px}
 .welcome .field{max-width:420px}
 
+/* the front door (quickstart.js): kind, files, notes, build */
+.qs h3{display:flex;align-items:center;gap:8px;margin:16px 0 8px}
+.qs h3 em{font-style:normal;font-weight:400;color:var(--muted);font-size:12px}
+.qs-n{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--deep);color:#fff;font-size:12px;
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.qs-drop{padding:22px;cursor:pointer}
+.qs textarea{width:100%;box-sizing:border-box}
+.qs-files{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.qs-file{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--hair);border-radius:6px;padding:8px 10px;background:#fff}
+.qs-file > span:nth-child(2){flex:1;min-width:0}
+.qs-file b{display:block;color:var(--deep);font-size:12.5px;overflow-wrap:anywhere}
+.qs-file small{display:block;color:var(--gray);font-size:11.5px;line-height:1.4}
+.qs-file small.qs-warn{color:#8a5a00;margin-top:3px}
+.qs-file.is-croesus,.qs-file.is-plan{border-color:var(--shield);background:var(--tint)}
+.qs-file.is-unknown{background:#fff8eb}
+.qs-icon{width:22px;text-align:center;color:var(--deep);font-size:15px}
+.qs-go{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px}
+.btn-big{padding:11px 20px;font-size:14px}
+.route-grid.two{grid-template-columns:1fr 1fr;margin-top:12px}
+
+/* the Copilot panel's two steps */
+.qc-card{border-color:var(--shield)}
+.qc-step{display:grid;grid-template-columns:30px 1fr;gap:6px;margin-bottom:12px}
+.qc-step .step-n{position:static}
+.qc-step textarea{width:100%;box-sizing:border-box}
+.qs-card .btn-big{margin-top:4px}
+details.more-copilot > summary h3{margin:0}
+details.more-copilot[open] > .card{box-shadow:none;border:1px solid var(--hair);margin:10px 0 0}
+
+/* "Next blank" above the pages */
+.btn-blank{background:#fff4b8;border-color:#e2cf6a;color:#5a4a00}
+.btn-blank:hover{background:#ffec8a}
+
 .lib-list{display:flex;flex-direction:column;gap:6px;margin:10px 0}
 .lib-row{display:flex;align-items:center;gap:6px;border:1px solid var(--hair);border-radius:6px;padding:8px 10px;background:#fff}
 .lib-main{flex:1;min-width:0}

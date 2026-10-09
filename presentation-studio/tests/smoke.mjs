@@ -36,7 +36,10 @@ ok(await modalOpen(), "welcome screen shows on first open");
 await shot("01-welcome");
 await page.click('#wcKinds .piece-card:has-text("Portfolio review")');
 await page.fill("#wcClient", "Robert & Anne Kowalchuk");
-await page.click('.route-btn[data-route="type"]');
+await page.click("#qsBuild");
+await page.waitForTimeout(300);
+ok(await page.isVisible("#drSelf"), "draft-ready screen offers the two ways to fill it in");
+await page.click("#btnModalClose");
 let d = await deck();
 ok(d.meta.kind === "portfolio_review", "template chosen: portfolio review");
 ok(d.meta.title === "The Kowalchuk Portfolio Review", "surname title suggested: " + d.meta.title);
@@ -75,9 +78,10 @@ await shot("04-copilot");
 const prompt = await page.textContent("#promptPreview");
 ok(prompt.includes("# How your money is invested"), "whole-piece prompt lists the sections");
 ok(!prompt.includes("Kowalchuk"), "client name is not put into the prompt");
-await page.fill("#pasteBox", "# How your money is invested\nThe portfolio is built for **steady growth** with some income.\n- Canadian equity anchors the mix\n- Bonds soften the swings\nTotal invested: $1,480,000\n\n# A brand new section\n> One sentence worth pulling out.");
-await page.click("#btnSmartPaste");
-ok(await modalOpen(), "preview shows before anything changes");
+ok(await page.isVisible("#btnQcCopy") && await page.isVisible("#qcAnswer"), "Copilot tab leads with the two steps");
+await page.fill("#qcAnswer", "# How your money is invested\nThe portfolio is built for **steady growth** with some income.\n- Canadian equity anchors the mix\n- Bonds soften the swings\nTotal invested: $1,480,000\n\n# A brand new section\n> One sentence worth pulling out.");
+await page.click("#btnQcApply");
+ok(await modalOpen(), "a whole-document answer shows a preview before anything changes");
 await shot("05-text-preview");
 await page.click("#pvGo");
 d = await deck();
@@ -106,6 +110,7 @@ const json = {
   ]
 };
 await page.click('.rail-tab[data-panel="copilot"]');
+await page.click("details.more-copilot > summary");
 await page.fill("#pasteBox", "Here is your JSON:\n```json\n" + JSON.stringify(json, null, 2) + "\n```");
 await page.click("#btnSmartPaste");
 ok(await modalOpen(), "JSON preview shows");
@@ -197,6 +202,41 @@ await page.reload();
 await page.waitForTimeout(700);
 d = await deck();
 ok(d.meta.title === "The Kowalchuk Plan" && !(await modalOpen()), "restored without the welcome screen");
+
+console.log("Quick start: files + notes → draft with [[blanks]] → Copilot fills them");
+await page.click("#btnNew");
+await page.waitForTimeout(200);
+ok(await page.isVisible("#qsDrop"), "New opens the front door with a drop zone");
+await page.evaluate(async () => {
+  /* a 1×1 picture and a notes file stand in for screenshots and dictation; no client data here */
+  const png = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkaPhfDwAEhgGAzE1vSgAAAABJRU5ErkJggg=="), c => c.charCodeAt(0));
+  await showWelcome.addFiles([new File([png], "screenshot.png", {type: "image/png"}),
+                              new File(["They want to help their daughter with university."], "notes.txt", {type: "text/plain"})]);
+});
+ok((await page.locator("#qsFiles .qs-file").count()) === 2, "both dropped files listed");
+await page.click('#wcKinds .piece-card[data-kind="topic"]');
+await page.fill("#qsNotes", "Talked about RESP top-ups.");
+await page.fill("#wcClient", "Test Household");
+await shot("15-quick-start");
+await page.click("#qsBuild");
+await page.waitForTimeout(300);
+ok(await page.isVisible("#drCopilot"), "draft-ready screen shows");
+await page.click("#drCopilot");
+d = await deck();
+ok(d.meta.kind === "topic" && d.meta.client === "Test Household", "kind and client taken from the front door");
+ok(d.sections.some(s => s.title === "Supporting detail" && s.blocks[0].type === "image"), "the picture got its own page");
+ok(/RESP top-ups/.test(d.sources.notes) && /daughter with university/.test(d.sources.notes), "typed notes and the notes file both kept for Copilot");
+ok(await page.isVisible("#btnNextBlank") && /1 blank/.test(await page.textContent("#btnNextBlank")), "Next blank button counts the blank");
+const qp = await page.evaluate(() => copilotPrompt());
+ok(/1\. In "Supporting detail": \[\[What this shows\]\]/.test(qp) && /RESP top-ups/.test(qp), "Copilot prompt lists the numbered blank and the notes");
+await page.click("#btnQcCopy");
+await page.fill("#qcAnswer", "Here you go:\n1. **How the RESP grows to 2031.**");
+await shot("16-copilot-two-steps");
+await page.click("#btnQcApply");
+d = await deck();
+const cap = d.sections.find(s => s.title === "Supporting detail").blocks[0].caption;
+ok(cap === "How the RESP grows to 2031.", "numbered answer dropped into its blank (" + cap + ")");
+ok(await page.isHidden("#btnNextBlank"), "no blanks left, button hidden");
 
 ok(errors.length === 0, "no script errors" + (errors.length ? ":\n    " + errors.join("\n    ") : ""));
 await browser.close();

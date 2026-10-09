@@ -40,6 +40,7 @@ TARGETS = [
             "portfolios.js",  # portfolio library and account recommendations
             "autofill.js",    # pre-written documents filled from the files
             "automation.js",  # Presentation JSON, smart paste, per-block Copilot
+            "quickstart.js",  # front door, [[blanks]], Copilot in two steps
             "app.js",         # the studio itself
         ],
     },

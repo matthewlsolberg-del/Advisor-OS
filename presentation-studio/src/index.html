@@ -47,7 +47,7 @@
     <nav class="rail-tabs" role="tablist">
       <button class="rail-tab is-active" data-panel="start"><i>1</i>Start</button>
       <button class="rail-tab" data-panel="build"><i>2</i>Build <b id="buildChip"></b></button>
-      <button class="rail-tab" data-panel="copilot"><i>3</i>Copilot&nbsp;&amp;&nbsp;JSON</button>
+      <button class="rail-tab" data-panel="copilot"><i>3</i>Copilot</button>
       <button class="rail-tab" data-panel="style"><i>4</i>Style</button>
       <button class="rail-tab" data-panel="finish"><i>5</i>Finish <b id="finishChip"></b></button>
     </nav>
@@ -58,6 +58,12 @@
         <h2>Start here</h2>
         <p>Pick what you are making and fill in the cover. The page on the right
           updates as you type.</p>
+      </div>
+      <div class="card qs-card">
+        <h3>Fastest way</h3>
+        <p class="hint">Drop the Croesus report, the financial plan, screenshots and your dictated
+          notes on one screen. The document is built for you; you fill in the blanks.</p>
+        <button class="btn btn-primary btn-wide btn-big" id="btnQuickStart">New document from files &amp; notes</button>
       </div>
       <div class="card">
         <h3>What are you making?</h3>
@@ -134,10 +140,26 @@
     <!-- 3 · COPILOT & JSON -->
     <section class="panel" data-panel="copilot">
       <div class="panel-intro">
-        <h2>Copilot &amp; JSON</h2>
-        <p>Copilot writes, this program formats. Nothing here goes online: you copy a prompt into
-          Copilot on your work machine and paste its answer back.</p>
+        <h2>Copilot</h2>
+        <p>Copilot writes the words, this program does the layout and keeps your figures. Nothing
+          here goes online: you copy, paste into Copilot, and paste its answer back.</p>
       </div>
+
+      <div class="card qc-card" id="qcCard">
+        <div class="qc-step"><span class="step-n">1</span>
+          <div><button class="btn btn-primary btn-wide btn-big" id="btnQcCopy">Copy for Copilot</button>
+            <p class="hint">Paste it into Copilot. Attach screenshots or the plan there too if you like.
+              <span id="qcWhat"></span></p></div></div>
+        <div class="qc-step"><span class="step-n">2</span>
+          <div><textarea id="qcAnswer" rows="7" spellcheck="false"
+              placeholder="Paste Copilot's whole answer here"></textarea>
+            <button class="btn btn-primary btn-wide btn-big mt8" id="btnQcApply">Put it in my document</button></div></div>
+        <p class="hint">Copilot only fills the [[blanks]] and writes the commentary. It never re-types
+          your figures, so they stay exactly as in the Croesus report and the plan.</p>
+      </div>
+
+      <details class="card more-copilot">
+      <summary><h3>More Copilot options</h3></summary>
 
       <div class="card step-card">
         <span class="step-n">1</span>
@@ -204,6 +226,7 @@
           <button class="btn" id="btnLibrary">Portfolio library</button>
         </div>
       </div>
+      </details>
     </section>
 
     <!-- 4 · STYLE -->
@@ -301,6 +324,7 @@
         <button class="btn btn-mini" id="btnZoomIn" aria-label="Zoom in">+</button>
       </div>
       <div class="canvas-status" id="pageCount"></div>
+      <button class="btn btn-mini btn-blank" id="btnNextBlank" hidden title="Jump to the next [[blank]] to fill in">Next blank</button>
       <span class="canvas-tip" id="canvasTip">Click text to edit &middot; point at a block for tools</span>
       <label class="check check-inline"><input type="checkbox" id="optEditInline" checked> Edit on the page</label>
     </div>

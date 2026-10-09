@@ -162,6 +162,7 @@ function render(){
   /* laying out again rebuilds every page; put the view back where the person was */
   host.scrollTop = keepTop; host.scrollLeft = keepLeft;
   updateChips();
+  updateBlankButton();
   const print = deckPrint();
   if (print !== lastPrint){ lastPrint = print; markDirty(); }
   updateUndoButtons();
@@ -1111,15 +1112,7 @@ async function handleFiles(files){
       } else if (name.endsWith(".json")){
         openAnyJSON(await readTextFile(f));
       } else if (name.endsWith(".pdf")){
-        const text = await readPdfText(f);
-        if (!text.trim()){
-          alert("No text came out of that PDF — it is probably a scan or an image-only export.\n\nCopy the text out of the PDF viewer and paste it, or take a screenshot and drop that in as a picture.");
-        } else {
-          $("pasteBox").value = text;
-          showRail("copilot");
-          $("pasteCard").scrollIntoView({block:"center"});
-          alert("The PDF's text is in the paste box for you to check before it goes in.\n\n" + PDF_CAVEAT);
-        }
+        await importPdfFile(f);     /* Croesus report or plan: its pages; anything else: into the notes */
       } else if (/\.(png|jpe?g|gif|webp|svg)$/.test(name)){
         const b = newBlock("image");
         b.src = await readImage(f); b.caption = "";
@@ -1370,66 +1363,11 @@ function showHelp(){
   $("btnHelpWelcome").onclick = () => showWelcome(false);
 }
 
-/** The front door: what are you making, who for, and how will you fill it in. */
-function showWelcome(isNew){
-  let kind = isNew ? "plan_summary" : deck.meta.kind;
-  showModal(isNew ? "New presentation" : "Welcome to Presentation Studio", `
-    <div class="welcome">
-      <p class="lede">Make a polished, on-brand client presentation. Pick what you are making,
-        then choose how you want to fill it in — you can mix all three.</p>
-      <h3>1 · What are you making?</h3>
-      <div class="piece-grid wide" id="wcKinds"></div>
-      <label class="field"><span>Prepared for (optional)</span><input id="wcClient" placeholder="Robert &amp; Anne Kowalchuk"></label>
-      <h3>2 · How do you want to fill it in?</h3>
-      <div class="route-grid">
-        <button class="route-btn big" data-route="type"><i>&#9998;</i><b>I'll type it</b>
-          <span>The template's sections appear with sample text. Click any text on the page and type over it.</span></button>
-        <button class="route-btn big" data-route="copilot"><i>&#10022;</i><b>Copilot writes it</b>
-          <span>Copy one prompt into Copilot with your notes, paste its answer back. Laid out for you.</span></button>
-        <button class="route-btn big" data-route="json"><i>{&#8202;}</i><b>I have JSON</b>
-          <span>A whole presentation from Copilot, a script or a coder, in one paste.</span></button>
-      </div>
-      <p class="hint center">${isNew ? "Unsaved changes to the current piece are lost — Cancel and Save first if you need them." : "Already started? <a href='#' id='wcOpen'>Open a saved file</a> or just close this."}</p>
-    </div>`, {wide:true});
-  const kinds = $("wcKinds");
-  const drawKinds = () => {
-    kinds.innerHTML = "";
-    PIECE_CARDS.forEach(c => {
-      const b = el("button", "piece-card" + (c.kind === kind ? " is-on" : ""), "<b>" + esc(c.name) + "</b><span>" + esc(c.note) + "</span>");
-      b.onclick = () => { kind = c.kind; drawKinds(); };
-      kinds.appendChild(b);
-    });
-  };
-  drawKinds();
-  if (!isNew) $("wcClient").value = deck.meta.client || "";
-  if ($("wcOpen")) $("wcOpen").onclick = (e) => { e.preventDefault(); $("btnOpen").click(); };
-  $$("#modalBody .route-btn").forEach(btn => btn.onclick = () => {
-    try { localStorage.setItem(WELCOMED_KEY, "1"); } catch (e){}
-    const client = $("wcClient").value.trim();
-    if (isNew || kind !== deck.meta.kind || !deckIsStarter()){
-      if (!isNew && !deckIsStarter() && kind !== deck.meta.kind && !confirm("Replace the current sections with the new template?")) return;
-      snapshot();
-      const d = newDeck(kind);
-      if (!isNew){ d.team = deck.team; d.contact = deck.contact; d.design = deck.design; d.cover = deck.cover; }
-      deck = d;
-      redoStack = [];
-    }
-    deck.meta.client = client;
-    if (client) deck.meta.title = titleIdeas(kind, client)[0] || deck.meta.title;
-    selectedId = null; currentSectionId = null; openSectionId = null;
-    hideModal();
-    syncPanels();
-    if (isNew) markClean("not saved yet");
-    render(); autosave();
-    const route = btn.dataset.route;
-    if (route === "type"){ showRail("build"); toast("Click any text on the page and type over it."); }
-    else if (route === "copilot"){ showRail("copilot"); setPromptKind("text"); }
-    else { goJSON(); }
-  });
-}
+/* The front door (showWelcome) lives in quickstart.js. */
 function goJSON(){
   showRail("copilot");
   setPromptKind("json");
+  document.querySelector(".more-copilot").open = true;
   $("pasteCard").scrollIntoView({block:"center", behavior:"smooth"});
   $("pasteBox").focus();
 }
@@ -1442,7 +1380,13 @@ function showRail(name){
   const panel = document.querySelector('.panel[data-panel="' + name + '"]');
   if (panel) panel.scrollTop = 0;
   if (name === "finish") buildCheckList();
-  if (name === "copilot") showPrompt();
+  if (name === "copilot"){ showPrompt(); describeCopilotStep(); }
+}
+/** The line under "Copy for Copilot": what this prompt will ask for. */
+function describeCopilotStep(){
+  const n = collectBlanks(deck).length;
+  $("qcWhat").textContent = n ? "It asks Copilot to fill the " + n + (n === 1 ? " blank" : " blanks") + " in your document, using your notes."
+                              : "No [[blanks]] left, so it asks Copilot to write the whole document from your notes.";
 }
 function go(target){
   if (target === "copilot-json") goJSON();
@@ -1464,6 +1408,14 @@ function wire(){
   $("btnPresent").onclick = present;
   $("btnPresent2").onclick = present;
   $("btnHelp").onclick = showHelp;
+  $("btnQuickStart").onclick = () => showWelcome(true);
+  $("btnNextBlank").onclick = goNextBlank;
+  $("btnQcCopy").onclick = () => copyText(copilotPrompt(), "Copied. Paste it into Copilot, then paste Copilot's answer in step 2.");
+  $("btnQcApply").onclick = () => {
+    const text = $("qcAnswer").value;
+    if (!text.trim()){ toast("Paste Copilot's answer in the box first."); return; }
+    applyCopilotAnswer(text);
+  };
   $("btnExport").onclick = () => exportPdf();
   $("btnExport2").onclick = () => exportPdf();
   $("btnModalClose").onclick = hideModal;

@@ -10,11 +10,11 @@
    ========================================================================== */
 
 const PIECE_CARDS = [
-  {kind:"plan_summary",     name:"Financial plan summary", note:"Where they stand, what the plan projects, what happens next"},
-  {kind:"portfolio_review", name:"Portfolio review",       note:"How it is invested, how it behaved, what changed"},
-  {kind:"annual_review",    name:"Annual review",          note:"The year, the portfolio, the plan, the decisions"},
-  {kind:"topic",            name:"Topic write-up",         note:"One question: options, recommendation, caveats"},
+  {kind:"portfolio_review", name:"Portfolio review",       note:"Drop in the Croesus report: accounts, mix, returns, holdings"},
+  {kind:"plan_summary",     name:"Financial plan summary", note:"Drop in the plan: where they stand, goals, what closes the gap"},
+  {kind:"annual_review",    name:"Annual review",          note:"Portfolio and plan together, plus the decisions"},
   {kind:"proposal",         name:"New-client proposal",    note:"What we heard, what we would do, how we work"},
+  {kind:"topic",            name:"Topic write-up",         note:"One question: options, recommendation, caveats"},
   {kind:"blank",            name:"Start blank",            note:"Build the sections yourself"}
 ];
 
