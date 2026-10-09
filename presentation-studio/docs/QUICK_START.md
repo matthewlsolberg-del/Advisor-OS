@@ -25,7 +25,14 @@ A portfolio review from a Croesus report takes a couple of minutes.
 | **Financial plan summary** | The financial plan (PDF) | Where you stand · goals and how well they're funded · closing the gap · projection · education · protection · estate · assumptions · next steps |
 | **Annual review** | Both | The two together, with an agenda and one set of recommendations |
 | **Investment recommendation** | Croesus report (optional) | Our recommendations (household summary) · one page per account, with the model portfolio |
+| **Prospect meeting** | Your notes (dictate them) | Thank you · what we heard · your situation today · what matters most · what we would recommend · how we would invest · planning beyond the investments · how we work · what happens next · what to bring |
 | Proposal, topic write-up, blank | — | House templates to fill in |
+
+**Planning topics, ready written.** On Edit, the **+ Add** list has sections you can drop into any
+document: RRSP to RRIF, CPP and OAS timing, pension options, retirement income, TFSA or RRSP,
+spousal RRSP, tax-loss selling, debt or investing, corporate investing, RESP, FHSA, estate,
+insurance, market update and fees. Each is written in plain language with yellow blanks for what
+is specific to the client, and Copilot fills those from your notes.
 
 **Drop in your reports.** Drag the PDFs onto the box, or click *choose files*. The report is
 read **on this computer** and the draft lays itself out: every figure comes straight from the

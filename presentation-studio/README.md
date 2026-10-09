@@ -75,6 +75,7 @@ src/
   js/pdfread.js       PDFs read with their layout (embedded pdf.js)
   js/facts.js         Croesus reports and financial plans -> facts
   js/smart.js         pre-filled drafts from the facts; one-prompt Copilot fill
+  js/content.js       ready-written wording: prospect meeting, planning topics
   js/intake.js        the Start tab and the Copilot step
   js/viz.js           charts and infographics as inline SVG
   js/render.js        the layout engine: blocks → measured, paginated pages

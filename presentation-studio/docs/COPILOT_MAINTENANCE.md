@@ -34,6 +34,8 @@ Search (Ctrl+F) for the name in the right-hand column.
 | The suggested recommendations (TFSA, legacy positions…) | smart.js | `function portfolioSuggestions` / `function planSuggestions` |
 | Investor profiles (targets and ranges) | smart.js | `const INVESTOR_PROFILES` |
 | What Copilot is told when it writes the words | smart.js | `function slotPrompt` |
+| The prospect-meeting template's wording | content.js | `TEMPLATES.prospect` |
+| The planning topics in Edit → + Add (RRIF, CPP/OAS, TFSA or RRSP, RESP…) | content.js | `const PLANNING_TOPICS` |
 | Croesus account types (A/B, S, J, V…) and labels | facts.js | `function accountKind` / `function accountLabelFor` |
 | Reading the Croesus report | facts.js | `function parseCroesus` |
 | Reading the financial plan | facts.js | `function parsePlan` |

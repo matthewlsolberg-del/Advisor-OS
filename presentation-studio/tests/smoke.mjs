@@ -215,6 +215,38 @@ ok(JSON.stringify(d).includes("We meet again in March to review"), "typing repla
 ok(await page.evaluate(() => window.getSelection().toString()) === "[[what we review]]", "the button moves on to the next blank");
 await shot("15-next-blank");
 
+console.log("Prospect meeting and planning topics");
+page.on("dialog", dlg => dlg.accept());
+await page.click('.rail-tab[data-panel="start"]');
+await page.click('#pieceGrid .piece-card:has-text("Prospect meeting")');
+await page.waitForTimeout(400);
+d = await deck();
+ok(d.meta.kind === "prospect" && d.meta.title === "Working Together", "prospect meeting laid out with its cover");
+ok(["What we heard", "Your situation today", "What we would recommend", "What happens next", "What to bring"].every(t => d.sections.some(s => s.title === t)),
+  "prospect sections: heard, situation, recommend, next, what to bring");
+await page.click('.rail-tab[data-panel="build"]');
+await page.selectOption("#presetPick", "t_cppoas");
+await page.click("#btnAddSection");
+await page.selectOption("#presetPick", "t_tfsarrsp");
+await page.click("#btnAddSection");
+await page.waitForTimeout(300);
+d = await deck();
+ok(d.sections.some(s => s.title === "When to start CPP and OAS") && d.sections.some(s => s.title === "TFSA or RRSP?"), "planning topics added from the list");
+ok((await page.locator("#presetPick optgroup").count()) >= 5, "topics grouped in the list");
+const over = await page.evaluate(() => [...document.querySelectorAll("#pages .page-overflow")].map(n => (n.closest(".page") || n).innerText.replace(/\s+/g, " ").slice(0, 80)));
+if (over.length && shots) await page.locator("#pages .page-overflow").first().locator("xpath=ancestor::*[contains(@class,'page')][1]").screenshot({path: path.join(shots, "over.png")});
+ok(over.length === 0, "prospect + topics, " + (await deck()).design.format + ": nothing runs off a page " + JSON.stringify(over));
+const sp = await page.evaluate(() => slotPrompt());
+ok(/prospect_heard/.test(sp) && /t_cppoas_you_/.test(sp), "Copilot prompt asks for the prospect and topic boxes");
+await page.evaluate(() => {
+  const ans = {slots: {}};
+  slotBlocks().forEach(({b}) => { if (b.slot === "prospect_heard") ans.slots[b.slot] = ["Retire at 60 without worry", "Help the kids with university"]; });
+  applySlotAnswer(JSON.stringify(ans));
+});
+d = await deck();
+ok(JSON.stringify(d).includes("Help the kids with university"), "Copilot's answer filled the What we heard box");
+await shot("16-prospect");
+
 ok(errors.length === 0, "no script errors" + (errors.length ? ":\n    " + errors.join("\n    ") : ""));
 await browser.close();
 console.log(failures ? `\n${failures} check(s) failed` : "\nAll checks passed");

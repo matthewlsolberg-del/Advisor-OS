@@ -499,13 +499,15 @@ const SECTION_PRESETS = [
   ["next", "What happens next", () => ({title:"What happens next", blocks:blocks(
     {type:"actions", items:[{t:"Confirm the plan", d:"Review and confirm the agreed direction.", who:"You", when:"Next meeting"},
                             {t:"Implement", d:"Complete the agreed account and portfolio changes.", who:"Us", when:"After approval"}]})})]
-];
+].concat(PLANNING_TOPICS.map(([id, name, group, make]) => [id, name, make, group]));   /* content.js */
 function addPresetSection(id){
   const p = SECTION_PRESETS.find(x => x[0] === id) || SECTION_PRESETS[0];
   const made = p[2]();
   snapshot();
   const sec = {id:uid(), title:made.title, brief:made.title, kicker:"", summary:"",
     blocks:made.blocks.map(b => Object.assign(b, {seed:true}))};
+  /* a topic added twice gets its own Copilot boxes */
+  sec.blocks.forEach(b => { if (b.slot) b.slot += "_" + sec.id; });
   deck.sections.push(sec);
   currentSectionId = openSectionId = sec.id;
   selectedId = null;
@@ -1374,7 +1376,15 @@ function wire(){
   };
 
   /* build */
-  $("presetPick").innerHTML = SECTION_PRESETS.map(([id, name]) => '<option value="' + id + '">' + esc(name) + "</option>").join("");
+  /* general sections first, then the planning topics under their groups */
+  const groups = [];
+  SECTION_PRESETS.forEach(([id, name, , group]) => {
+    const g = group || "Sections";
+    let at = groups.find(x => x.g === g);
+    if (!at) groups.push(at = {g, items: []});
+    at.items.push('<option value="' + id + '">' + esc(name) + "</option>");
+  });
+  $("presetPick").innerHTML = groups.map(x => '<optgroup label="' + esc(x.g) + '">' + x.items.join("") + "</optgroup>").join("");
   $("btnAddSection").onclick = () => addPresetSection($("presetPick").value);
   $("btnAddRec").onclick = openRecommendationDialog;
   $("btnBorrow").onclick = showBorrowDialog;

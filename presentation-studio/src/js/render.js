@@ -430,7 +430,7 @@ function layout(deck, host){
   /* account pages are listed once, under "Our recommendations", not one by one */
   const tocSections = deck.sections.filter(s => !s.accountRecommendation);
   const tocCount = deck.options.toc
-    ? Math.max(1, Math.ceil(tocSections.length / 16))
+    ? Math.max(1, Math.ceil(tocSections.length / tocPerPage(deck)))
     : 0;
   const tocSlots = [];
   for (let i = 0; i < tocCount; i++){
@@ -584,8 +584,13 @@ function layout(deck, host){
   return {pages, sectionPages};
 }
 
+/* How many entries fit on one contents page. Past a handful the list is set
+   tighter (.toc-list.is-long) so a long document still fits. */
+function tocPerPage(deck){ return deck.design.format === "slides" ? 7 : 13; }
+
 function fillToc(deck, slots, sectionPages){
-  const perPage = 16;
+  const perPage = tocPerPage(deck);
+  const long = deck.sections.filter(s => !s.accountRecommendation).length > (deck.design.format === "slides" ? 5 : 9);
   slots.forEach((p, pi) => {
     const body = p._body;
     body.innerHTML = "";
@@ -593,7 +598,7 @@ function fillToc(deck, slots, sectionPages){
       body.appendChild(el("h2","toc-title","Contents"));
       body.appendChild(el("div","toc-rule"));
     }
-    const list = el("ol","toc-list");
+    const list = el("ol","toc-list" + (long ? " is-long" : ""));
     deck.sections.filter(s => !s.accountRecommendation).slice(pi * perPage, (pi + 1) * perPage).forEach((s, i) => {
       const li = el("li","toc-item");
       li.appendChild(el("span","toc-num", String(pi * perPage + i + 1).padStart(2,"0")));

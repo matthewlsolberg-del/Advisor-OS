@@ -201,6 +201,9 @@
 .toc-dots{flex:1;border-bottom:0}
 .toc-page{font-family:var(--f-disp);font-size:14px;color:var(--gray);font-variant-numeric:tabular-nums}
 .toc-note{margin-top:26px;font-size:var(--t-cap);color:var(--gray);line-height:1.5}
+.toc-list.is-long .toc-item{padding:9px 0}
+.toc-list.is-long .toc-name{font-size:17px}
+.doc[data-format="slides"] .toc-list.is-long .toc-item{padding:6px 0}
 
 /* ── Blocks ─────────────────────────────────────────────────────────────── */
 .blk{margin:0 0 var(--gap)}
@@ -750,3 +753,11 @@ mark.blank.is-current,mark.needs.is-current{outline:2px solid #D99E14;outline-of
 .hh-chart-side .hh-title{margin-bottom:10px}
 .hh-donut{margin-top:3px;margin-bottom:9px}
 .hh-structure .hh-title{margin-top:2px;margin-bottom:6px}
+
+/* slides are landscape: profile band on top, mix and account table side by side */
+.doc[data-format="slides"] .hh-intro{display:none}
+.doc[data-format="slides"] .hh-page-title{font-size:28px}
+.doc[data-format="slides"] .hh-main{display:grid;grid-template-columns:44% 56%;gap:22px;align-items:start}
+.doc[data-format="slides"] .hh-allocation-panel{grid-template-columns:52% 48%;gap:10px;border-bottom:0;padding:0;margin:0}
+.doc[data-format="slides"] .hh-donut{width:150px;height:150px}
+.doc[data-format="slides"] .hh-note{display:none}

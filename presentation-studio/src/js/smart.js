@@ -368,8 +368,10 @@ function householdPairs(d){
     return {s, p: recProfile(b), amount: exact};
   });
   const total = recs.reduce((n, r) => n + r.amount, 0), sums = {};
+  /* the mix is of the accounts that have a portfolio; one still to choose does not dilute it */
+  const placed = recs.filter(r => r.p && r.amount).reduce((n, r) => n + r.amount, 0);
   recs.forEach(r => { if (r.p && r.amount) allocationPairs(r.p).forEach(x => { sums[x.name] = (sums[x.name] || 0) + r.amount * x.value / 100; }); });
-  return {recs, total, pairs: ALLOCATION_ORDER.map(name => ({name, value: total ? Math.round((sums[name] || 0) / total * 1000) / 10 : 0})).filter(x => x.value > .04)};
+  return {recs, total, pairs: ALLOCATION_ORDER.map(name => ({name, value: placed ? Math.round((sums[name] || 0) / placed * 1000) / 10 : 0})).filter(x => x.value > .04)};
 }
 function householdSummaryHTML(){
   const {recs, total, pairs} = householdPairs(deck);
@@ -454,18 +456,19 @@ function buildDraft(){
   ensureHouseholdSummary(deck);
   /* cover wording to suit the piece */
   const P = facts.portfolio, F = facts.plan;
-  const names = {portfolio_review: "Your Portfolio Review", plan_summary: "Your Financial Plan", annual_review: "Your Annual Review", recommendation: "Our Recommendations"};
-  const kicker = {portfolio_review: "Portfolio review", plan_summary: "Financial plan summary", annual_review: "Annual review", recommendation: "Investment recommendation"};
+  const names = {portfolio_review: "Your Portfolio Review", plan_summary: "Your Financial Plan", annual_review: "Your Annual Review", recommendation: "Our Recommendations", prospect: "Working Together"};
+  const kicker = {portfolio_review: "Portfolio review", plan_summary: "Financial plan summary", annual_review: "Annual review", recommendation: "Investment recommendation", prospect: "Our first conversation"};
   if (names[kind]){
     const sn = surnameOf(deck.meta.client);
     if (!deck.meta.title || Object.values(names).includes(deck.meta.title) || /^The .+ (Plan|Review|Portfolio Review|Portfolio|Recommendation)$/.test(deck.meta.title) || Object.values(TITLE_IDEAS).some(l => l.includes(deck.meta.title)))
-      deck.meta.title = sn ? (kind === "plan_summary" ? "The " + sn + " Plan" : kind === "recommendation" ? "The " + sn + " Portfolio" : "The " + sn + " " + (kind === "annual_review" ? "Review" : "Portfolio Review")) : names[kind];
+      deck.meta.title = kind === "prospect" ? names[kind] : sn ? (kind === "plan_summary" ? "The " + sn + " Plan" : kind === "recommendation" ? "The " + sn + " Portfolio" : "The " + sn + " " + (kind === "annual_review" ? "Review" : "Portfolio Review")) : names[kind];
     deck.meta.kicker = kicker[kind];
     deck.meta.subtitle = {
       portfolio_review: "How your money is invested, how it has done, and what we recommend." + (P && P.asOf ? " As at " + P.asOf + "." : ""),
       plan_summary: "Where you stand, where the plan is headed, and what we do next.",
       annual_review: "The year in review, where the plan stands, and the decisions ahead.",
-      recommendation: "Your investor profile, the household portfolio, and the portfolio we recommend for each account."}[kind];
+      recommendation: "Your investor profile, the household portfolio, and the portfolio we recommend for each account.",
+      prospect: TEMPLATES.prospect.subtitle}[kind];
   }
   selectedId = null; openSectionId = null;
   syncPanels(); render();
