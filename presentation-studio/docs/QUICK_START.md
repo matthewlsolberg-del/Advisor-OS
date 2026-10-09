@@ -31,7 +31,8 @@ A portfolio review from a Croesus report takes a couple of minutes.
 **Planning topics, ready written.** On Edit, the **+ Add** list has sections you can drop into any
 document: RRSP to RRIF, CPP and OAS timing, pension options, retirement income, TFSA or RRSP,
 spousal RRSP, tax-loss selling, debt or investing, corporate investing, RESP, FHSA, estate,
-insurance, market update and fees. Each is written in plain language with yellow blanks for what
+insurance, life insurance (how much and what kind, in the estate plan, owned by your
+corporation, insured retirement and estate strategies), market update and fees. Each is written in plain language with yellow blanks for what
 is specific to the client, and Copilot fills those from your notes.
 
 **Drop in your reports.** Drag the PDFs onto the box, or click *choose files*. The report is

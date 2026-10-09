@@ -4,7 +4,8 @@
    1. PROSPECT MEETING — the template for a first meeting with a prospect:
       what we heard, their situation, what we recommend, what happens next.
    2. PLANNING TOPICS — sections you add from Edit → "+ Add" (RRIF
-      conversion, CPP and OAS timing, TFSA or RRSP, RESP …). Each is written
+      conversion, CPP and OAS timing, TFSA or RRSP, RESP, life insurance,
+      corporate-owned life insurance …). Each is written
       in plain language with yellow [[blanks]] for what only you know.
 
    To change the wording, edit the text here; to add a topic, copy one entry
@@ -250,6 +251,57 @@ const PLANNING_TOPICS = [
              ["Critical illness", "A lump sum to cover costs during a serious illness"], ["Long-term care", "The cost of care later in life"]]},
     {type: "facts", items: [{k: "Coverage today", v: "[[What you have now]]"}, {k: "What the plan shows", v: "[[What would be needed]]"}]},
     {type: "paragraph", slot: "t_insurance_you", slotHint: "what we suggest for this client", text: "[[What we suggest for you]]"}
+  )})],
+
+  ["t_life", "Life insurance: how much, and what kind", "Life insurance", () => ({title: "Life insurance", blocks: blocks(
+    {type: "lead", text: "Life insurance makes sure the people who depend on you can carry on with the plan if you are not there. How much you need, and for how long, comes from your plan."},
+    {type: "bullets", style: "bullet", items: [
+      "**Debts:** the mortgage and any loans, so the family keeps the home.",
+      "**Income:** replacing the income your family would lose, for as long as they would need it.",
+      "**Goals:** education for the children and the retirement your spouse was counting on.",
+      "**Final costs and taxes:** funeral costs, and the tax due on death on RRSPs, RRIFs and investments that have grown.",
+      "**Legacy:** what you want to leave to family or to charity."]},
+    {type: "table", caption: "The main kinds of life insurance", headers: ["", "Term", "Permanent (whole life or universal life)"],
+      rows: [["How long it lasts", "A set period, such as 10 or 20 years, often renewable", "For life, as long as the policy is kept in force"],
+             ["Cost", "Lower to start; rises at renewal", "Higher, but can be set to stay level"],
+             ["Cash value", "None", "Builds a cash value that grows tax-sheltered within limits"],
+             ["Best suited to", "Needs that end: the mortgage, the working years, the children at home", "Needs that last: tax on death, estate equalization, legacy"]]},
+    {type: "facts", items: [{k: "Coverage today", v: "[[Personal and group coverage you have now]]"}, {k: "What the plan shows", v: "[[Coverage needed, and for how long]]"},
+      {k: "Gap", v: "[[Difference]]"}]},
+    {type: "callout", tone: "note", title: "Group coverage", text: "Coverage through work usually ends when you leave the job, and is often a multiple of salary rather than what the family would actually need."},
+    {type: "paragraph", slot: "t_life_you", slotHint: "what we suggest for this client's life insurance and why", text: "[[What we suggest for you, and why]]"}
+  )})],
+  ["t_life_estate", "Life insurance in your estate plan", "Life insurance", () => ({title: "Life insurance and your estate", blocks: blocks(
+    {type: "lead", text: "Life insurance can do things in an estate plan that savings cannot: it pays out in cash, at the moment it is needed, tax-free to the people you name."},
+    {type: "bullets", style: "bullet", items: [
+      "**Paying the tax on death:** on death, RRSPs and RRIFs are generally taxed as income and investments as if sold, unless they pass to a spouse. A policy can cover that bill so assets do not have to be sold.",
+      "**Straight to your beneficiaries:** a death benefit paid to a named beneficiary goes directly to them, outside the estate, without waiting for probate.",
+      "**Equalizing an estate:** when a cottage, farm or business goes to one child, insurance can leave an equal share to the others.",
+      "**Joint last-to-die:** one policy on a couple that pays on the second death, when the estate's tax is usually due.",
+      "**Giving to charity:** a policy can fund a larger gift than you could make from savings, with tax receipts for the estate or along the way."]},
+    {type: "paragraph", slot: "t_life_estate_you", slotHint: "how this applies to this client's estate", text: "[[How this applies to your estate]]"}
+  )})],
+  ["t_corp_life", "Corporate-owned life insurance", "Life insurance", () => ({title: "Life insurance owned by your corporation", blocks: blocks(
+    {type: "lead", text: "If you own a business, the company can own and pay for life insurance. Because premiums are paid with corporate dollars, which are often taxed at a lower rate than personal income, this can be an efficient way to pay for coverage you need anyway."},
+    {type: "bullets", style: "bullet", items: [
+      "**The capital dividend account:** when the company receives a death benefit, the amount above the policy's adjusted cost basis is added to its capital dividend account. That amount can then be paid out to the shareholders or the estate as a tax-free capital dividend.",
+      "**Tax on the shares at death:** a death benefit can give the company the cash to deal with the tax on your shares, without selling the business or its assets.",
+      "**Buy-sell agreements:** insurance on each owner funds the purchase of a partner's shares, so the surviving owners keep the business and the family is paid fairly.",
+      "**Key person coverage:** protects the company if the loss of an owner or key employee would hurt the business.",
+      "**Surplus earnings:** the cash value of an exempt permanent policy grows tax-sheltered inside the company, and that growth does not count as passive investment income for the small business deduction."]},
+    {type: "callout", tone: "note", title: "Premiums", text: "Premiums for a corporate-owned policy are generally not tax-deductible. Who owns the policy, who pays, and who is named as beneficiary all matter for tax, and are set with your accountant."},
+    {type: "facts", items: [{k: "Corporation", v: "[[Name and what it holds]]"}, {k: "Coverage in the company today", v: "[[Policies, if any]]"},
+      {k: "Shareholders", v: "[[Who owns the shares]]"}, {k: "Agreements", v: "[[Buy-sell or shareholder agreement in place?]]"}]},
+    {type: "paragraph", slot: "t_corp_life_you", slotHint: "how corporate-owned insurance could fit this client's company", text: "[[How this could fit your company]]"}
+  )})],
+  ["t_life_strategies", "Insured retirement and estate strategies", "Life insurance", () => ({title: "Insured retirement and estate strategies", blocks: blocks(
+    {type: "lead", text: "For business owners and families with more than they will spend, permanent life insurance can serve the estate and, in some cases, retirement as well."},
+    {type: "table", caption: "Illustrative strategies; every one depends on health, age, tax and the company's structure", headers: ["Strategy", "How it works", "What to weigh"],
+      rows: [["Corporate estate transfer", "Surplus money the company does not need is moved, over time, from taxable investments into an exempt permanent policy. At death, the benefit flows through the capital dividend account.", "Money moved into the policy is less flexible than investments. Suits money meant for the next generation."],
+             ["Insured retirement program", "The policy's cash value builds up. In retirement, a lender may lend against it, and the loan is repaid from the death benefit.", "Loans are at the lender's discretion and interest rates can change. Policy values are not guaranteed to grow as illustrated. Tax rules can change."],
+             ["Shareholder-owned, company-paid", "The owner holds the policy and the company pays the premiums.", "Usually a taxable benefit to the shareholder; ownership is decided with your accountant."]]},
+    {type: "callout", tone: "note", title: "How we would approach it", text: "We start from your plan: what the company and family need, and what is surplus. We then work with [[the insurance specialist we work with]] and your accountant before anything is put in place."},
+    {type: "paragraph", slot: "t_life_strategies_you", slotHint: "which strategy might suit this client and what we would look at next", text: "[[Which strategy might suit you, and what we would look at next]]"}
   )})],
 
   ["t_market", "Market update", "Markets & fees", () => ({title: "The markets this period", blocks: blocks(
