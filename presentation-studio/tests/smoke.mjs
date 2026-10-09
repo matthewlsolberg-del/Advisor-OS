@@ -317,6 +317,35 @@ ok(await page.isVisible("#btnSave"), "File menu holds New, Open, Save");
 await page.keyboard.press("Escape");
 await page.mouse.click(5, 300);
 
+console.log("A real mouse reaches the tools on the page");
+/* Playwright's click jumps straight to a button; a person's mouse travels there.
+   Travel from the block to its toolbar (and from a line to its ✕) in small steps. */
+const travelClick = async (from, to) => {
+  await page.mouse.move(from.x, from.y); await page.waitForTimeout(120);
+  await page.mouse.move(to.x, to.y, {steps: 12}); await page.waitForTimeout(60);
+  await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(300);
+};
+for (const type of ["paragraph", "bullets", "facts", "actions", "table", "chart"]){
+  const pos = await page.evaluate((type) => {
+    const w = document.querySelector('#pages .blk-hit[data-type="' + type + '"]'); if (!w) return null;
+    w.scrollIntoView({block: "center"});
+    const r = w.getBoundingClientRect(), bar = [...w.children].find(c => c.classList.contains("blk-quickbar"));
+    const q = [...bar.children].find(x => x.textContent.includes("Remove")).getBoundingClientRect();
+    return {bid: w.dataset.bid, from: {x: r.x + r.width * 0.4, y: r.y + 20}, to: {x: q.x + q.width / 2, y: q.y + q.height / 2}};
+  }, type);
+  if (!pos) continue;
+  await travelClick(pos.from, pos.to);
+  ok(await page.evaluate(bid => !findBlock(bid), pos.bid), "the mouse reaches ✕ Remove on a " + type);
+  await page.evaluate(() => undo());
+}
+const linePos = await page.evaluate(() => {
+  const li = document.querySelector("#pages .blk-hit li.is-editable, #pages .blk-hit .fact"); li.scrollIntoView({block: "center"});
+  const r = li.getBoundingClientRect(), x = li.querySelector(":scope > .item-del").getBoundingClientRect();
+  return {n: JSON.stringify(deck).length, from: {x: r.x + 30, y: r.y + r.height / 2}, to: {x: x.x + x.width / 2, y: x.y + x.height / 2}};
+});
+await travelClick(linePos.from, linePos.to);
+ok(await page.evaluate(n => JSON.stringify(deck).length < n, linePos.n), "the mouse reaches the ✕ on a single line");
+
 ok(errors.length === 0, "no script errors" + (errors.length ? ":\n    " + errors.join("\n    ") : ""));
 await browser.close();
 console.log(failures ? `\n${failures} check(s) failed` : "\nAll checks passed");
