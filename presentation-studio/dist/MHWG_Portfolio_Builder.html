@@ -680,6 +680,10 @@ body.builder{--rail-w:440px}
 .toc-name{font-family:var(--f-disp);font-size:19px;color:var(--deep);letter-spacing:-.01em}
 .toc-dots{flex:1;border-bottom:0}
 .toc-page{font-family:var(--f-disp);font-size:14px;color:var(--gray);font-variant-numeric:tabular-nums}
+/* a long contents list sits tighter so it still fits one page */
+.toc-list.is-long .toc-item{padding:9px 0}
+.toc-list.is-long .toc-name{font-size:17px}
+.doc[data-format="slides"] .toc-list.is-long .toc-item{padding:6px 0}
 .toc-note{margin-top:26px;font-size:var(--t-cap);color:var(--gray);line-height:1.5}
 
 /* ── Blocks ─────────────────────────────────────────────────────────────── */
@@ -891,6 +895,9 @@ body.builder{--rail-w:440px}
 
 /* Copilot's gap markers: loud on screen and in print, so nobody misses one */
 mark.needs{background:#FFE8B3;color:#5c3a06;font-weight:600;padding:0 2px;border-radius:2px}
+/* a [[blank]] from a template: fill it in (the "Next blank" button walks through them) */
+mark.blank{background:#FFF1C2;color:#6b4a00;padding:0 3px;border-radius:3px;box-shadow:inset 0 -1.5px 0 #E2B33C}
+mark.blank.is-current{background:#FFD97A;outline:2px solid #E2B33C}
 
 /* ── Page style: Classic ─────────────────────────────────────────────────────
    The original inside pages (Oct 2): tighter margins, boxed key numbers, a
@@ -1759,10 +1766,13 @@ function richToHtml(s){
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
     .replace(/==(.+?)==/g, '<em class="hl">$1</em>')    /* one highlighted phrase */
     /* Copilot's gap markers stay loud until someone fills them in */
-    .replace(/\[(NEEDS ADVISOR INPUT|SOURCE CONFLICT)\b([^\]]*)\]/gi, '<mark class="needs">[$1$2]</mark>');
+    .replace(/\[(NEEDS ADVISOR INPUT|SOURCE CONFLICT)\b([^\]]*)\]/gi, '<mark class="needs">[$1$2]</mark>')
+    /* template blanks: [[client's goal]] — highlighted until typed over */
+    .replace(/\[\[([^\]]{0,200})\]\]/g, '<mark class="blank">[[$1]]</mark>');
 }
-/** Copilot is told to write these instead of guessing. Each one is a question for the advisor. */
-const GAP_RE = /\[(?:NEEDS ADVISOR INPUT|SOURCE CONFLICT)\b[^\]]*\]/gi;
+/** Copilot is told to write these instead of guessing, and templates leave
+    [[blanks]] to fill in. Each one is a question for the advisor. */
+const GAP_RE = /\[(?:NEEDS ADVISOR INPUT|SOURCE CONFLICT)\b[^\]]*\]|\[\[[^\]]{0,200}\]\]/gi;
 function gapCount(v){ return (JSON.stringify(v || "").match(GAP_RE) || []).length; }
 /* Is this element bold? <b>/<strong>, or a span Word or Chrome styled with a
    heavy font-weight. Google Docs wraps whole pastes in <b style="font-weight:
@@ -3047,8 +3057,8 @@ const nfmt = (n) => {
   if (n == null || n === "" || isNaN(n)) return "";
   const a = Math.abs(n);
   if (a >= 1000) return n.toLocaleString("en-CA", {maximumFractionDigits:0});
-  if (a >= 100)  return n.toFixed(0);
-  if (a >= 10)   return n.toFixed(1).replace(/\.0$/,"");
+  /* below 1,000, keep up to two decimals so a return reads exactly as the
+     report prints it (35.77, not 35.8) */
   return String(Math.round(n * 100) / 100);
 };
 
@@ -3945,7 +3955,7 @@ function layout(deck, host){
   pages.push({node: coverPage(deck), numbered:false});
 
   const tocCount = deck.options.toc
-    ? Math.max(1, Math.ceil(tocSections(deck).length / 16))
+    ? Math.max(1, Math.ceil(tocSections(deck).length / tocPerPage(deck)))
     : 0;
   const tocSlots = [];
   for (let i = 0; i < tocCount; i++){
@@ -4105,8 +4115,13 @@ function layout(deck, host){
     recommendation pages ("Our recommendations" stands for all of them). */
 function tocSections(deck){ return deck.sections.filter(s => !s.accountRecommendation); }
 
+/* How many entries fit on one contents page (with the list set tighter once
+   there are more than a handful — see .toc-list.is-long). */
+function tocPerPage(deck){ return deck.design.format === "slides" ? 7 : 13; }
+
 function fillToc(deck, slots, sectionPages){
-  const perPage = 16;
+  const perPage = tocPerPage(deck);
+  const long = tocSections(deck).length > (deck.design.format === "slides" ? 5 : 9);
   slots.forEach((p, pi) => {
     const body = p._body;
     body.innerHTML = "";
@@ -4114,7 +4129,7 @@ function fillToc(deck, slots, sectionPages){
       body.appendChild(el("h2","toc-title","Contents"));
       body.appendChild(el("div","toc-rule"));
     }
-    const list = el("ol","toc-list");
+    const list = el("ol","toc-list" + (long ? " is-long" : ""));
     tocSections(deck).slice(pi * perPage, (pi + 1) * perPage).forEach((s, i) => {
       const li = el("li","toc-item");
       li.appendChild(el("span","toc-num", String(pi * perPage + i + 1).padStart(2,"0")));

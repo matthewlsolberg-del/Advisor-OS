@@ -266,7 +266,7 @@ function preflight(){
   deck.sections.forEach(s => {
     const n = gapCount(s.blocks);
     if (n) issues.push({t:'“' + (s.title || "Untitled") + '” still has ' + n + " note" + (n === 1 ? "" : "s") +
-      " for the advisor ([NEEDS ADVISOR INPUT] / [SOURCE CONFLICT])",
+      " to fill in ([[blank]] / [NEEDS ADVISOR INPUT] / [SOURCE CONFLICT])",
       fix: () => { showRail("build"); jumpToSection(s); }});
   });
 

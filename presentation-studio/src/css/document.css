@@ -200,6 +200,10 @@
 .toc-name{font-family:var(--f-disp);font-size:19px;color:var(--deep);letter-spacing:-.01em}
 .toc-dots{flex:1;border-bottom:0}
 .toc-page{font-family:var(--f-disp);font-size:14px;color:var(--gray);font-variant-numeric:tabular-nums}
+/* a long contents list sits tighter so it still fits one page */
+.toc-list.is-long .toc-item{padding:9px 0}
+.toc-list.is-long .toc-name{font-size:17px}
+.doc[data-format="slides"] .toc-list.is-long .toc-item{padding:6px 0}
 .toc-note{margin-top:26px;font-size:var(--t-cap);color:var(--gray);line-height:1.5}
 
 /* ── Blocks ─────────────────────────────────────────────────────────────── */
@@ -411,6 +415,9 @@
 
 /* Copilot's gap markers: loud on screen and in print, so nobody misses one */
 mark.needs{background:#FFE8B3;color:#5c3a06;font-weight:600;padding:0 2px;border-radius:2px}
+/* a [[blank]] from a template: fill it in (the "Next blank" button walks through them) */
+mark.blank{background:#FFF1C2;color:#6b4a00;padding:0 3px;border-radius:3px;box-shadow:inset 0 -1.5px 0 #E2B33C}
+mark.blank.is-current{background:#FFD97A;outline:2px solid #E2B33C}
 
 /* ── Page style: Classic ─────────────────────────────────────────────────────
    The original inside pages (Oct 2): tighter margins, boxed key numbers, a

@@ -1214,9 +1214,9 @@ function exportPdf(force){
   commitEdits();
   const gaps = gapCount(deck.sections.map(s => s.blocks));
   if (gaps && force !== true && force !== "gaps"){
-    showModal("Notes for the advisor are still in the text", `
-      <p>${gaps} place${gaps === 1 ? "" : "s"} still say <b>[NEEDS ADVISOR INPUT]</b> or
-      <b>[SOURCE CONFLICT]</b> — they are highlighted on the page and would print in the PDF.</p>
+    showModal("There are still blanks to fill in", `
+      <p>${gaps} place${gaps === 1 ? "" : "s"} still have a <b>[[blank]]</b>, <b>[NEEDS ADVISOR INPUT]</b> or
+      <b>[SOURCE CONFLICT]</b>. They are highlighted on the page and would print in the PDF.</p>
       <div class="modal-actions"><button class="btn btn-ghost" id="btnGapsAnyway">Export anyway</button>
          <button class="btn btn-primary" id="btnShowGaps">Show me</button></div>`);
     $("btnShowGaps").onclick = () => { hideModal(); showRail("finish"); };

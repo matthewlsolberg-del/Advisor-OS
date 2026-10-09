@@ -21,10 +21,13 @@ function richToHtml(s){
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
     .replace(/==(.+?)==/g, '<em class="hl">$1</em>')    /* one highlighted phrase */
     /* Copilot's gap markers stay loud until someone fills them in */
-    .replace(/\[(NEEDS ADVISOR INPUT|SOURCE CONFLICT)\b([^\]]*)\]/gi, '<mark class="needs">[$1$2]</mark>');
+    .replace(/\[(NEEDS ADVISOR INPUT|SOURCE CONFLICT)\b([^\]]*)\]/gi, '<mark class="needs">[$1$2]</mark>')
+    /* template blanks: [[client's goal]] — highlighted until typed over */
+    .replace(/\[\[([^\]]{0,200})\]\]/g, '<mark class="blank">[[$1]]</mark>');
 }
-/** Copilot is told to write these instead of guessing. Each one is a question for the advisor. */
-const GAP_RE = /\[(?:NEEDS ADVISOR INPUT|SOURCE CONFLICT)\b[^\]]*\]/gi;
+/** Copilot is told to write these instead of guessing, and templates leave
+    [[blanks]] to fill in. Each one is a question for the advisor. */
+const GAP_RE = /\[(?:NEEDS ADVISOR INPUT|SOURCE CONFLICT)\b[^\]]*\]|\[\[[^\]]{0,200}\]\]/gi;
 function gapCount(v){ return (JSON.stringify(v || "").match(GAP_RE) || []).length; }
 /* Is this element bold? <b>/<strong>, or a span Word or Chrome styled with a
    heavy font-weight. Google Docs wraps whole pastes in <b style="font-weight:

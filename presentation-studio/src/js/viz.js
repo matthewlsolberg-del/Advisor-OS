@@ -15,8 +15,8 @@ const nfmt = (n) => {
   if (n == null || n === "" || isNaN(n)) return "";
   const a = Math.abs(n);
   if (a >= 1000) return n.toLocaleString("en-CA", {maximumFractionDigits:0});
-  if (a >= 100)  return n.toFixed(0);
-  if (a >= 10)   return n.toFixed(1).replace(/\.0$/,"");
+  /* below 1,000, keep up to two decimals so a return reads exactly as the
+     report prints it (35.77, not 35.8) */
   return String(Math.round(n * 100) / 100);
 };
 

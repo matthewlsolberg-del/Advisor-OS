@@ -38,6 +38,7 @@ TARGETS = [
             "docxout.js",     # the Word draft
             "workflow.js",    # status, paste-with-preview, the Finish check
             "portfolios.js",  # portfolio library and account recommendations
+            "autofill.js",    # pre-written documents filled from the files
             "automation.js",  # Presentation JSON, smart paste, per-block Copilot
             "app.js",         # the studio itself
         ],
