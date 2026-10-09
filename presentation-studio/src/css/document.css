@@ -413,6 +413,7 @@
 mark.needs{background:#FFE8B3;color:#5c3a06;font-weight:600;padding:0 2px;border-radius:2px}
 mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border-radius:3px;border-bottom:1.5px dashed #D99E14}
 @media print{mark.blank{background:#FFF3C4}}
+mark.blank.is-current,mark.needs.is-current{outline:2px solid #D99E14;outline-offset:1px}
 
 /* ── Page style: Classic ─────────────────────────────────────────────────────
    The original inside pages (Oct 2): tighter margins, boxed key numbers, a

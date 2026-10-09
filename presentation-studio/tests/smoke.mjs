@@ -195,6 +195,26 @@ await page.waitForTimeout(700);
 d = await deck();
 ok(d.meta.title === "The Kowalchuk Plan" && !(await modalOpen()), "restored without the welcome screen");
 
+console.log("Next blank");
+await page.evaluate(() => {
+  const b = newBlock("paragraph");
+  b.text = "We meet again in [[month]] to review [[what we review]].";
+  deck.sections[0].blocks.push(b);
+  render();
+});
+await page.waitForTimeout(200);
+ok(/2 blanks/.test(await page.textContent("#btnNextBlank")), "Next blank counts the blanks on the page");
+await page.click("#btnNextBlank");
+await page.waitForTimeout(300);
+ok(await page.evaluate(() => window.getSelection().toString()) === "[[month]]", "first blank selected, ready to type over");
+await page.keyboard.type("March");
+await page.click("#btnNextBlank");
+await page.waitForTimeout(400);
+d = await deck();
+ok(JSON.stringify(d).includes("We meet again in March to review"), "typing replaced the blank in the deck");
+ok(await page.evaluate(() => window.getSelection().toString()) === "[[what we review]]", "the button moves on to the next blank");
+await shot("15-next-blank");
+
 ok(errors.length === 0, "no script errors" + (errors.length ? ":\n    " + errors.join("\n    ") : ""));
 await browser.close();
 console.log(failures ? `\n${failures} check(s) failed` : "\nAll checks passed");

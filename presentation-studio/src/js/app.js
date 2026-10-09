@@ -162,6 +162,7 @@ function render(){
   /* laying out again rebuilds every page; put the view back where the person was */
   host.scrollTop = keepTop; host.scrollLeft = keepLeft;
   updateChips();
+  updateBlankButton();
   const print = deckPrint();
   if (print !== lastPrint){ lastPrint = print; markDirty(); }
   updateUndoButtons();

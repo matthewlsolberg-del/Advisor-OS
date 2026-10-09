@@ -396,6 +396,10 @@ kbd{font-family:var(--ui);font-size:11px;border:1px solid #c9d1c9;border-bottom-
 .big-steps textarea{margin:6px 0}
 .help-steps{padding-left:20px}.help-steps li{margin:6px 0}
 mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border-radius:3px;border-bottom:1.5px dashed #D99E14}
+
+/* "Next blank" above the pages (intake.js) */
+.btn-blank{background:#fff4b8;border-color:#e2cf6a;color:#5a4a00}
+.btn-blank:hover{background:#ffec8a}
 </style>
 <style>/* ==========================================================================
    The document — US Letter pages, TD 2026 Premium palette, MHWG house style.
@@ -812,6 +816,7 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 mark.needs{background:#FFE8B3;color:#5c3a06;font-weight:600;padding:0 2px;border-radius:2px}
 mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border-radius:3px;border-bottom:1.5px dashed #D99E14}
 @media print{mark.blank{background:#FFF3C4}}
+mark.blank.is-current,mark.needs.is-current{outline:2px solid #D99E14;outline-offset:1px}
 
 /* ── Page style: Classic ─────────────────────────────────────────────────────
    The original inside pages (Oct 2): tighter margins, boxed key numbers, a
@@ -1417,6 +1422,7 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
         <button class="btn btn-mini" id="btnZoomIn" aria-label="Zoom in">+</button>
       </div>
       <div class="canvas-status" id="pageCount"></div>
+      <button class="btn btn-mini btn-blank" id="btnNextBlank" hidden title="Jump to the next yellow blank and select it, so you just type">Next blank</button>
       <span class="canvas-tip" id="canvasTip">Click text to edit &middot; point at a block for tools</span>
       <label class="check check-inline"><input type="checkbox" id="optEditInline" checked> Edit on the page</label>
     </div>
@@ -7363,6 +7369,51 @@ function setProfile(name){
   syncPanels(); render();
 }
 
+/* ── Next blank: walk the yellow blanks on the page ─────────────────────── */
+
+/* Each press selects the next [[blank]] (or NEEDS ADVISOR INPUT note) on the
+   page, so the advisor just types over it. lastBlank remembers where we were,
+   because the pages are laid out again after every edit. */
+let lastBlank = null;      /* {bid, i, order} of the blank shown last */
+function goNextBlank(){
+  const marks = $$("#pages mark.blank, #pages mark.needs");
+  if (!marks.length){ toast("No blanks left: every yellow blank is filled in."); updateBlankButton(); return; }
+  const hits = $$("#pages .blk-hit").map(h => h.dataset.bid);
+  const where = marks.map(m => {
+    const hit = m.closest(".blk-hit");
+    const bid = hit ? hit.dataset.bid : "";
+    return {m, bid, order: hits.indexOf(bid), i: hit ? $$("mark.blank, mark.needs", hit).indexOf(m) : 0};
+  });
+  let k = 0;
+  if (lastBlank){
+    const same = where.findIndex(w => w.bid === lastBlank.bid && w.i === lastBlank.i);
+    /* still there (skipped): go past it; filled: the next one from the same place */
+    k = same >= 0 ? (same + 1) % where.length
+      : Math.max(0, where.findIndex(w => w.order > lastBlank.order || (w.bid === lastBlank.bid && w.i >= lastBlank.i)));
+  }
+  const w = where[k];
+  lastBlank = {bid: w.bid, i: w.i, order: w.order};
+  marks.forEach(x => x.classList.remove("is-current"));
+  w.m.classList.add("is-current");
+  w.m.scrollIntoView({block: "center", behavior: "smooth"});
+  const ed = w.m.closest('[contenteditable="true"]');
+  if (ed){
+    ed.focus();
+    const r = document.createRange();
+    r.selectNodeContents(w.m);
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(r);
+  } else if (w.bid && findBlock(w.bid)) selectBlock(w.bid, false);
+}
+/** The count on the "Next blank" button above the pages; hidden when there are none. */
+function updateBlankButton(){
+  const btn = $("btnNextBlank");
+  if (!btn) return;
+  const n = gapCount(deck.sections.map(s => s.blocks));
+  btn.hidden = !n;
+  btn.innerHTML = n + (n === 1 ? " blank" : " blanks") + " &middot; <b>Next &rarr;</b>";
+}
+
 /* ── Copilot: one prompt, one answer ─────────────────────────────────────── */
 
 function updateSlotStatus(){
@@ -7397,6 +7448,7 @@ function wireIntake(){
     doBuild(); showRail("build");
     toast("Draft laid out — fill in the yellow blanks, or let Copilot write the words (tab 3).", 5000);
   };
+  $("btnNextBlank").onclick = goNextBlank;
   $("btnCopySlots").onclick = copySlotPrompt;
   $("btnApplySlots").onclick = applySlots;
   $("slotAnswer").addEventListener("paste", () => setTimeout(applySlots, 60));
@@ -7576,6 +7628,7 @@ function render(){
   /* laying out again rebuilds every page; put the view back where the person was */
   host.scrollTop = keepTop; host.scrollLeft = keepLeft;
   updateChips();
+  updateBlankButton();
   const print = deckPrint();
   if (print !== lastPrint){ lastPrint = print; markDirty(); }
   updateUndoButtons();

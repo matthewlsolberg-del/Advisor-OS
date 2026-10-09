@@ -386,3 +386,7 @@ kbd{font-family:var(--ui);font-size:11px;border:1px solid #c9d1c9;border-bottom-
 .big-steps textarea{margin:6px 0}
 .help-steps{padding-left:20px}.help-steps li{margin:6px 0}
 mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border-radius:3px;border-bottom:1.5px dashed #D99E14}
+
+/* "Next blank" above the pages (intake.js) */
+.btn-blank{background:#fff4b8;border-color:#e2cf6a;color:#5a4a00}
+.btn-blank:hover{background:#ffec8a}

@@ -167,6 +167,51 @@ function setProfile(name){
   syncPanels(); render();
 }
 
+/* ── Next blank: walk the yellow blanks on the page ─────────────────────── */
+
+/* Each press selects the next [[blank]] (or NEEDS ADVISOR INPUT note) on the
+   page, so the advisor just types over it. lastBlank remembers where we were,
+   because the pages are laid out again after every edit. */
+let lastBlank = null;      /* {bid, i, order} of the blank shown last */
+function goNextBlank(){
+  const marks = $$("#pages mark.blank, #pages mark.needs");
+  if (!marks.length){ toast("No blanks left: every yellow blank is filled in."); updateBlankButton(); return; }
+  const hits = $$("#pages .blk-hit").map(h => h.dataset.bid);
+  const where = marks.map(m => {
+    const hit = m.closest(".blk-hit");
+    const bid = hit ? hit.dataset.bid : "";
+    return {m, bid, order: hits.indexOf(bid), i: hit ? $$("mark.blank, mark.needs", hit).indexOf(m) : 0};
+  });
+  let k = 0;
+  if (lastBlank){
+    const same = where.findIndex(w => w.bid === lastBlank.bid && w.i === lastBlank.i);
+    /* still there (skipped): go past it; filled: the next one from the same place */
+    k = same >= 0 ? (same + 1) % where.length
+      : Math.max(0, where.findIndex(w => w.order > lastBlank.order || (w.bid === lastBlank.bid && w.i >= lastBlank.i)));
+  }
+  const w = where[k];
+  lastBlank = {bid: w.bid, i: w.i, order: w.order};
+  marks.forEach(x => x.classList.remove("is-current"));
+  w.m.classList.add("is-current");
+  w.m.scrollIntoView({block: "center", behavior: "smooth"});
+  const ed = w.m.closest('[contenteditable="true"]');
+  if (ed){
+    ed.focus();
+    const r = document.createRange();
+    r.selectNodeContents(w.m);
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(r);
+  } else if (w.bid && findBlock(w.bid)) selectBlock(w.bid, false);
+}
+/** The count on the "Next blank" button above the pages; hidden when there are none. */
+function updateBlankButton(){
+  const btn = $("btnNextBlank");
+  if (!btn) return;
+  const n = gapCount(deck.sections.map(s => s.blocks));
+  btn.hidden = !n;
+  btn.innerHTML = n + (n === 1 ? " blank" : " blanks") + " &middot; <b>Next &rarr;</b>";
+}
+
 /* ── Copilot: one prompt, one answer ─────────────────────────────────────── */
 
 function updateSlotStatus(){
@@ -201,6 +246,7 @@ function wireIntake(){
     doBuild(); showRail("build");
     toast("Draft laid out — fill in the yellow blanks, or let Copilot write the words (tab 3).", 5000);
   };
+  $("btnNextBlank").onclick = goNextBlank;
   $("btnCopySlots").onclick = copySlotPrompt;
   $("btnApplySlots").onclick = applySlots;
   $("slotAnswer").addEventListener("paste", () => setTimeout(applySlots, 60));

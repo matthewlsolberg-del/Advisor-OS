@@ -48,7 +48,8 @@ whether the combined mix sits inside the profile's equity range.
 ## 2 · Edit
 
 - **Click any text on the page and type over it.** Press Enter (or click away) to finish.
-- **Yellow `[[blanks]]`** are the only things you must supply. Finish counts them.
+- **Yellow `[[blanks]]`** are the only things you must supply. Press **Next blank** above the
+  pages: it selects the next one so you just type over it. Finish counts them too.
 - **"What we recommend"** starts with suggestions drawn from the data: a TFSA for whoever
   doesn't have one, a large single position, legacy holdings with no value, RESP grants…
   Delete the ones that don't apply.

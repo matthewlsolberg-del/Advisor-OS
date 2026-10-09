@@ -42,6 +42,7 @@ Search (Ctrl+F) for the name in the right-hand column.
 | The account-recommendation page and the household summary | portfolios.js / smart.js | `function recommendationProfileMarkup` / `function householdSummaryHTML` |
 | The approved model portfolios | not in the code | Use **Portfolio library** in the app, then **Export library backup** to share |
 | The Start tab's options and Copilot's three steps | the `<body>` markup, and intake.js | `data-panel="start"` / `function wireIntake` |
+| The "Next blank" button above the pages | intake.js | `function goNextBlank` / `function updateBlankButton` |
 
 Section sizes: most are 10–45 KB, which fits in one Copilot message. app.js (78 KB) is the
 largest, so for app.js copy just the one function you need.
