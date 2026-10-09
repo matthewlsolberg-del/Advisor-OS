@@ -9,7 +9,7 @@
 const VIZ_W = 660;                      /* the content column, in CSS px */
 const SEQ = BRAND.sequence;
 /* Bars and lines are big areas of colour: deep green and gold lead, so the page
-   stays calm; the bright Shield Green comes third. Donuts keep the TD order. */
+   stays calm; the bright Shield Green comes third. Donuts use the same order. */
 const BAR_SEQ = ["#002B1A", "#CFBD91", "#42BF19", "#3B5B72", "#A4D6DD", "#D99E14", "#855991"];
 const INK = "#1C1C1C";
 
@@ -289,7 +289,7 @@ function donutChart(labels, values, unit){
   const p = (ang, rad) => [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)];
   nums.forEach((v, i) => {
     if (!(v > 0)) return;                  /* zero slices draw nothing */
-    const fill = SEQ[i % SEQ.length];
+    const fill = BAR_SEQ[i % BAR_SEQ.length];
     const share = v / total;
     if (share >= 0.9999){
       /* A full ring: an arc can't start and end on the same point, so draw
@@ -312,7 +312,7 @@ function donutChart(labels, values, unit){
   rowsData.forEach(d => {
     const i = d.i;
     const pct = asTyped ? nums[i] : (nums[i] / total) * 100;
-    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${SEQ[i % SEQ.length]}"/>` +
+    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${BAR_SEQ[i % BAR_SEQ.length]}"/>` +
             svgLines(d.lines, lx, yy, lh, `font-size="12" fill="${INK}"`) +
             `<text x="${VIZ_W - 4}" y="${yy}" font-size="12" fill="#002B1A" text-anchor="end" font-weight="600">` +
             `${unit === "%" ? nfmt(pct) + "%" : svgEsc(withUnit(nums[i], unit))}</text>`;

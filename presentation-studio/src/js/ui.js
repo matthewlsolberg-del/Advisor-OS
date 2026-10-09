@@ -11,6 +11,7 @@ const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 function toast(msg, ms){
   const t = $("toast");
   t.textContent = msg; t.hidden = false;
+  t.onclick = () => { t.hidden = true; };      /* click to dismiss */
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.hidden = true; }, ms || 2600);
 }

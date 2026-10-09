@@ -260,6 +260,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 .check-row{display:block;width:100%;text-align:left;border:1px solid var(--hair);border-left:3px solid var(--warn);border-radius:5px;
   background:#fff;padding:8px 10px;margin-bottom:5px;cursor:pointer;font-size:12px;line-height:1.4}
 .check-row:hover{background:var(--tint)}
+.check-row.is-soft{border-left-color:var(--hair);color:var(--muted)}
 .check-ok{border:1px solid #cfe6c6;border-left:3px solid var(--shield);background:#f3faf0;border-radius:5px;padding:11px;font-size:12.5px;line-height:1.5;color:var(--gray)}
 .check-ok b{color:var(--deep)}
 
@@ -432,7 +433,7 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .file-drop button:hover{background:var(--tint)}
 .btn-copilot{background:#fff4b8;border-color:#e2cf6a;color:#3d3200;font-weight:600}
 .btn-copilot:hover{background:#ffec8a}
-.toast{top:64px;bottom:auto}
+.toast{left:calc(var(--rail-w) + (100vw - var(--rail-w)) / 2);bottom:24px;cursor:pointer}
 .view-pick{font-size:12px;padding:3px 6px;border:1px solid #cfd8cf;border-radius:5px;background:#fff}
 .view-banner{background:#3B5B72;color:#fff;font-size:12.5px;padding:7px 14px;display:flex;gap:12px;align-items:center;justify-content:center}
 .view-banner button{background:#fff;color:#3B5B72;border:0;border-radius:4px;padding:3px 9px;cursor:pointer;font-weight:600}
@@ -2652,7 +2653,7 @@ function readTextFile(file){
 const VIZ_W = 660;                      /* the content column, in CSS px */
 const SEQ = BRAND.sequence;
 /* Bars and lines are big areas of colour: deep green and gold lead, so the page
-   stays calm; the bright Shield Green comes third. Donuts keep the TD order. */
+   stays calm; the bright Shield Green comes third. Donuts use the same order. */
 const BAR_SEQ = ["#002B1A", "#CFBD91", "#42BF19", "#3B5B72", "#A4D6DD", "#D99E14", "#855991"];
 const INK = "#1C1C1C";
 
@@ -2932,7 +2933,7 @@ function donutChart(labels, values, unit){
   const p = (ang, rad) => [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)];
   nums.forEach((v, i) => {
     if (!(v > 0)) return;                  /* zero slices draw nothing */
-    const fill = SEQ[i % SEQ.length];
+    const fill = BAR_SEQ[i % BAR_SEQ.length];
     const share = v / total;
     if (share >= 0.9999){
       /* A full ring: an arc can't start and end on the same point, so draw
@@ -2955,7 +2956,7 @@ function donutChart(labels, values, unit){
   rowsData.forEach(d => {
     const i = d.i;
     const pct = asTyped ? nums[i] : (nums[i] / total) * 100;
-    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${SEQ[i % SEQ.length]}"/>` +
+    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${BAR_SEQ[i % BAR_SEQ.length]}"/>` +
             svgLines(d.lines, lx, yy, lh, `font-size="12" fill="${INK}"`) +
             `<text x="${VIZ_W - 4}" y="${yy}" font-size="12" fill="#002B1A" text-anchor="end" font-weight="600">` +
             `${unit === "%" ? nfmt(pct) + "%" : svgEsc(withUnit(nums[i], unit))}</text>`;
@@ -3687,7 +3688,8 @@ function layout(deck, host){
 
     /* Running on: the section starts part way down the page. It moves to a fresh
        page when little room is left, or when it is short enough to keep whole
-       on the next page but would be split here. */
+       on the next page but would be split here (unless nearly half the page
+       is still empty: then it starts here, rather than leave a gap). */
     let pre = null;
     if (page && used > 0 && !deck.options.dividers && items.length && items[0].type === "heading"){
       items[0] = Object.assign({}, items[0], {runOn: true});
@@ -3695,7 +3697,7 @@ function layout(deck, host){
       /* the last block's bottom margin need not fit on the page */
       const gap = parseFloat(getComputedStyle(doc).getPropertyValue("--gap")) || 15;
       const total = pre.reduce((n, x) => n + x.h, 0) - gap, room = LIMIT - used;
-      if (room < LIMIT * 0.22 || (total > room && total <= LIMIT * 0.6)){
+      if (room < LIMIT * 0.22 || (total > room && total <= LIMIT * 0.6 && room < LIMIT * 0.45)){
         page = null;
         items[0] = Object.assign({}, items[0], {runOn: false});
         pre = null;
@@ -3904,6 +3906,7 @@ const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 function toast(msg, ms){
   const t = $("toast");
   t.textContent = msg; t.hidden = false;
+  t.onclick = () => { t.hidden = true; };      /* click to dismiss */
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.hidden = true; }, ms || 2600);
 }

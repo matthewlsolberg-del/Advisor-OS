@@ -260,6 +260,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 .check-row{display:block;width:100%;text-align:left;border:1px solid var(--hair);border-left:3px solid var(--warn);border-radius:5px;
   background:#fff;padding:8px 10px;margin-bottom:5px;cursor:pointer;font-size:12px;line-height:1.4}
 .check-row:hover{background:var(--tint)}
+.check-row.is-soft{border-left-color:var(--hair);color:var(--muted)}
 .check-ok{border:1px solid #cfe6c6;border-left:3px solid var(--shield);background:#f3faf0;border-radius:5px;padding:11px;font-size:12.5px;line-height:1.5;color:var(--gray)}
 .check-ok b{color:var(--deep)}
 
@@ -432,7 +433,7 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .file-drop button:hover{background:var(--tint)}
 .btn-copilot{background:#fff4b8;border-color:#e2cf6a;color:#3d3200;font-weight:600}
 .btn-copilot:hover{background:#ffec8a}
-.toast{top:64px;bottom:auto}
+.toast{left:calc(var(--rail-w) + (100vw - var(--rail-w)) / 2);bottom:24px;cursor:pointer}
 .view-pick{font-size:12px;padding:3px 6px;border:1px solid #cfd8cf;border-radius:5px;background:#fff}
 .view-banner{background:#3B5B72;color:#fff;font-size:12.5px;padding:7px 14px;display:flex;gap:12px;align-items:center;justify-content:center}
 .view-banner button{background:#fff;color:#3B5B72;border:0;border-radius:4px;padding:3px 9px;cursor:pointer;font-weight:600}
@@ -1286,7 +1287,7 @@ mark.blank.is-current,mark.needs.is-current{outline:2px solid #D99E14;outline-of
 .doc[data-format="slides"] .team-grid.is-small .team-cell{width:25%}
 </style>
 </head>
-<body data-build="10.0">
+<body data-build="10.1">
 
 
 <header class="topbar">
@@ -1343,7 +1344,7 @@ mark.blank.is-current,mark.needs.is-current{outline:2px solid #D99E14;outline-of
         <div id="pieceGrid" class="piece-grid"></div>
       </div>
 
-      <div class="card step-card">
+      <div class="card step-card" id="dropCard">
         <span class="step-n">2</span>
         <h3>Drop in your reports</h3>
         <div class="dropzone big" id="dropzone">
@@ -1356,7 +1357,7 @@ mark.blank.is-current,mark.needs.is-current{outline:2px solid #D99E14;outline-of
         <div id="sourceList" class="source-list"></div>
       </div>
 
-      <div class="card step-card">
+      <div class="card step-card" id="notesCard">
         <span class="step-n">3</span>
         <h3>Your notes <em>optional</em></h3>
         <textarea id="fldNotes" rows="6" placeholder="Talk or type, in any order: what you discussed, what changed, what you want to recommend, anything they asked about.&#10;&#10;Tip: press Windows + H to dictate."></textarea>
@@ -1391,7 +1392,7 @@ mark.blank.is-current,mark.needs.is-current{outline:2px solid #D99E14;outline-of
       <div class="panel-intro">
         <h2>Edit the draft</h2>
         <p><b>Click any text on the page to type over it.</b> Yellow <mark class="blank">[[blanks]]</mark>
-          are yours to fill. Point at a block for its tools; click it for all its settings.</p>
+          are yours to fill: the form below lists them all. Point at anything for its tools, and press <b>&#10005;</b> to remove what doesn't apply.</p>
       </div>
       <div class="card blank-card" id="blankCard">
         <div class="card-head"><h3>Fill in the blanks</h3><span class="progress-label" id="blankCount"></span></div>
@@ -3794,7 +3795,7 @@ function normalizeFacts(v){
 const VIZ_W = 660;                      /* the content column, in CSS px */
 const SEQ = BRAND.sequence;
 /* Bars and lines are big areas of colour: deep green and gold lead, so the page
-   stays calm; the bright Shield Green comes third. Donuts keep the TD order. */
+   stays calm; the bright Shield Green comes third. Donuts use the same order. */
 const BAR_SEQ = ["#002B1A", "#CFBD91", "#42BF19", "#3B5B72", "#A4D6DD", "#D99E14", "#855991"];
 const INK = "#1C1C1C";
 
@@ -4074,7 +4075,7 @@ function donutChart(labels, values, unit){
   const p = (ang, rad) => [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)];
   nums.forEach((v, i) => {
     if (!(v > 0)) return;                  /* zero slices draw nothing */
-    const fill = SEQ[i % SEQ.length];
+    const fill = BAR_SEQ[i % BAR_SEQ.length];
     const share = v / total;
     if (share >= 0.9999){
       /* A full ring: an arc can't start and end on the same point, so draw
@@ -4097,7 +4098,7 @@ function donutChart(labels, values, unit){
   rowsData.forEach(d => {
     const i = d.i;
     const pct = asTyped ? nums[i] : (nums[i] / total) * 100;
-    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${SEQ[i % SEQ.length]}"/>` +
+    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${BAR_SEQ[i % BAR_SEQ.length]}"/>` +
             svgLines(d.lines, lx, yy, lh, `font-size="12" fill="${INK}"`) +
             `<text x="${VIZ_W - 4}" y="${yy}" font-size="12" fill="#002B1A" text-anchor="end" font-weight="600">` +
             `${unit === "%" ? nfmt(pct) + "%" : svgEsc(withUnit(nums[i], unit))}</text>`;
@@ -4829,7 +4830,8 @@ function layout(deck, host){
 
     /* Running on: the section starts part way down the page. It moves to a fresh
        page when little room is left, or when it is short enough to keep whole
-       on the next page but would be split here. */
+       on the next page but would be split here (unless nearly half the page
+       is still empty: then it starts here, rather than leave a gap). */
     let pre = null;
     if (page && used > 0 && !deck.options.dividers && items.length && items[0].type === "heading"){
       items[0] = Object.assign({}, items[0], {runOn: true});
@@ -4837,7 +4839,7 @@ function layout(deck, host){
       /* the last block's bottom margin need not fit on the page */
       const gap = parseFloat(getComputedStyle(doc).getPropertyValue("--gap")) || 15;
       const total = pre.reduce((n, x) => n + x.h, 0) - gap, room = LIMIT - used;
-      if (room < LIMIT * 0.22 || (total > room && total <= LIMIT * 0.6)){
+      if (room < LIMIT * 0.22 || (total > room && total <= LIMIT * 0.6 && room < LIMIT * 0.45)){
         page = null;
         items[0] = Object.assign({}, items[0], {runOn: false});
         pre = null;
@@ -5046,6 +5048,7 @@ const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 function toast(msg, ms){
   const t = $("toast");
   t.textContent = msg; t.hidden = false;
+  t.onclick = () => { t.hidden = true; };      /* click to dismiss */
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.hidden = true; }, ms || 2600);
 }
@@ -5831,14 +5834,19 @@ function preflight(){
   if (!deck.meta.date) issues.push({t:"No date on the cover", fix:() => showRail("start")});
   if (!deck.meta.advisor) issues.push({t:"No advisor named on the cover", fix:() => showRail("start")});
 
+  /* One line per section with yellow blanks (the "Fill in the blanks" form
+     lists each one); sections with nothing written at all; then one line for
+     the standard wording still to read over, rather than one per section. */
   deck.sections.forEach(s => {
+    const n = gapCount(s.blocks);
     const st = sectionStatus(s);
-    if (st !== "done"){
-      issues.push({
-        t: '“' + (s.title || "Untitled") + '” ' + (st === "empty" ? "is still empty" : s.smart ? "has pre-written words to read over (or let Copilot write them)" : "is part written"),
-        fix: () => { showRail("build"); jumpToSection(s); }
-      });
-    }
+    const hasSeeds = (s.blocks || []).some(b => b.seed);
+    if (n) issues.push({t:'“' + (s.title || "Untitled") + '”: ' + n + " yellow blank" + (n === 1 ? "" : "s") + " to fill in",
+      fix: () => { showRail("build"); jumpToSection(s); }});
+    else if (s.accountRecommendation && st !== "done") issues.push({t:'“' + (s.title || "Untitled") + '”: no model portfolio chosen yet',
+      fix: () => { showRail("build"); jumpToSection(s); }});
+    else if (st === "empty" && !hasSeeds) issues.push({t:'“' + (s.title || "Untitled") + '” is still empty',
+      fix: () => { showRail("build"); jumpToSection(s); }});
   });
 
   deck.sections.forEach(s => (s.blocks || []).forEach(b => {
@@ -5847,25 +5855,26 @@ function preflight(){
     }
   }));
 
-  deck.sections.forEach(s => {
-    const n = gapCount(s.blocks);
-    if (n) issues.push({t:'“' + (s.title || "Untitled") + '” has ' + n + " yellow blank" + (n === 1 ? "" : "s") + " to fill in",
-      fix: () => { showRail("build"); jumpToSection(s); }});
-  });
-
   const chk = toCheckIds();
   if (chk.length) issues.push({t: chk.length + (chk.length === 1 ? " passage" : " passages") + " Copilot wrote still to read over (marked “Copilot wrote this” on the page)",
     fix: () => { showRail("build"); selectBlock(chk[0], true); }});
+
+  const standard = deck.sections.filter(s => !s.accountRecommendation && !s.recommendationOverview &&
+    (s.blocks || []).some(b => b.seed && !VISUAL_TYPES.includes(b.type)));
+  if (standard.length) issues.push({
+    t: standard.length + (standard.length === 1 ? " section still has" : " sections still have") +
+       " our standard wording: read it over, trim it, or let Copilot write it from your notes",
+    soft: true, fix: () => showRail("copilot")});
 
   layoutProblems().forEach(c => issues.push({
     t:"Something runs off the bottom of page " + c.page + " and would be cut off in the PDF",
     fix:() => c.node.scrollIntoView({block:"start", behavior:"smooth"})}));
 
   if (!deck.options.disclosures){
-    issues.push({t:"The standard disclosures are switched off", fix:() => showRail("style")});
+    issues.push({t:"The standard disclosures are switched off", fix:() => openFinishCard("optDisc")});
   } else if (JSON.stringify(deck.disclosures) !== JSON.stringify(BRAND.disclosures)){
     issues.push({t:"The disclosures have been changed from the standard wording — compliance needs to see that",
-      fix:() => showRail("style")});
+      fix:() => openFinishCard("fldFirm")});
   }
   if (!deck.options.draft && deck.meta.reviewedHash && deck.meta.reviewedHash !== contentHash()){
     issues.push({t:"The piece has changed since the DRAFT tag came off — put it back on until it is checked again",
@@ -8124,6 +8133,19 @@ function buildPieceGrid(){
   rest.forEach(c => box.appendChild(card(c)));
   more.appendChild(box);
   grid.appendChild(more);
+  orderStartSteps();
+}
+/** A piece built from notes (a prospect meeting) asks for the notes first and the
+    reports second; a piece built from a report asks for the report first. */
+function orderStartSteps(){
+  const drop = $("dropCard"), notes = $("notesCard");
+  if (!drop || !notes) return;
+  const k = SMART_KINDS.find(c => c.kind === deck.meta.kind);
+  const notesFirst = !k || !k.uses.length;
+  if (notesFirst) drop.before(notes); else notes.before(drop);
+  notes.querySelector(".step-n").textContent = notesFirst ? "2" : "3";
+  drop.querySelector(".step-n").textContent = notesFirst ? "3" : "2";
+  notes.querySelector("h3 em").textContent = notesFirst ? "dictate what you heard" : "optional";
 }
 function switchPiece(kind){
   if (deck.meta.kind === kind) return;
@@ -9465,19 +9487,31 @@ function buildCheckList(){
   } else {
     host.appendChild(el("p", "hint", "Worth fixing before anyone sees it. Click one to go to it."));
     issues.forEach(is => {
-      const row = el("button", "check-row", esc(is.t));
+      const row = el("button", "check-row" + (is.soft ? " is-soft" : ""), esc(is.t));
       row.onclick = is.fix;
       host.appendChild(row);
     });
   }
 }
 function updateChips(){
-  const p = deckProgress();
-  $("buildChip").textContent = p.total ? p.done + "/" + p.total : "";
-  const n = preflight().length;
+  /* Edit: yellow blanks left. Finish: things to fix (the "read it over" reminder does not count). */
+  const blanks = collectBlanks().length;
+  $("buildChip").textContent = blanks ? String(blanks) : "✓";
+  $("buildChip").className = blanks ? "is-warn" : "is-ok";
+  $("buildChip").title = blanks ? blanks + " yellow blanks to fill in" : "Every blank is filled in";
+  const n = preflight().filter(is => !is.soft).length;
   $("finishChip").textContent = n ? String(n) : "✓";
   $("finishChip").className = n ? "is-warn" : "is-ok";
   if ($("rail").querySelector('.panel.is-active[data-panel="finish"]')) buildCheckList();
+}
+/** Finish tab, with the folded card that holds the field `id` opened and in view. */
+function openFinishCard(id){
+  showRail("finish");
+  const f = $(id);
+  if (!f) return;
+  const card = f.closest("details");
+  if (card) card.open = true;
+  f.scrollIntoView({block: "center", behavior: "smooth"});
 }
 
 /* ── Inspector ──────────────────────────────────────────────────────────── */
@@ -10202,7 +10236,7 @@ function newPresentation(){
   if (!deckIsStarter() && !confirm("Start a new presentation?\n\nSave this one first if you need it. (Undo brings it back.)")) return;
   snapshot();
   const keep = {team: deck.team, contact: deck.contact, design: deck.design, cover: deck.cover};
-  deck = Object.assign(newDeck("portfolio_review"), keep);
+  deck = Object.assign(newDeck("prospect"), keep);   /* prospect meetings are the most common piece */
   selectedId = null; currentSectionId = null; openSectionId = null;
   syncPanels(); render();
   builtPrint = deckPrint();
@@ -10490,7 +10524,7 @@ function boot(){
     const saved = localStorage.getItem(AUTOSAVE_KEY);
     if (saved) restored = JSON.parse(saved);
   } catch (e){}
-  deck = restored && restored.sections ? migrate(restored) : newDeck("portfolio_review");
+  deck = restored && restored.sections ? migrate(restored) : newDeck("prospect");
   $$("[data-wordmark]").forEach(n => n.appendChild(wordmark()));
   wire();
   syncPanels();

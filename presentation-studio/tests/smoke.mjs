@@ -176,8 +176,11 @@ for (const [tab, n] of [["start", "11-start"], ["copilot", "12-copilot"], ["fini
   await page.waitForTimeout(150);
   await shot(n);
 }
-const checks = await page.locator("#checkList .check-row").count();
-ok(checks > 0, "Finish lists what is left (" + checks + " items)");
+const checks = await page.locator("#checkList .check-row, #checkList .check-ok").count();
+ok(checks > 0, "Finish shows what is left, or that nothing is (" + checks + " rows)");
+const blankRow = await page.evaluate(() => { const b = deck.sections[0].blocks[0], was = b.text;
+  b.text = "[[Their goal]]"; const has = preflight().some(is => /1 yellow blank/.test(is.t)); b.text = was; return has; });
+ok(blankRow, "a yellow blank shows on the Finish list");
 
 console.log("Slides format");
 await page.click('.rail-tab[data-panel="start"]');

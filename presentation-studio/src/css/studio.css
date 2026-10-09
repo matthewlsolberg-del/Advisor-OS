@@ -250,6 +250,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 .check-row{display:block;width:100%;text-align:left;border:1px solid var(--hair);border-left:3px solid var(--warn);border-radius:5px;
   background:#fff;padding:8px 10px;margin-bottom:5px;cursor:pointer;font-size:12px;line-height:1.4}
 .check-row:hover{background:var(--tint)}
+.check-row.is-soft{border-left-color:var(--hair);color:var(--muted)}
 .check-ok{border:1px solid #cfe6c6;border-left:3px solid var(--shield);background:#f3faf0;border-radius:5px;padding:11px;font-size:12.5px;line-height:1.5;color:var(--gray)}
 .check-ok b{color:var(--deep)}
 
@@ -422,7 +423,7 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .file-drop button:hover{background:var(--tint)}
 .btn-copilot{background:#fff4b8;border-color:#e2cf6a;color:#3d3200;font-weight:600}
 .btn-copilot:hover{background:#ffec8a}
-.toast{top:64px;bottom:auto}
+.toast{left:calc(var(--rail-w) + (100vw - var(--rail-w)) / 2);bottom:24px;cursor:pointer}
 .view-pick{font-size:12px;padding:3px 6px;border:1px solid #cfd8cf;border-radius:5px;background:#fff}
 .view-banner{background:#3B5B72;color:#fff;font-size:12.5px;padding:7px 14px;display:flex;gap:12px;align-items:center;justify-content:center}
 .view-banner button{background:#fff;color:#3B5B72;border:0;border-radius:4px;padding:3px 9px;cursor:pointer;font-weight:600}

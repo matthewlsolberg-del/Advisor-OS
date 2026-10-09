@@ -45,6 +45,8 @@ Search (Ctrl+F) for the name in the right-hand column.
 | The account-recommendation page and the household summary | portfolios.js / smart.js | `function recommendationProfileMarkup` / `function householdSummaryHTML` |
 | The approved model portfolios | not in the code | Use **Portfolio library** in the app, then **Export library backup** to share |
 | The Start tab's options and Copilot's three steps | the `<body>` markup, and intake.js | `data-panel="start"` / `function wireIntake` |
+| What the Finish tab's "Check it over" list says | workflow.js | `function preflight` |
+| The order of the Start steps (notes first for a prospect meeting) | intake.js | `function orderStartSteps` |
 | The "Next blank" button above the pages | intake.js | `function goNextBlank` / `function updateBlankButton` |
 | The "Fill in the blanks" form on Edit, and the ✓ Looks right marks | blanks.js | `function buildBlankForm` / `function decorateToCheck` |
 | Which blanks Copilot is asked to fill from the notes | blanks.js | `function blankPromptPart` / `function applyBlankAnswers` |

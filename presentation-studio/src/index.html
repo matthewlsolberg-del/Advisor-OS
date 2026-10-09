@@ -68,7 +68,7 @@
         <div id="pieceGrid" class="piece-grid"></div>
       </div>
 
-      <div class="card step-card">
+      <div class="card step-card" id="dropCard">
         <span class="step-n">2</span>
         <h3>Drop in your reports</h3>
         <div class="dropzone big" id="dropzone">
@@ -81,7 +81,7 @@
         <div id="sourceList" class="source-list"></div>
       </div>
 
-      <div class="card step-card">
+      <div class="card step-card" id="notesCard">
         <span class="step-n">3</span>
         <h3>Your notes <em>optional</em></h3>
         <textarea id="fldNotes" rows="6" placeholder="Talk or type, in any order: what you discussed, what changed, what you want to recommend, anything they asked about.&#10;&#10;Tip: press Windows + H to dictate."></textarea>
@@ -116,7 +116,7 @@
       <div class="panel-intro">
         <h2>Edit the draft</h2>
         <p><b>Click any text on the page to type over it.</b> Yellow <mark class="blank">[[blanks]]</mark>
-          are yours to fill. Point at a block for its tools; click it for all its settings.</p>
+          are yours to fill: the form below lists them all. Point at anything for its tools, and press <b>&#10005;</b> to remove what doesn't apply.</p>
       </div>
       <div class="card blank-card" id="blankCard">
         <div class="card-head"><h3>Fill in the blanks</h3><span class="progress-label" id="blankCount"></span></div>

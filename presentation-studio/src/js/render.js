@@ -544,7 +544,8 @@ function layout(deck, host){
 
     /* Running on: the section starts part way down the page. It moves to a fresh
        page when little room is left, or when it is short enough to keep whole
-       on the next page but would be split here. */
+       on the next page but would be split here (unless nearly half the page
+       is still empty: then it starts here, rather than leave a gap). */
     let pre = null;
     if (page && used > 0 && !deck.options.dividers && items.length && items[0].type === "heading"){
       items[0] = Object.assign({}, items[0], {runOn: true});
@@ -552,7 +553,7 @@ function layout(deck, host){
       /* the last block's bottom margin need not fit on the page */
       const gap = parseFloat(getComputedStyle(doc).getPropertyValue("--gap")) || 15;
       const total = pre.reduce((n, x) => n + x.h, 0) - gap, room = LIMIT - used;
-      if (room < LIMIT * 0.22 || (total > room && total <= LIMIT * 0.6)){
+      if (room < LIMIT * 0.22 || (total > room && total <= LIMIT * 0.6 && room < LIMIT * 0.45)){
         page = null;
         items[0] = Object.assign({}, items[0], {runOn: false});
         pre = null;

@@ -41,6 +41,19 @@ function buildPieceGrid(){
   rest.forEach(c => box.appendChild(card(c)));
   more.appendChild(box);
   grid.appendChild(more);
+  orderStartSteps();
+}
+/** A piece built from notes (a prospect meeting) asks for the notes first and the
+    reports second; a piece built from a report asks for the report first. */
+function orderStartSteps(){
+  const drop = $("dropCard"), notes = $("notesCard");
+  if (!drop || !notes) return;
+  const k = SMART_KINDS.find(c => c.kind === deck.meta.kind);
+  const notesFirst = !k || !k.uses.length;
+  if (notesFirst) drop.before(notes); else notes.before(drop);
+  notes.querySelector(".step-n").textContent = notesFirst ? "2" : "3";
+  drop.querySelector(".step-n").textContent = notesFirst ? "3" : "2";
+  notes.querySelector("h3 em").textContent = notesFirst ? "dictate what you heard" : "optional";
 }
 function switchPiece(kind){
   if (deck.meta.kind === kind) return;

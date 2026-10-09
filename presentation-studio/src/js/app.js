@@ -645,19 +645,31 @@ function buildCheckList(){
   } else {
     host.appendChild(el("p", "hint", "Worth fixing before anyone sees it. Click one to go to it."));
     issues.forEach(is => {
-      const row = el("button", "check-row", esc(is.t));
+      const row = el("button", "check-row" + (is.soft ? " is-soft" : ""), esc(is.t));
       row.onclick = is.fix;
       host.appendChild(row);
     });
   }
 }
 function updateChips(){
-  const p = deckProgress();
-  $("buildChip").textContent = p.total ? p.done + "/" + p.total : "";
-  const n = preflight().length;
+  /* Edit: yellow blanks left. Finish: things to fix (the "read it over" reminder does not count). */
+  const blanks = collectBlanks().length;
+  $("buildChip").textContent = blanks ? String(blanks) : "✓";
+  $("buildChip").className = blanks ? "is-warn" : "is-ok";
+  $("buildChip").title = blanks ? blanks + " yellow blanks to fill in" : "Every blank is filled in";
+  const n = preflight().filter(is => !is.soft).length;
   $("finishChip").textContent = n ? String(n) : "✓";
   $("finishChip").className = n ? "is-warn" : "is-ok";
   if ($("rail").querySelector('.panel.is-active[data-panel="finish"]')) buildCheckList();
+}
+/** Finish tab, with the folded card that holds the field `id` opened and in view. */
+function openFinishCard(id){
+  showRail("finish");
+  const f = $(id);
+  if (!f) return;
+  const card = f.closest("details");
+  if (card) card.open = true;
+  f.scrollIntoView({block: "center", behavior: "smooth"});
 }
 
 /* ── Inspector ──────────────────────────────────────────────────────────── */
@@ -1382,7 +1394,7 @@ function newPresentation(){
   if (!deckIsStarter() && !confirm("Start a new presentation?\n\nSave this one first if you need it. (Undo brings it back.)")) return;
   snapshot();
   const keep = {team: deck.team, contact: deck.contact, design: deck.design, cover: deck.cover};
-  deck = Object.assign(newDeck("portfolio_review"), keep);
+  deck = Object.assign(newDeck("prospect"), keep);   /* prospect meetings are the most common piece */
   selectedId = null; currentSectionId = null; openSectionId = null;
   syncPanels(); render();
   builtPrint = deckPrint();
@@ -1670,7 +1682,7 @@ function boot(){
     const saved = localStorage.getItem(AUTOSAVE_KEY);
     if (saved) restored = JSON.parse(saved);
   } catch (e){}
-  deck = restored && restored.sections ? migrate(restored) : newDeck("portfolio_review");
+  deck = restored && restored.sections ? migrate(restored) : newDeck("prospect");
   $$("[data-wordmark]").forEach(n => n.appendChild(wordmark()));
   wire();
   syncPanels();

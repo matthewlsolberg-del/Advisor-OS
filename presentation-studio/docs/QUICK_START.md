@@ -6,7 +6,8 @@ connects to the internet; client information stays on your computer.
 ## The short version
 
 1. **Start** — pick what you are making (Prospect meeting, Portfolio review or Financial plan
-   summary; the rest are under *More*), drop in the reports, add your notes.
+   summary; the rest are under *More*), then dictate your notes or drop in the reports. A
+   prospect meeting asks for your notes first; a review asks for the report first.
 2. **Edit** — the draft is already laid out, generously. Fill in the short **Fill in the
    blanks** form, and press **✕** on anything that doesn't apply.
 3. **✦ Copilot** (top bar) — *optional*: one press copies the prompt; paste it into Copilot,

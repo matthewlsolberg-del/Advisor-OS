@@ -22,7 +22,7 @@ SRC = ROOT / "src"
 # Load order matters: each module uses what the ones before it define.
 TARGETS = [
     {
-        "out": "MHWG_Presentation_Studio.html", "page": "index.html", "version": "10.0",
+        "out": "MHWG_Presentation_Studio.html", "page": "index.html", "version": "10.1",
         "css": ["css/studio.css"],
         "vendor": ["vendor/pdf.worker.min.js", "vendor/pdf.min.js"],   # pdf.js, at the very bottom
         "scripts": [
