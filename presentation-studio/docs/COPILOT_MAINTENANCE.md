@@ -38,6 +38,7 @@ Search (Ctrl+F) for the name in the right-hand column.
 | The planning topics in Edit → + Add (RRIF, CPP/OAS, TFSA or RRSP, RESP…) | content.js | `const PLANNING_TOPICS` |
 | Croesus account types (A/B, S, J, V…) and labels | facts.js | `function accountKind` / `function accountLabelFor` |
 | Reading the Croesus report | facts.js | `function parseCroesus` |
+| The Croesus asset allocation chart (names by colour) | facts.js / pdfread.js | `const CROESUS_ALLOCATION_COLORS` / `function pdfDonuts` |
 | Reading the financial plan | facts.js | `function parsePlan` |
 | Team members, address, phone, disclosures | brand.js | `const BRAND` |
 | Colours and fonts on the printed pages | `<style>` (document part) | `.doc{` |

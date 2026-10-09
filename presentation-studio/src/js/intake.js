@@ -66,6 +66,7 @@ function setFacts(key, facts, fileName){
   if (auto) doBuild(); else { syncPanels(); render(); }
   const what = key === "plan" ? "Financial plan" : "Portfolio report";
   toast(what + " read: " + (facts.found || []).join(", ") + (auto ? ". The draft is laid out." : ". Press Build my draft to use it."), 7000);
+  if ((facts.warnings || []).length) alert(what + " — please check:\n\n" + facts.warnings.join("\n"));
 }
 
 function unknownReport(name, text){

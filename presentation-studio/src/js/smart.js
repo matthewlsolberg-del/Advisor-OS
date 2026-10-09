@@ -142,9 +142,17 @@ function buildPortfolioReview(P, notes, opts){
       "[[what each account is for]]"})
   ]));
 
-  if ((P.classes || []).length || top.length){
-    const cls = (P.classes || []).filter(c => c.pct || c.value);
+  if ((P.allocation || []).length || (P.classes || []).length || top.length){
+    /* the report's own asset allocation chart when it has one; otherwise the
+       asset-class totals of the holdings list */
+    const alloc = (P.allocation || []).filter(c => c.pct > 0);
+    const cls = alloc.length ? [] : (P.classes || []).filter(c => c.pct || c.value);
+    const groupPct = (re) => Math.round(alloc.filter(c => re.test(c.name)).reduce((n, c) => n + c.pct, 0) * 10) / 10;
     S.push(sec("How your money is invested", [
+      alloc.length ? mk("chart", {chart: "donut", title: "Your asset allocation", labels: alloc.map(c => c.name),
+        series: [{name: "Share", values: alloc.map(c => c.pct)}], unit: "%",
+        caption: "From the asset allocation in the portfolio report, as at " + asOf + ". Equities " + fmPct(groupPct(/Equity/), 1) +
+          ", fixed income " + fmPct(groupPct(/Fixed Income/), 1) + ", cash " + fmPct(groupPct(/^Cash/), 1) + ".", size: "full"}) : null,
       cls.length ? mk("chart", {chart: "donut", title: "Asset mix", labels: cls.map(c => c.name),
         series: [{name: "Share", values: cls.map(c => c.pct != null ? c.pct : Math.round(c.value / total * 1000) / 10)}], unit: "%",
         caption: "As classified in the portfolio report, as at " + asOf + ".", size: "full"}) : null,
@@ -484,7 +492,8 @@ function factsDigest(facts){
     if ((P.years || []).length) out.push("- Calendar years: " + P.years.map(y => y.year + " " + fmPct(y.value)).join(", "));
     (P.accounts || []).forEach(a => out.push("- Account " + a.label + " (" + a.kind + "): " + fm$(a.value)));
     combinedHoldings(P).slice(0, 8).forEach(h => out.push("- Holding " + h.name + ": " + fm$(h.value) + " (" + fmPct(h.value / P.total * 100, 1) + ")"));
-    (P.classes || []).forEach(c => out.push("- Asset class " + c.name + ": " + fmPct(c.pct, 2)));
+    if ((P.allocation || []).length) P.allocation.forEach(c => out.push("- Asset allocation " + c.name + ": " + fmPct(c.pct, 1)));
+    else (P.classes || []).forEach(c => out.push("- Asset class " + c.name + ": " + fmPct(c.pct, 2)));
     if (P.income) out.push("- Estimated annual income " + fm$(P.income) + ", yield " + fmPct(P.yield));
   }
   if (F){
