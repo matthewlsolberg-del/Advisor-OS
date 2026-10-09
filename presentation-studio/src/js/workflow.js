@@ -10,11 +10,11 @@
    ========================================================================== */
 
 const PIECE_CARDS = [
-  {kind:"portfolio_review", name:"Portfolio review",       note:"Drop in the Croesus report: accounts, mix, returns, holdings"},
-  {kind:"plan_summary",     name:"Financial plan summary", note:"Drop in the plan: where they stand, goals, what closes the gap"},
-  {kind:"annual_review",    name:"Annual review",          note:"Portfolio and plan together, plus the decisions"},
-  {kind:"proposal",         name:"New-client proposal",    note:"What we heard, what we would do, how we work"},
+  {kind:"plan_summary",     name:"Financial plan summary", note:"Where they stand, what the plan projects, what happens next"},
+  {kind:"portfolio_review", name:"Portfolio review",       note:"How it is invested, how it behaved, what changed"},
+  {kind:"annual_review",    name:"Annual review",          note:"The year, the portfolio, the plan, the decisions"},
   {kind:"topic",            name:"Topic write-up",         note:"One question: options, recommendation, caveats"},
+  {kind:"proposal",         name:"New-client proposal",    note:"What we heard, what we would do, how we work"},
   {kind:"blank",            name:"Start blank",            note:"Build the sections yourself"}
 ];
 
@@ -65,7 +65,7 @@ function hasWords(v, key){
   return false;
 }
 function sectionStatus(sec){
-  if (sec.recommendationOverview) return householdProfileName() ? "done" : "started";
+  if (sec.recommendationOverview) return "done";
   if (sec.accountRecommendation) return (sec.blocks || []).some(b => b.type === "recommendation" && recProfile(b)) ? "done" : "started";
   const blocks = sec.blocks || [];
   if (gapCount(blocks) && blocks.some(b => !b.seed && hasWords(b))) return "started";
@@ -251,7 +251,7 @@ function preflight(){
     const st = sectionStatus(s);
     if (st !== "done"){
       issues.push({
-        t: '“' + (s.title || "Untitled") + '” is ' + (st === "empty" ? "still empty" : "part written"),
+        t: '“' + (s.title || "Untitled") + '” ' + (st === "empty" ? "is still empty" : s.smart ? "has pre-written words to read over (or let Copilot write them)" : "is part written"),
         fix: () => { showRail("build"); jumpToSection(s); }
       });
     }
@@ -265,17 +265,9 @@ function preflight(){
 
   deck.sections.forEach(s => {
     const n = gapCount(s.blocks);
-    if (n) issues.push({t:'“' + (s.title || "Untitled") + '” still has ' + n + " note" + (n === 1 ? "" : "s") +
-      " to fill in ([[blank]] / [NEEDS ADVISOR INPUT] / [SOURCE CONFLICT])",
+    if (n) issues.push({t:'“' + (s.title || "Untitled") + '” has ' + n + " yellow blank" + (n === 1 ? "" : "s") + " to fill in",
       fix: () => { showRail("build"); jumpToSection(s); }});
   });
-
-  const eq = householdEquityCheck(deck);
-  if (eq && !eq.inRange){
-    const sum = deck.sections.find(s => s.recommendationOverview);
-    issues.push({t:"Combined equity (" + eq.equity + "%) is outside the " + deck.household.investorProfile +
-      " range of " + eq.min + "%–" + eq.max + "%", fix:() => { const b = sum && sum.blocks[0]; if (b) selectBlock(b.id, true); }});
-  }
 
   layoutProblems().forEach(c => issues.push({
     t:"Something runs off the bottom of page " + c.page + " and would be cut off in the PDF",

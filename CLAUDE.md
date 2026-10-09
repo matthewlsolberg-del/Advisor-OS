@@ -38,11 +38,15 @@ cd presentation-studio
 python3 build.py                      # builds both dist/ files from src/
 NODE_PATH=$(npm root -g) node tests/smoke.mjs     # Studio end-to-end (headless Chromium)
 NODE_PATH=$(npm root -g) node tests/builder.mjs   # Portfolio Builder end-to-end
+NODE_PATH=$(npm root -g) node tests/intake.mjs croesus.pdf plan.pdf [shots]  # real reports
 ```
 
 - Edit `src/`, never `dist/` by hand; rebuild and commit both.
 - Load order of modules is in `build.py` (`TARGETS`). Shared engine: `brand.js`, `parse.js`,
   `viz.js`, `render.js`, `ui.js`, `portfolios.js`.
+- Pipeline (Studio): dropped PDF → `pdfread.js` (pdf.js, positions kept) → `facts.js`
+  (Croesus / plan → facts) → `smart.js` (facts → pre-written sections with `slot` blocks and
+  `[[blanks]]`) → Copilot fills slots via one JSON prompt (`slotPrompt` / `applySlotAnswer`).
 - The deck object is the single source of truth; every edit changes it and the pages are
   laid out again from scratch.
 - Look at the result: tests take screenshots when given a folder; check them.

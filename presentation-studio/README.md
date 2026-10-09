@@ -1,16 +1,33 @@
 # MHWG Presentation Studio
 
-A single, offline HTML file that turns notes, Copilot output or JSON into polished, on-brand
-client presentations and reports — cover, contents, sections, account recommendations, team
-page and disclosures — and exports them to PDF.
+Drop in a **Croesus portfolio report** or a **financial plan**, add your notes, and get a
+polished, on-brand client document in minutes: portfolio reviews, plan summaries, annual
+reviews and investment recommendations, already written around the real figures, with
+yellow `[[blanks]]` for what only the advisor knows. Copilot can write the words in one copy
+and paste. One offline HTML file; nothing leaves the computer.
 
 **To use it:** open [`dist/MHWG_Presentation_Studio.html`](dist/MHWG_Presentation_Studio.html)
-in Edge or Chrome. Partners start with [`docs/QUICK_START.md`](docs/QUICK_START.md).
+in Edge. Partners start with [`docs/QUICK_START.md`](docs/QUICK_START.md). To change it with
+Copilot on the work PC: [`docs/COPILOT_MAINTENANCE.md`](docs/COPILOT_MAINTENANCE.md).
 
-- **Nothing leaves the computer.** The page's Content Security Policy blocks every network
-  request. Copilot is used by copying prompts out and pasting answers back.
-- **Three ways to fill it in**, mixable: type on the page; have Copilot write it (text or JSON);
-  paste Presentation JSON from a script ([format](docs/PRESENTATION_JSON.md)).
+## What's new in v9
+
+- **Reports read on the computer.** An embedded copy of pdf.js reads PDFs with their layout,
+  and `facts.js` pulls the facts out of Croesus portfolio reports (accounts, typed by the
+  account-number letter; holdings; returns; month-end values; asset mix) and TD / Voyant
+  financial plans (net worth, people, goals and how well they are funded, the planner's
+  insights, education, protection, estate, the projection, assumptions). Unrecognized
+  reports go through a Copilot extraction prompt into the same shape.
+- **Drafts that are already written** (`smart.js`): each document type is laid out from the
+  facts, with house wording around every figure, data-driven suggestions, and `[[blanks]]`.
+- **One-button Copilot**: one prompt carries the notes, the facts and every pre-written box;
+  the answer comes back as JSON and fills them all. Rebuilding keeps written words.
+- **Four tabs**: Start → Edit → Copilot → Finish.
+- **v8.7's additions kept**: PMP/IPS investor profiles, the "Our recommendations" household
+  summary page, account pages headed "account | amount", and recommendation pages kept out of
+  the contents page.
+- **Built for Copilot maintenance**: readable code first, embedded assets last behind a
+  do-not-edit marker.
 
 ## Portfolio Builder (separate tool, same engine)
 
@@ -21,7 +38,7 @@ asset allocation checked against the profile's equity range, and one locked mode
 account. See [`docs/PORTFOLIO_BUILDER.md`](docs/PORTFOLIO_BUILDER.md). It shares the brand, page
 engine, model profiles and portfolio library with Presentation Studio but is not merged into it.
 
-## What changed in v7
+## What changed in v7 (history)
 
 v6.3 had grown about twenty "patch" layers (v1.1 → v6.3), each hiding or re-wiring the previous
 one on a timer — duplicate template pickers, two different recommendation builders, hidden tabs,
@@ -54,7 +71,11 @@ src/
   css/document.css    the printed document (pages, cover, blocks, recommendation page)
   js/brand.js         house standards, block factory, templates
   js/prompts.js       Copilot prompt pack and section briefs
-  js/parse.js         paste format, Word (.docx) and PDF text reading
+  js/parse.js         paste format, Word (.docx) reading
+  js/pdfread.js       PDFs read with their layout (embedded pdf.js)
+  js/facts.js         Croesus reports and financial plans -> facts
+  js/smart.js         pre-filled drafts from the facts; one-prompt Copilot fill
+  js/intake.js        the Start tab and the Copilot step
   js/viz.js           charts and infographics as inline SVG
   js/render.js        the layout engine: blocks → measured, paginated pages
   js/examples.js      worked examples per section
@@ -68,9 +89,11 @@ src/
   builder.html        Portfolio Builder page shell
   css/builder.css     Portfolio Builder additions
   assets/             embedded fonts, brand marks, standard portfolio profiles
+  vendor/             pdf.js 3.11.174 (Apache-2.0)
 build.py              → dist/MHWG_Presentation_Studio.html and dist/MHWG_Portfolio_Builder.html
 tests/smoke.mjs       Presentation Studio end-to-end test (headless Chromium)
 tests/builder.mjs     Portfolio Builder end-to-end test (offline, checks the math by hand)
+tests/intake.mjs      drops real reports in and checks the drafts (pass your own PDFs)
 examples/             sample Presentation JSON
 archive/              the v6.3 file this was rebuilt from
 ```
@@ -81,6 +104,7 @@ Build and test:
 python3 build.py
 NODE_PATH=$(npm root -g) node tests/smoke.mjs [screenshot-dir]     # needs Playwright + Chromium
 NODE_PATH=$(npm root -g) node tests/builder.mjs [screenshot-dir]
+NODE_PATH=$(npm root -g) node tests/intake.mjs croesus.pdf plan.pdf [screenshot-dir]
 ```
 
 Edit the files in `src/`, never `dist/` directly, then rebuild. The deck object is the single

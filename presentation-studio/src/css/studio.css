@@ -321,39 +321,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 .welcome .lede{font-size:14px;color:var(--gray);margin:0 0 6px}
 .welcome .field{max-width:420px}
 
-/* the front door (quickstart.js): kind, files, notes, build */
-.qs h3{display:flex;align-items:center;gap:8px;margin:16px 0 8px}
-.qs h3 em{font-style:normal;font-weight:400;color:var(--muted);font-size:12px}
-.qs-n{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--deep);color:#fff;font-size:12px;
-  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
-.qs-drop{padding:22px;cursor:pointer}
-.qs textarea{width:100%;box-sizing:border-box}
-.qs-files{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
-.qs-file{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--hair);border-radius:6px;padding:8px 10px;background:#fff}
-.qs-file > span:nth-child(2){flex:1;min-width:0}
-.qs-file b{display:block;color:var(--deep);font-size:12.5px;overflow-wrap:anywhere}
-.qs-file small{display:block;color:var(--gray);font-size:11.5px;line-height:1.4}
-.qs-file small.qs-warn{color:#8a5a00;margin-top:3px}
-.qs-file.is-croesus,.qs-file.is-plan{border-color:var(--shield);background:var(--tint)}
-.qs-file.is-unknown{background:#fff8eb}
-.qs-icon{width:22px;text-align:center;color:var(--deep);font-size:15px}
-.qs-go{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px}
-.btn-big{padding:11px 20px;font-size:14px}
-.route-grid.two{grid-template-columns:1fr 1fr;margin-top:12px}
-
-/* the Copilot panel's two steps */
-.qc-card{border-color:var(--shield)}
-.qc-step{display:grid;grid-template-columns:30px 1fr;gap:6px;margin-bottom:12px}
-.qc-step .step-n{position:static}
-.qc-step textarea{width:100%;box-sizing:border-box}
-.qs-card .btn-big{margin-top:4px}
-details.more-copilot > summary h3{margin:0}
-details.more-copilot[open] > .card{box-shadow:none;border:1px solid var(--hair);margin:10px 0 0}
-
-/* "Next blank" above the pages */
-.btn-blank{background:#fff4b8;border-color:#e2cf6a;color:#5a4a00}
-.btn-blank:hover{background:#ffec8a}
-
 .lib-list{display:flex;flex-direction:column;gap:6px;margin:10px 0}
 .lib-row{display:flex;align-items:center;gap:6px;border:1px solid var(--hair);border-radius:6px;padding:8px 10px;background:#fff}
 .lib-main{flex:1;min-width:0}
@@ -395,11 +362,27 @@ details.more-copilot[open] > .card{box-shadow:none;border:1px solid var(--hair);
   #presentHost,#presentView,#measure{display:none !important}
 }
 
-/* Help: the partner quick start (from Matt's v8.7 Studio) */
-.helper-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:8px 0 14px}
-.helper-card{border:1px solid var(--hair);border-left:3px solid var(--shield);border-radius:6px;padding:10px 11px;background:var(--tint)}
-.helper-card b{display:block;color:var(--deep);margin-bottom:3px}
-.helper-card p{margin:0;font-size:12px;line-height:1.45;color:var(--gray)}
-.helper-steps{counter-reset:helper;margin:8px 0 14px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}
-.helper-steps li{list-style:none;position:relative;padding:8px 9px 8px 35px;border-bottom:1px solid var(--hair);font-size:12px;line-height:1.4}
-.helper-steps li:before{counter-increment:helper;content:counter(helper);position:absolute;left:3px;top:7px;width:22px;height:22px;border-radius:50%;background:var(--deep);color:#fff;text-align:center;line-height:22px;font-weight:700;font-size:11px}
+/* ── v9: the Start tab, the one-button Copilot step ─────────────────────── */
+.btn-big{padding:12px 16px;font-size:15px;border-radius:7px}
+.mt16{margin-top:16px}
+kbd{font-family:var(--ui);font-size:11px;border:1px solid #c9d1c9;border-bottom-width:2px;border-radius:4px;padding:0 5px;background:#fff}
+.dropzone.big{padding:22px 14px;border-width:2px}
+.dropzone.big strong{font-size:15px}
+.source-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.source-row{display:flex;gap:9px;align-items:flex-start;border:1px solid #cfe6c6;background:#f3faf0;border-radius:6px;padding:8px 9px}
+.source-row > div{flex:1;min-width:0}
+.source-row b{display:block;color:var(--deep);font-size:12.5px;word-break:break-word}
+.source-row small{display:block;color:var(--gray);font-size:11px;line-height:1.4;white-space:pre-line}
+.source-row i.ok{font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--shield);color:#0d1f0a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:0 0 20px}
+.piece-card .ready-dot{font-style:normal;color:var(--shield);font-size:10px;vertical-align:1px}
+.piece-card.is-ready{border-color:#b6dca9}
+#fldNotes{font-family:var(--ui);font-size:13px;line-height:1.5}
+#btnBuild{margin-top:4px}
+.copilot-hero{border-color:#b6dca9;background:linear-gradient(#fff,#f7fbf5)}
+.big-steps{margin:0;padding-left:22px}
+.big-steps > li{margin:4px 0 14px;font-size:13px;line-height:1.5}
+.big-steps > li::marker{font-weight:700;color:var(--deep)}
+.big-steps .hint{display:block}
+.big-steps textarea{margin:6px 0}
+.help-steps{padding-left:20px}.help-steps li{margin:6px 0}
+mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border-radius:3px;border-bottom:1.5px dashed #D99E14}

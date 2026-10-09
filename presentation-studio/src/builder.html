@@ -8,13 +8,11 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <title>MHWG Portfolio Builder</title>
 <!-- Built from presentation-studio/src by build.py — edit the sources, not this file. -->
-<style>{{FONTS}}</style>
 <style>{{STUDIO_CSS}}</style>
 <style>{{DOC_CSS}}</style>
 </head>
 <body data-build="{{VERSION}}" class="builder">
 
-{{BRAND_MARKS}}
 
 <header class="topbar">
   <div class="brand">
@@ -137,5 +135,15 @@
 <script>
 {{SCRIPTS}}
 </script>
+
+<!-- ════════════════════════════════════════════════════════════════════════
+     EMBEDDED ASSETS — DO NOT EDIT ANYTHING BELOW THIS LINE.
+     Fonts, the MHWG wordmark and TD shield, and (Presentation Studio only) the
+     pdf.js PDF reader. They are large, machine-generated and never need
+     changing. Everything you might want to change is ABOVE this line.
+     ════════════════════════════════════════════════════════════════════════ -->
+<style>{{FONTS}}</style>
+<!-- brand marks: cloned wherever the page needs them -->
+{{BRAND_MARKS}}
 </body>
 </html>

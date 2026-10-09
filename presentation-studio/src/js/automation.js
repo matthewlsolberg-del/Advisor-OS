@@ -325,11 +325,6 @@ function readPresentation(v){
   if (Array.isArray(v.team) && v.team.length) out.team = v.team.map(t => ({name:S(t.name), desig:S(t.desig), title:S(t.title)}));
   if (v.contact && typeof v.contact === "object") out.contact = v.contact;
   if (Array.isArray(v.disclosures) && v.disclosures.length) out.disclosures = v.disclosures.map(S);
-  const ip = S((v.household || {}).investorProfile || v.investorProfile).trim();
-  if (ip){
-    const name = Object.keys(INVESTOR_PROFILES).find(k => k.toLowerCase() === ip.toLowerCase().replace(/\s+investor$/, ""));
-    if (name) out.investorProfile = name; else warn('Unknown investor profile "' + ip + '" — choose it on the Our recommendations page.');
-  }
   return out;
 }
 
@@ -360,7 +355,6 @@ function applyPresentation(r, mode){
   } else {
     deck.sections.push(...r.sections);
   }
-  if (r.investorProfile) setInvestorProfile(r.investorProfile);
   selectedId = null;
   syncPanels(); render();
   toast(r.sections.length + " section" + (r.sections.length === 1 ? "" : "s") + " laid out.");
@@ -406,6 +400,11 @@ function smartPaste(text){
     let v;
     try { v = parseJSONLoose(t); }
     catch (e){ showModal("That JSON did not read", "<pre class='prompt-preview'>" + esc(e.message) + "</pre>"); return false; }
+    if (v && !Array.isArray(v) && /^(portfolio|plan)-facts$/.test(v.kind || "")) return useFactsAnswer(t);
+    if (v && !Array.isArray(v) && v.slots && slotBlocks().length){
+      const n = applySlotAnswer(t);
+      toast(n + " boxes written by Copilot."); return true;
+    }
     if (v && !Array.isArray(v) && v.portfolioName && !v.sections){
       openPortfolioLibrary();
       $("libAdd").open = true; $("libJson").value = t; $("libCheck").click();
@@ -471,9 +470,7 @@ function presentationToJSON(images){
     design: {format: deck.design.format, cover: deck.cover.style === "photo" ? "white" : deck.cover.style,
              look: deck.design.look, accent: deck.design.accent, density: deck.design.density},
     options: Object.fromEntries(OPTION_KEYS.filter(k => k !== "draft").map(k => [k, !!deck.options[k]])),
-    household: deck.household && deck.household.investorProfile ? {investorProfile: deck.household.investorProfile} : undefined,
-    /* "Our recommendations" is rebuilt from the account pages, so it is not written out */
-    sections: deck.sections.filter(s => !s.recommendationOverview).map(s => {
+    sections: deck.sections.map(s => {
       if (s.accountRecommendation){
         const rec = s.blocks.find(b => b.type === "recommendation") || {};
         const p = recProfile(rec);

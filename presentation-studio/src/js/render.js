@@ -159,7 +159,7 @@ function renderBlock(b){
         body.appendChild(editable("div","a-t", a.t, b.id, "items." + i + ".t"));
         body.appendChild(editable("div","a-d", a.d, b.id, "items." + i + ".d"));
         const meta = [a.who, a.when].filter(Boolean).join(" · ");
-        if (meta) body.appendChild(el("div","a-meta", esc(meta)));
+        if (meta) body.appendChild(el("div","a-meta", richToHtml(meta)));
         r.appendChild(body);
         g.appendChild(r);
       });
@@ -215,8 +215,6 @@ function renderBlock(b){
     case "pagebreak": wrap.appendChild(el("div","blk-cap","— page break —")); break;
     /* an account recommendation: the locked one-page portfolio profile (portfolios.js) */
     case "recommendation": wrap.insertAdjacentHTML("beforeend", recommendationHTML(b)); break;
-    /* "Our recommendations": the household summary in front of the account pages (portfolios.js) */
-    case "householdSummary": wrap.insertAdjacentHTML("beforeend", householdSummaryHTML()); break;
     default:
       /* block types a page adds for itself (Portfolio Builder's summary blocks) */
       if (BLOCK_RENDERERS[b.type]){ BLOCK_RENDERERS[b.type](b, wrap); break; }
@@ -429,8 +427,10 @@ function layout(deck, host){
   /* front matter -------------------------------------------------------- */
   pages.push({node: coverPage(deck), numbered:false});
 
+  /* account pages are listed once, under "Our recommendations", not one by one */
+  const tocSections = deck.sections.filter(s => !s.accountRecommendation);
   const tocCount = deck.options.toc
-    ? Math.max(1, Math.ceil(tocSections(deck).length / tocPerPage(deck)))
+    ? Math.max(1, Math.ceil(tocSections.length / 16))
     : 0;
   const tocSlots = [];
   for (let i = 0; i < tocCount; i++){
@@ -487,30 +487,28 @@ function layout(deck, host){
   };
 
   deck.sections.forEach((section, si) => {
-    const ourRecs = section.recommendation || section.recommendationOverview;
-    ctx = {section: ourRecs ? "OUR RECOMMENDATIONS" : (section.runningTitle || section.title || ""),
+    const recPart = section.recommendationOverview || section.recommendation;
+    ctx = {section: recPart ? "OUR RECOMMENDATIONS" : (section.runningTitle || section.title || ""),
            recommendation: !!section.recommendation, householdSummary: !!section.recommendationOverview};
     if (deck.options.dividers){
       pages.push({node: dividerPage(deck, section, si + 1), numbered:true});
       sectionPages[section.id] = pages.length;   /* provisional; fixed below */
       page = null;
-    } else if ((deck.options.sectionBreak || ourRecs || (deck.sections[si - 1] || {}).recommendation) && si > 0){
-      page = null;              /* each section opens a page; recommendations always have their own */
+    } else if ((deck.options.sectionBreak || section.recommendation || section.recommendationOverview || (deck.sections[si - 1] || {}).recommendation) && si > 0){
+      page = null;              /* each section opens a page; a recommendation always has its own */
     }
     let items = (section.blocks || []).slice();
-    if (section.recommendationOverview){
-      /* the summary carries its own title, so title and summary never split across pages */
-      items = items.filter(b => b && b.type === "householdSummary");
-    } else if (!deck.options.dividers && section.recommendation){
+    if (!deck.options.dividers && !section.recommendation && !section.recommendationOverview){
+      items = [Object.assign(newBlock("heading"),
+                {id:"sec-" + section.id, level:2, kicker: section.kicker || "", text: section.title || "", num: si + 1})]
+              .concat(items);
+    } else if (!deck.options.dividers && section.recommendation && !section.recommendationOverview){
+      /* an account page: the account and amount as its heading, then the locked profile */
       items = [Object.assign(newBlock("heading"),
                 {id:"sec-" + section.id, level:2, kicker:"", text: section.title || "Account Recommendation"})]
               .concat(items);
-    } else if (!deck.options.dividers){
-      items = [Object.assign(newBlock("heading"),
-                {id:"sec-" + section.id, level:2, kicker: section.kicker || "", text: section.title || "",
-                 num: tocSections(deck).indexOf(section) + 1})]
-              .concat(items);
     }
+    /* the household summary carries its own title, so title and summary never split */
 
     items.forEach((b, bi) => {
       if (b.type === "pagebreak"){ page = null; return; }
@@ -586,17 +584,8 @@ function layout(deck, host){
   return {pages, sectionPages};
 }
 
-/** The sections listed in the contents: every one except the per-account
-    recommendation pages ("Our recommendations" stands for all of them). */
-function tocSections(deck){ return deck.sections.filter(s => !s.accountRecommendation); }
-
-/* How many entries fit on one contents page (with the list set tighter once
-   there are more than a handful — see .toc-list.is-long). */
-function tocPerPage(deck){ return deck.design.format === "slides" ? 7 : 13; }
-
 function fillToc(deck, slots, sectionPages){
-  const perPage = tocPerPage(deck);
-  const long = tocSections(deck).length > (deck.design.format === "slides" ? 5 : 9);
+  const perPage = 16;
   slots.forEach((p, pi) => {
     const body = p._body;
     body.innerHTML = "";
@@ -604,8 +593,8 @@ function fillToc(deck, slots, sectionPages){
       body.appendChild(el("h2","toc-title","Contents"));
       body.appendChild(el("div","toc-rule"));
     }
-    const list = el("ol","toc-list" + (long ? " is-long" : ""));
-    tocSections(deck).slice(pi * perPage, (pi + 1) * perPage).forEach((s, i) => {
+    const list = el("ol","toc-list");
+    deck.sections.filter(s => !s.accountRecommendation).slice(pi * perPage, (pi + 1) * perPage).forEach((s, i) => {
       const li = el("li","toc-item");
       li.appendChild(el("span","toc-num", String(pi * perPage + i + 1).padStart(2,"0")));
       li.appendChild(el("span","toc-name", esc(s.title || "")));

@@ -8,7 +8,6 @@
 
 
 const AUTOSAVE_KEY = "mhwg.presentation.working-copy";
-const WELCOMED_KEY = "mhwg.presentation.welcomed";
 
 /* ── State ──────────────────────────────────────────────────────────────── */
 
@@ -25,7 +24,7 @@ function todayISO(){
   return new Date(t.getTime() - t.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 function newDeck(kind){
-  const t = TEMPLATES[kind] || TEMPLATES.plan_summary;
+  const t = TEMPLATES[kind] || {title:"Our Recommendations", subtitle:"", kicker:"Investment recommendation", sections:[]};
   return {
     version: 1,
     meta:{ kind, title:t.title, subtitle:t.subtitle, kicker:t.kicker, client:"", advisor:"", date:todayISO(), docTitle:"" },
@@ -41,9 +40,12 @@ function newDeck(kind){
     team: structuredClone(BRAND.team),
     contact:{firm:BRAND.firm, address:BRAND.address, phone:BRAND.phone, web:BRAND.web},
     disclosures: BRAND.disclosures.slice(),
-    guideNumbers: null,   /* key figures, fed into every prompt */
+    facts: {},            /* what was read from dropped reports: {portfolio, plan} (facts.js) */
+    notes: "",            /* the advisor's own notes / dictation, given to Copilot */
+    profile: "",          /* household investor profile, for investment recommendations */
+    guideNumbers: null,
     drafts: {},
-    sources: {}           /* sources.message.note: the one takeaway, fed into every prompt */
+    sources: {}
   };
 }
 
@@ -102,7 +104,6 @@ function setPath(obj, path, value){
   cur[last] = value;
 }
 function blockLabelOf(b){
-  if (b.type === "householdSummary") return "Our recommendations";
   return b.type === "recommendation" ? "Recommendation" : (BLOCK_KINDS.find(k => k.type === b.type) || {}).label || b.type;
 }
 
@@ -144,7 +145,6 @@ function render(){
   const edit = $("optEditInline").checked;
   const keepTop = host.scrollTop, keepLeft = host.scrollLeft;
   host.className = "pages doc" + (edit ? " edit-on" : "");
-  ensureHouseholdSummary(deck);
   const result = layout(deck, host);
   $("pageCount").textContent = result.pages.length + (result.pages.length === 1 ? " page" : " pages");
   if (edit){
@@ -162,7 +162,6 @@ function render(){
   /* laying out again rebuilds every page; put the view back where the person was */
   host.scrollTop = keepTop; host.scrollLeft = keepLeft;
   updateChips();
-  updateBlankButton();
   const print = deckPrint();
   if (print !== lastPrint){ lastPrint = print; markDirty(); }
   updateUndoButtons();
@@ -199,8 +198,6 @@ function decorateBlocks(){
       if (!sec) return;
       btn("+ Block", "Add a block at the top of this section", (b) => showInsertMenu(b, {sectionId: sec.id, top: true}));
       btn("✦ Copilot", "Write this section with Copilot", () => { showRail("copilot"); setPromptKind("section", sec.id); });
-    } else if (w.dataset.type === "householdSummary"){
-      btn("Choose investor profile", "Set the household investor profile", () => selectBlock(bid, false));
     } else if (w.dataset.type === "recommendation"){
       btn("Edit recommendation", "Change the account, amount, portfolio or points", () => selectBlock(bid, false));
       btn("Delete page", "Remove this recommendation page", () => {
@@ -260,46 +257,17 @@ function syncPanels(){
   $("fldDisclosures").value = (deck.disclosures || []).join("\n\n");
   $$('input[name="accent"]').forEach(r => r.checked = r.value === deck.design.accent);
   $$('input[name="density"]').forEach(r => r.checked = r.value === deck.design.density);
-  $("fldMessage").value = ((deck.sources || {}).message || {}).note || "";
   buildPieceGrid();
   buildSwatches();
   buildTitlePicker();
   buildAdvisorPicker();
   buildTeamEditor();
   buildOutline();
-  buildNumbers();
+  syncIntake();
   buildPromptPicker();
   buildCheckList();
 }
 
-/* Start: what are we making */
-function buildPieceGrid(){
-  const grid = $("pieceGrid");
-  grid.innerHTML = "";
-  PIECE_CARDS.forEach(c => {
-    const card = el("button", "piece-card" + (deck.meta.kind === c.kind ? " is-on" : ""),
-      "<b>" + esc(c.name) + "</b><span>" + esc(c.note) + "</span>");
-    card.onclick = () => switchPiece(c.kind);
-    grid.appendChild(card);
-  });
-}
-function switchPiece(kind){
-  if (deck.meta.kind === kind) return;
-  const name = (PIECE_CARDS.find(c => c.kind === kind) || {}).name || kind;
-  if (!deckIsStarter() && !confirm("Switch to " + name + "?\n\nThe sections you have now are replaced with this template's. (Undo brings them back.)")) return;
-  snapshot();
-  /* only the sections and cover wording change; client, figures, team and settings stay */
-  const fresh = newDeck(kind);
-  ["kind", "subtitle", "kicker"].forEach(k => { deck.meta[k] = fresh.meta[k]; });
-  if (!deck.meta.title || Object.values(TITLE_IDEAS).some(list => list.includes(deck.meta.title)) || /^The .+ (Plan|Review|Portfolio Review)$/.test(deck.meta.title))
-    deck.meta.title = titleIdeas(kind, deck.meta.client)[0] || fresh.meta.title;
-  const recs = deck.sections.filter(s => s.accountRecommendation);
-  deck.sections = fresh.sections.concat(recs);
-  if (deck.guideNumbers && deck.guideNumbers.every(r => !(r.v || "").trim())) deck.guideNumbers = null;
-  selectedId = null; openSectionId = null;
-  syncPanels(); render();
-  toast(name + " — sections loaded");
-}
 
 /* the little picture-swatches for format, cover and page style */
 function swatchRow(host, items, current, cls, onPick){
@@ -358,10 +326,9 @@ function buildTeamEditor(){
 
 /* ── Build: the outline ─────────────────────────────────────────────────── */
 
-const STATUS_TEXT = {done:"written", started:"part written", empty:"to write"};
+const STATUS_TEXT = {done:"done", started:"to check", empty:"to write"};
 
 function buildOutline(){
-  ensureHouseholdSummary(deck);
   const host = $("outline");
   host.innerHTML = "";
   const p = deckProgress();
@@ -425,18 +392,14 @@ function buildOutline(){
     head.onclick = (e) => {
       if (e.target.closest("button")) return;
       currentSectionId = s.id;
-      if (s.accountRecommendation || s.recommendationOverview){
-        const r = s.blocks.find(b => b.type === "recommendation" || b.type === "householdSummary");
-        if (r) selectBlock(r.id, true);
-        return;
-      }
+      if (s.accountRecommendation){ const r = s.blocks[0]; if (r) selectBlock(r.id, true); return; }
       openSectionId = open && e.target.tagName !== "INPUT" ? null : s.id;
       buildOutline(); updateAddWhere();
       jumpToSection(s);
     };
     box.appendChild(head);
 
-    if (open && !s.accountRecommendation && !s.recommendationOverview){
+    if (open && !s.accountRecommendation){
       const list = el("div", "o-blocks");
       if (!(s.blocks || []).length) list.appendChild(el("div", "o-empty", "Empty — add a block below, or paste text on Copilot & JSON."));
       (s.blocks || []).forEach((b, bi) => {
@@ -567,58 +530,16 @@ function updateAddWhere(){
 
 /* ── Copilot tab: key figures and the prompt picker ─────────────────────── */
 
-function buildNumbers(){
-  const host = $("numRows");
-  if (!deck.guideNumbers) deck.guideNumbers = (NUMBER_ROWS[deck.meta.kind] || NUMBER_ROWS.blank).map(r => Object.assign({}, r));
-  const rows = deck.guideNumbers;
-  host.innerHTML = "";
-  rows.forEach((r, i) => {
-    const card = el("div", "num-row");
-    const inp = (key, ph) => { const n = document.createElement("input"); n.value = r[key] || ""; n.placeholder = ph;
-      n.oninput = () => { r[key] = n.value; markDirty(); showPrompt(); }; card.appendChild(n); };
-    inp("k", "Label"); inp("v", "Value"); inp("note", "Note (as at…, illustrative)");
-    card.appendChild(inspBtn("✕", () => { snapshot(); rows.splice(i, 1); buildNumbers(); markDirty(); }, "btn-danger"));
-    host.appendChild(card);
-  });
-  const sel = $("numSection"), keep = sel.value;
-  sel.innerHTML = deck.sections.filter(s => !s.accountRecommendation).map(s => '<option value="' + esc(s.id) + '">' + esc(s.title || "Untitled") + "</option>").join("");
-  if (keep) sel.value = keep;
-}
-function numbersToPage(kind){
-  const rows = (deck.guideNumbers || []).filter(r => (r.k || "").trim() && (r.v || "").trim());
-  if (kind === "stats" && rows.length < 2){ toast("Fill in at least two figures."); return; }
-  if (!rows.length){ toast("Fill in at least one figure."); return; }
-  const block = kind === "stats"
-    ? Object.assign(newBlock("stats"), {fromNumbers:"stats", cols: rows.length <= 4 ? rows.length : rows.length <= 6 ? 3 : 4,
-        items: rows.map(r => ({num:r.v, label:r.k, note:r.note || ""}))})
-    : Object.assign(newBlock("facts"), {fromNumbers:"facts",
-        items: rows.map(r => ({k:r.k, v:r.v + ((r.note || "").trim() ? " (" + r.note.trim() + ")" : "")}))});
-  /* pressing again updates the cards already on the page instead of adding a second set */
-  let existing = null;
-  deck.sections.forEach(s => (s.blocks || []).forEach((b, i) => { if (b.fromNumbers === kind) existing = {s, i}; }));
-  snapshot();
-  if (existing){
-    block.id = existing.s.blocks[existing.i].id;
-    existing.s.blocks[existing.i] = block;
-    syncPanels(); render(); jumpToSection(existing.s);
-    toast("Updated the figures already in “" + (existing.s.title || "section") + "”");
-    return;
-  }
-  const sec = deck.sections.find(s => s.id === $("numSection").value) || deck.sections.find(s => !s.accountRecommendation);
-  if (!sec){ toast("Add a section first."); return; }
-  sec.blocks.unshift(block);
-  syncPanels(); render(); jumpToSection(sec);
-  toast("Added to “" + (sec.title || "section") + "”");
-}
 
 function setPromptKind(kind, sectionId){
   const r = document.querySelector('input[name="promptKind"][value="' + kind + '"]');
   if (r) r.checked = true;
   if (sectionId){ $("promptSection").value = sectionId; currentSectionId = sectionId; }
+  const more = $("promptKind").closest("details"); if (more) more.open = true;
   buildPromptPicker();
   if (kind === "section") $("promptSection").scrollIntoView({block:"center", behavior:"smooth"});
 }
-function promptKind(){ return (document.querySelector('input[name="promptKind"]:checked') || {}).value || "text"; }
+function promptKind(){ return (document.querySelector('input[name="promptKind"]:checked') || {}).value || "section"; }
 function buildPromptPicker(){
   const kind = promptKind();
   const secSel = $("promptSection"), keep = secSel.value;
@@ -733,10 +654,19 @@ function buildInspector(){
   box.hidden = false;
   $("inspectorTitle").textContent = blockLabelOf(b);
   body.innerHTML = "";
-  const isRec = b.type === "recommendation", isHousehold = b.type === "householdSummary";
-  ["btnBlockUp", "btnBlockDown", "btnBlockDup", "btnBlockCopilot"].forEach(id => { $(id).hidden = isRec || isHousehold; });
-  $("btnBlockDelete").hidden = isHousehold;
-  if (isHousehold){ $("inspectorTitle").textContent = "Our recommendations"; buildHouseholdSummaryInspector(body); return; }
+  const isRec = b.type === "recommendation";
+  if (b.type === "householdSummary"){
+    ["btnBlockUp", "btnBlockDown", "btnBlockDup", "btnBlockCopilot", "btnBlockDelete"].forEach(id => { $(id).hidden = true; });
+    $("inspectorTitle").textContent = "Our recommendations";
+    body.appendChild(el("p", "insp-note", "The household summary is worked out from the account pages that follow it. Set the investor profile here."));
+    const sel = inspSelect([{id: "", name: "— choose —"}].concat(Object.keys(INVESTOR_PROFILES).map(n => ({id: n, name: n}))), deck.profile || "", v => { setProfile(v); buildInspector(); });
+    body.appendChild(insp("Household investor profile", sel));
+    const p = INVESTOR_PROFILES[deck.profile];
+    if (p) body.appendChild(el("p", "insp-note", esc(p.description) + "<br><b>Equity</b> " + p.equity + "% (" + p.equityMin + "–" + p.equityMax + "%) · <b>Fixed income</b> " + p.fixedIncome + "% (" + p.fixedMin + "–" + p.fixedMax + "%)"));
+    return;
+  }
+  ["btnBlockDelete"].forEach(id => { $(id).hidden = false; });
+  ["btnBlockUp", "btnBlockDown", "btnBlockDup", "btnBlockCopilot"].forEach(id => { $(id).hidden = isRec; });
   if (isRec){ buildRecommendationInspector(b, body); return; }
   body.appendChild(el("p", "insp-note insp-sec", "In “" + esc(found.section.title || "section") + "”" + (b.seed ? " · <b>still sample text</b>" : "")));
 
@@ -1112,7 +1042,7 @@ async function handleFiles(files){
       } else if (name.endsWith(".json")){
         openAnyJSON(await readTextFile(f));
       } else if (name.endsWith(".pdf")){
-        await importPdfFile(f);     /* Croesus report or plan: its pages; anything else: into the notes */
+        await intakePdf(f);
       } else if (/\.(png|jpe?g|gif|webp|svg)$/.test(name)){
         const b = newBlock("image");
         b.src = await readImage(f); b.caption = "";
@@ -1178,6 +1108,12 @@ function migrate(d){
   d.sections = (d.sections || []).map(s => Object.assign({id:uid(), title:"", blocks:[]}, s));
   d.sections.forEach(s => { s.blocks = (s.blocks || []).filter(Boolean); });
   d.guideNumbers = Array.isArray(d.guideNumbers) ? d.guideNumbers : null;
+  d.facts = d.facts && typeof d.facts === "object" ? d.facts : {};
+  d.notes = typeof d.notes === "string" ? d.notes : "";
+  d.profile = d.profile || (d.v8 && d.v8.investorProfile) || "";      /* v8.x kept it under v8 */
+  delete d.v8;
+  /* v8.x summary pages carried no block; give them the one that draws the page */
+  d.sections.forEach(s => { if (s.recommendationOverview && !(s.blocks || []).some(b => b.type === "householdSummary")) s.blocks = [{id: uid(), type: "householdSummary"}]; });
   d.drafts = d.drafts && typeof d.drafts === "object" ? d.drafts : {};
   d.sources = d.sources && typeof d.sources === "object" ? d.sources : {};
   delete d.wizard;
@@ -1189,12 +1125,6 @@ function migrate(d){
   if (dropped) setTimeout(() => toast(dropped + (dropped === 1 ? " picture was a web link" : " pictures were web links") +
     " — removed, this program never loads anything from the internet. Drop the picture file in instead.", 7000), 50);
   migrateRecommendations(d);
-  /* files saved by the v8.x Copilot builds kept the household profile under d.v8 */
-  if (d.v8 && d.v8.investorProfile && !(d.household && d.household.investorProfile)){
-    d.household = Object.assign({}, d.household, {investorProfile: d.v8.investorProfile});
-  }
-  delete d.v8;
-  ensureHouseholdSummary(d);
   return d;
 }
 
@@ -1207,9 +1137,9 @@ function exportPdf(force){
   commitEdits();
   const gaps = gapCount(deck.sections.map(s => s.blocks));
   if (gaps && force !== true && force !== "gaps"){
-    showModal("There are still blanks to fill in", `
-      <p>${gaps} place${gaps === 1 ? "" : "s"} still have a <b>[[blank]]</b>, <b>[NEEDS ADVISOR INPUT]</b> or
-      <b>[SOURCE CONFLICT]</b>. They are highlighted on the page and would print in the PDF.</p>
+    showModal("Notes for the advisor are still in the text", `
+      <p>${gaps} place${gaps === 1 ? "" : "s"} still say <b>[NEEDS ADVISOR INPUT]</b> or
+      <b>[SOURCE CONFLICT]</b> — they are highlighted on the page and would print in the PDF.</p>
       <div class="modal-actions"><button class="btn btn-ghost" id="btnGapsAnyway">Export anyway</button>
          <button class="btn btn-primary" id="btnShowGaps">Show me</button></div>`);
     $("btnShowGaps").onclick = () => { hideModal(); showRail("finish"); };
@@ -1319,57 +1249,49 @@ function presentEnd(){
 
 
 function showHelp(){
-  showModal("Partner Quick Start", `
-    <p class="lead">Use this guide to build, review and save a client presentation without changing the underlying tool.</p>
-    <h3>Recommended workflow</h3>
-    <ol class="helper-steps">
-      <li><b>Start</b><br>Choose the type of presentation and enter the client, title, advisor and date.</li>
-      <li><b>Build the narrative</b><br>Use the sections in the left sidebar. Select a section to edit it, reorder it or add content.</li>
-      <li><b>Add recommendations</b><br>In Build, add one account recommendation for each account. Enter the account label, amount and approved portfolio.</li>
-      <li><b>Set the household profile</b><br>Select <b>Our recommendations</b> in the left sidebar. Choose the Investor Profile in the right-hand settings panel.</li>
-      <li><b>Review the summary</b><br>Confirm the household total, overall allocation, every account amount and each assigned portfolio.</li>
-      <li><b>Finish and save</b><br>Run the Finish checks, save the <code>.mhwg.json</code> working file, then export the PDF.</li>
+  showModal("How Presentation Studio works", `
+    <ol class="help-steps">
+      <li><b>Start</b> — pick what you are making and drop in what you have: the <b>Croesus portfolio report</b>,
+        the <b>financial plan</b> PDF, screenshots, Word files. Reports are read on this computer and the draft
+        lays itself out — every figure straight from the report. Add your notes (Windows + H to dictate).</li>
+      <li><b>Edit</b> — click any text on the page and type over it. The yellow <mark class="blank">[[blanks]]</mark>
+        are yours to fill. Point at a block for its tools; click it for all its settings.</li>
+      <li><b>Copilot</b> — press <b>Copy the prompt</b>, paste it into Copilot, paste Copilot's answer back. It writes
+        the words around the figures, from your notes. <b>✦ Copilot</b> on any block does just that block.</li>
+      <li><b>Finish</b> — the checklist (blanks left, anything cut off), the DRAFT tag, Save and Export PDF.</li>
     </ol>
-    <div class="helper-grid">
-      <div class="helper-card"><b>Editing an account</b><p>Select the account in the left sidebar. Use the right panel to change the account name, amount, portfolio or “How it fits” points.</p></div>
-      <div class="helper-card"><b>Editing the Investor Profile</b><p>Select <b>Our recommendations</b> in the left sidebar. The profile dropdown appears in the right panel, not on the client-facing page.</p></div>
-      <div class="helper-card"><b>Portfolio library</b><p>Use Portfolio library to view approved profiles or add an approved profile from Copilot JSON. Existing saved profiles are retained between versions.</p></div>
-      <div class="helper-card"><b>Saving versus exporting</b><p><b>Save</b> creates the editable working file. <b>Export PDF</b> creates the client-facing output. Keep the working file with the client file.</p></div>
-    </div>
-    <h3>Before sharing the PDF</h3>
+    <h3>Nothing leaves this computer</h3>
+    <p>The page cannot connect to anything. Copilot is used only by copy and paste.</p>
+    <h3>Account types from Croesus</h3>
+    <p>The letter at the end of the account number: <b>A/B</b> non-registered (CAD/USD, or corporate), <b>S</b> RRSP /
+      LIRA / spousal RRSP, <b>J</b> TFSA, <b>V</b> RESP. The account-type text in the report wins when there is one.</p>
+    <h3>Typing shortcuts</h3>
     <ul>
-      <li>Confirm client names, account labels and dollar amounts.</li>
-      <li>Confirm the household total equals the account reconciliation total.</li>
-      <li>Confirm the selected Investor Profile and the household allocation are appropriate.</li>
-      <li>Confirm every recommended portfolio is the intended approved profile.</li>
-      <li>Review advisor-input markers, disclosures, page overflow warnings and the DRAFT status.</li>
+      <li><code># Section</code> · <code>## Sub-heading</code> · <code>- bullet</code> · <code>1. numbered</code> ·
+        <code>&gt; callout</code> · <code>Label: value</code> · <code>$1.2M | Label | note</code> · <code>| a | b |</code> tables</li>
+      <li><code>**bold**</code> · <code>==one highlighted phrase==</code> · <code>[[a blank to fill]]</code></li>
     </ul>
-    <h3>Copilot and source material</h3>
-    <p>Copilot is used through copy and paste. The HTML does not connect directly to Copilot or the internet. Use approved source material, verify all figures, and do not treat generated wording as a substitute for advisor review.</p>
-    <h3>Common fixes</h3>
-    <ul>
-      <li><b>Recommendation missing:</b> add an account recommendation in Build and select an approved portfolio.</li>
-      <li><b>Household allocation looks wrong:</b> verify every account amount and each portfolio allocation profile.</li>
-      <li><b>Page is too long:</b> shorten optional wording first. Do not remove required disclosures.</li>
-      <li><b>Need to continue later:</b> open the saved <code>.mhwg.json</code> working file, not the exported PDF.</li>
-    </ul>
+    <p><code>Ctrl+Z</code> undo · <code>Ctrl+S</code> save · <code>Ctrl+P</code> export · <code>Enter</code> finishes a line</p>
     <div class="modal-actions">
-      <button class="btn btn-ghost" id="btnClearLocal">Clear browser working copy</button>
+      <button class="btn btn-ghost" id="btnClearLocal">Clear the working copy from this browser</button>
       <button class="btn" id="btnHelpJSON">JSON format</button>
-      <button class="btn btn-primary" id="btnHelpWelcome">Show welcome screen</button>
-    </div>`, {wide:true});
+      <button class="btn btn-primary" id="btnHelpOk">Got it</button></div>`, {wide:true});
   $("btnClearLocal").onclick = () => { try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e){} toast("Working copy cleared from this browser"); };
   $("btnHelpJSON").onclick = showJSONReference;
-  $("btnHelpWelcome").onclick = () => showWelcome(false);
+  $("btnHelpOk").onclick = hideModal;
 }
 
-/* The front door (showWelcome) lives in quickstart.js. */
-function goJSON(){
-  showRail("copilot");
-  setPromptKind("json");
-  document.querySelector(".more-copilot").open = true;
-  $("pasteCard").scrollIntoView({block:"center", behavior:"smooth"});
-  $("pasteBox").focus();
+/** New: a fresh template on the Start tab. Undo brings the previous piece back. */
+function newPresentation(){
+  if (!deckIsStarter() && !confirm("Start a new presentation?\n\nSave this one first if you need it. (Undo brings it back.)")) return;
+  snapshot();
+  const keep = {team: deck.team, contact: deck.contact, design: deck.design, cover: deck.cover};
+  deck = Object.assign(newDeck("portfolio_review"), keep);
+  selectedId = null; currentSectionId = null; openSectionId = null;
+  syncPanels(); render();
+  builtPrint = deckPrint();
+  markClean("not saved yet");
+  showRail("start");
 }
 
 /* ── Wiring ─────────────────────────────────────────────────────────────── */
@@ -1380,17 +1302,10 @@ function showRail(name){
   const panel = document.querySelector('.panel[data-panel="' + name + '"]');
   if (panel) panel.scrollTop = 0;
   if (name === "finish") buildCheckList();
-  if (name === "copilot"){ showPrompt(); describeCopilotStep(); }
-}
-/** The line under "Copy for Copilot": what this prompt will ask for. */
-function describeCopilotStep(){
-  const n = collectBlanks(deck).length;
-  $("qcWhat").textContent = n ? "It asks Copilot to fill the " + n + (n === 1 ? " blank" : " blanks") + " in your document, using your notes."
-                              : "No [[blanks]] left, so it asks Copilot to write the whole document from your notes.";
+  if (name === "copilot"){ showPrompt(); updateSlotStatus(); }
 }
 function go(target){
-  if (target === "copilot-json") goJSON();
-  else showRail(target);
+  showRail(target);
 }
 
 function wire(){
@@ -1401,21 +1316,13 @@ function wire(){
   $("docTitle").oninput = () => { deck.meta.docTitle = $("docTitle").value; markDirty(); };
   $("btnUndo").onclick = undo;
   $("btnRedo").onclick = redo;
-  $("btnNew").onclick = () => showWelcome(true);
+  $("btnNew").onclick = newPresentation;
   $("btnOpen").onclick = () => pickFile(".json", async f => openAnyJSON(await readTextFile(f)));
   $("btnSave").onclick = saveDeck;
   $("btnSave2").onclick = saveDeck;
   $("btnPresent").onclick = present;
   $("btnPresent2").onclick = present;
   $("btnHelp").onclick = showHelp;
-  $("btnQuickStart").onclick = () => showWelcome(true);
-  $("btnNextBlank").onclick = goNextBlank;
-  $("btnQcCopy").onclick = () => copyText(copilotPrompt(), "Copied. Paste it into Copilot, then paste Copilot's answer in step 2.");
-  $("btnQcApply").onclick = () => {
-    const text = $("qcAnswer").value;
-    if (!text.trim()){ toast("Paste Copilot's answer in the box first."); return; }
-    applyCopilotAnswer(text);
-  };
   $("btnExport").onclick = () => exportPdf();
   $("btnExport2").onclick = () => exportPdf();
   $("btnModalClose").onclick = hideModal;
@@ -1487,14 +1394,7 @@ function wire(){
   $("canvas").addEventListener("drop", e => { e.preventDefault(); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
 
   /* copilot & json */
-  $("fldMessage").oninput = () => {
-    deck.sources = deck.sources || {};
-    deck.sources.message = {note: $("fldMessage").value};
-    markDirty(); showPrompt();
-  };
-  $("btnAddNum").onclick = () => { snapshot(); (deck.guideNumbers = deck.guideNumbers || []).push({k:"", v:"", note:""}); buildNumbers(); markDirty(); };
-  $("btnNumStats").onclick = () => numbersToPage("stats");
-  $("btnNumFacts").onclick = () => numbersToPage("facts");
+  wireIntake();
   $$('input[name="promptKind"]').forEach(r => r.onchange = buildPromptPicker);
   $("promptSection").onchange = () => { currentSectionId = $("promptSection").value; showPrompt(); };
   $("promptTool").onchange = showPrompt;
@@ -1644,17 +1544,15 @@ function boot(){
     const saved = localStorage.getItem(AUTOSAVE_KEY);
     if (saved) restored = JSON.parse(saved);
   } catch (e){}
-  deck = restored && restored.sections ? migrate(restored) : newDeck("plan_summary");
+  deck = restored && restored.sections ? migrate(restored) : newDeck("portfolio_review");
   $$("[data-wordmark]").forEach(n => n.appendChild(wordmark()));
   wire();
   syncPanels();
   markClean(restored ? "restored from this browser" : "not saved yet");
   render();
   if (restored) showRail("build");
+  builtPrint = restored ? "" : deckPrint();     /* a fresh template fills itself when a report is dropped */
   /* web fonts change every measurement, so lay out again once they are in */
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
-  let welcomed = false;
-  try { welcomed = !!localStorage.getItem(WELCOMED_KEY); } catch (e){}
-  if (!restored && !welcomed) showWelcome(false);
 }
 document.addEventListener("DOMContentLoaded", boot);
