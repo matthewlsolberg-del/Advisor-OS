@@ -22,7 +22,7 @@ SRC = ROOT / "src"
 # Load order matters: each module uses what the ones before it define.
 TARGETS = [
     {
-        "out": "MHWG_Presentation_Studio.html", "page": "index.html", "version": "9.0",
+        "out": "MHWG_Presentation_Studio.html", "page": "index.html", "version": "10.2",
         "css": ["css/studio.css"],
         "vendor": ["vendor/pdf.worker.min.js", "vendor/pdf.min.js"],   # pdf.js, at the very bottom
         "scripts": [
@@ -39,8 +39,11 @@ TARGETS = [
             "workflow.js",    # status, paste-with-preview, the Finish check
             "portfolios.js",  # portfolio library and account recommendations
             "smart.js",       # pre-filled drafts from the facts, Copilot fills the words
+            "content.js",     # ready-written wording: prospect meeting, planning topics
             "automation.js",  # Presentation JSON, smart paste, per-block Copilot
             "intake.js",      # the Start tab (reports in) and the one-button Copilot step
+            "blanks.js",      # the fill-in-the-blanks form, Copilot's blanks, "check" marks
+            "views.js",       # one-page leave-behind, private prep sheet, where figures came from
             "app.js",         # the studio itself
         ],
     },

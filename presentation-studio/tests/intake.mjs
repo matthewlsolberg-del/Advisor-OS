@@ -28,6 +28,8 @@ const shot = async n => { if (shots) await page.screenshot({ path: path.join(sho
 const pageShot = async (i, n) => { if (!shots) return; const p = page.locator("#pages .page").nth(i); await p.scrollIntoViewIfNeeded(); await p.screenshot({ path: path.join(shots, n + ".png") }); };
 const D = () => page.evaluate(() => JSON.parse(JSON.stringify(deck)));
 const titles = async () => (await D()).sections.map(s => s.title);
+/* the less common kinds sit under "More" on the Start tab */
+const openMore = () => page.evaluate(() => { const m = document.querySelector("#pieceGrid details.piece-more"); if (m) m.open = true; });
 
 await page.goto(file);
 await page.waitForTimeout(700);
@@ -49,6 +51,12 @@ const txt = await page.textContent("#pages");
 ok(txt.includes(money(P.total)) && P.periods.every(x => txt.includes(x.value + "%")), "headline figures on the page");
 ok(P.accounts.every(a => txt.includes(a.label) && txt.includes(money(a.value))), "every account on the page, named the house way");
 ok(/What we recommend/.test(txt) && d.sections.find(s => s.title === "What we recommend").blocks.some(b => b.type === "actions" && b.items.length), "data-driven suggestions present");
+if ((P.allocation || []).length){
+  const sum = P.allocation.reduce((t, c) => t + c.pct, 0);
+  ok(Math.abs(sum - 100) <= 0.3 && P.allocation.every(c => !/\[\[/.test(c.name)), "asset allocation chart measured: " + P.allocation.map(c => c.name + " " + c.pct).join(", "));
+  const mix = d.sections.find(s => s.title === "How your money is invested").blocks.find(b => b.type === "chart");
+  ok(mix && mix.title === "Your asset allocation" && mix.series[0].values.join() === P.allocation.filter(c => c.pct > 0).map(c => c.pct).join(), "the draft's asset mix is the report's allocation");
+} else ok(true, "no asset allocation chart in this report (holdings classes used)");
 ok(await page.locator("#pages .page-overflow").count() === 0, "nothing runs off a page");
 ok(await page.locator("#sourceList .source-row").count() === 1, "the report is listed as read");
 await shot("i02-portfolio-draft");
@@ -73,6 +81,7 @@ const pn = await page.locator("#pages .page").count();
 for (let i = 0; i < Math.min(pn, 12); i++) await pageShot(i, "i04-plan-p" + (i + 1));
 
 console.log("Annual review (both)");
+await openMore();
 await page.click('#pieceGrid .piece-card:has-text("Annual review")');
 await page.waitForTimeout(400);
 ok((await titles()).includes("Your accounts") && (await titles()).includes("Your goals"), "annual review uses both: " + (await titles()).length + " sections");
@@ -105,6 +114,7 @@ ok((await page.textContent("#pages")).includes("Copilot wrote glance."), "a rebu
 console.log("Investment recommendation");
 await page.click('.rail-tab[data-panel="start"]');
 page.once("dialog", dlg => dlg.accept());
+await openMore();
 await page.click('#pieceGrid .piece-card:has-text("Investment recommendation")');
 await page.waitForTimeout(300);
 ok(await page.isVisible("#profileCard"), "investor profile card appears");

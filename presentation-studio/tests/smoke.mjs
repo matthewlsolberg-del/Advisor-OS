@@ -176,8 +176,11 @@ for (const [tab, n] of [["start", "11-start"], ["copilot", "12-copilot"], ["fini
   await page.waitForTimeout(150);
   await shot(n);
 }
-const checks = await page.locator("#checkList .check-row").count();
-ok(checks > 0, "Finish lists what is left (" + checks + " items)");
+const checks = await page.locator("#checkList .check-row, #checkList .check-ok").count();
+ok(checks > 0, "Finish shows what is left, or that nothing is (" + checks + " rows)");
+const blankRow = await page.evaluate(() => { const b = deck.sections[0].blocks[0], was = b.text;
+  b.text = "[[Their goal]]"; const has = preflight().some(is => /1 yellow blank/.test(is.t)); b.text = was; return has; });
+ok(blankRow, "a yellow blank shows on the Finish list");
 
 console.log("Slides format");
 await page.click('.rail-tab[data-panel="start"]');
@@ -194,6 +197,154 @@ await page.reload();
 await page.waitForTimeout(700);
 d = await deck();
 ok(d.meta.title === "The Kowalchuk Plan" && !(await modalOpen()), "restored without the welcome screen");
+
+console.log("Next blank");
+await page.evaluate(() => {
+  const b = newBlock("paragraph");
+  b.text = "We meet again in [[month]] to review [[what we review]].";
+  deck.sections[0].blocks.push(b);
+  render();
+});
+await page.waitForTimeout(200);
+ok(/2 blanks/.test(await page.textContent("#btnNextBlank")), "Next blank counts the blanks on the page");
+await page.click("#btnNextBlank");
+await page.waitForTimeout(300);
+ok(await page.evaluate(() => window.getSelection().toString()) === "[[month]]", "first blank selected, ready to type over");
+await page.keyboard.type("March");
+await page.click("#btnNextBlank");
+await page.waitForTimeout(400);
+d = await deck();
+ok(JSON.stringify(d).includes("We meet again in March to review"), "typing replaced the blank in the deck");
+ok(await page.evaluate(() => window.getSelection().toString()) === "[[what we review]]", "the button moves on to the next blank");
+await shot("15-next-blank");
+
+console.log("Prospect meeting and planning topics");
+page.on("dialog", dlg => dlg.accept());
+await page.click('.rail-tab[data-panel="start"]');
+await page.click('#pieceGrid .piece-card:has-text("Prospect meeting")');
+await page.waitForTimeout(400);
+d = await deck();
+ok(d.meta.kind === "prospect" && d.meta.title === "Working Together", "prospect meeting laid out with its cover");
+ok(["What we heard", "Your situation today", "What we would recommend", "What happens next", "What to bring"].every(t => d.sections.some(s => s.title === t)),
+  "prospect sections: heard, situation, recommend, next, what to bring");
+await page.click('.rail-tab[data-panel="build"]');
+await page.selectOption("#presetPick", "t_cppoas");
+await page.click("#btnAddSection");
+await page.selectOption("#presetPick", "t_tfsarrsp");
+await page.click("#btnAddSection");
+await page.waitForTimeout(300);
+d = await deck();
+ok(d.sections.some(s => s.title === "When to start CPP and OAS") && d.sections.some(s => s.title === "TFSA or RRSP?"), "planning topics added from the list");
+ok((await page.locator("#presetPick optgroup").count()) >= 5, "topics grouped in the list");
+const over = await page.evaluate(() => [...document.querySelectorAll("#pages .page-overflow")].map(n => (n.closest(".page") || n).innerText.replace(/\s+/g, " ").slice(0, 80)));
+if (over.length && shots) await page.locator("#pages .page-overflow").first().locator("xpath=ancestor::*[contains(@class,'page')][1]").screenshot({path: path.join(shots, "over.png")});
+ok(over.length === 0, "prospect + topics, " + (await deck()).design.format + ": nothing runs off a page " + JSON.stringify(over));
+const sp = await page.evaluate(() => slotPrompt());
+ok(/prospect_heard/.test(sp) && /t_cppoas_you_/.test(sp), "Copilot prompt asks for the prospect and topic boxes");
+await page.evaluate(() => {
+  const ans = {slots: {}};
+  slotBlocks().forEach(({b}) => { if (b.slot === "prospect_heard") ans.slots[b.slot] = ["Retire at 60 without worry", "Help the kids with university"]; });
+  applySlotAnswer(JSON.stringify(ans));
+});
+d = await deck();
+ok(JSON.stringify(d).includes("Help the kids with university"), "Copilot's answer filled the What we heard box");
+await shot("16-prospect");
+
+console.log("Fill in the blanks, and Copilot fills blanks from the notes");
+await page.click('.rail-tab[data-panel="build"]');
+await page.waitForTimeout(200);
+const formRows = await page.locator("#blankForm .bf-row input").count();
+const blanksBefore = await page.evaluate(() => collectBlanks().length);
+ok(formRows > 10 && formRows === blanksBefore, "the form lists every blank (" + formRows + ")");
+const firstLabel = await page.locator("#blankForm .bf-label").first().innerText();
+await page.locator("#blankForm .bf-row input").first().fill("We met at the Chamber lunch in September.");
+await page.locator("#blankForm .bf-row input").first().press("Enter");
+await page.waitForTimeout(300);
+ok(await page.evaluate(() => collectBlanks().length) === blanksBefore - 1 && (await page.textContent("#pages")).includes("We met at the Chamber lunch"),
+  "typing in the form fills the page (" + firstLabel.split("\n")[0] + ")");
+ok(await page.evaluate(() => document.activeElement && document.activeElement.closest && !!document.activeElement.closest("#blankForm")), "focus moves on down the form");
+const bp = await page.evaluate(() => slotPrompt());
+ok(/THE BLANKS/.test(bp) && /"blanks"/.test(bp) && /■ b1 — /.test(bp), "the Copilot prompt lists the blanks for Copilot to fill");
+const meetKey = await page.evaluate(() => Object.keys(deck.blankKeys).find(k => /Meeting date/.test(JSON.stringify(collectBlanks().find(it => it.bid === deck.blankKeys[k].bid && it.raw === deck.blankKeys[k].raw) || {}))));
+ok(!!meetKey, "a blank has a key Copilot can answer (" + meetKey + ")");
+await page.evaluate((k) => {
+  const blanks = {}; blanks[k] = "November 14"; blanks.b1 = blanks.b1 || "";
+  const t = JSON.stringify({slots: {}, blanks});
+  const ev = new ClipboardEvent("paste", {clipboardData: new DataTransfer(), bubbles: true, cancelable: true});
+  ev.clipboardData.setData("text/plain", t);
+  document.querySelector(".canvas").dispatchEvent(ev);
+}, meetKey);
+await page.waitForTimeout(300);
+d = await deck();
+ok(JSON.stringify(d).includes("November 14"), "Copilot's answer pasted anywhere filled the blank");
+ok(Object.keys(d.toCheck || {}).length > 0 && await page.locator("#pages .blk-check").count() > 0, "what Copilot wrote is marked to read over");
+await page.locator("#pages .blk-check").first().click();
+await page.waitForTimeout(200);
+ok((await deck()).toCheck && Object.keys((await deck()).toCheck).length === Object.keys(d.toCheck).length - 1, "“Looks right” clears the mark");
+await shot("17-blank-form");
+
+console.log("One-click trimming");
+const itemsBefore = await page.evaluate(() => deck.sections.find(s => s.title === "What to bring").blocks.find(b => b.type === "bullets").items.length);
+const bring = page.locator('#pages .blk-bullets li:has-text("Notices of Assessment")');
+await bring.hover();
+await bring.locator(".item-del").click();
+await page.waitForTimeout(200);
+ok(await page.evaluate(() => deck.sections.find(s => s.title === "What to bring").blocks.find(b => b.type === "bullets").items.length) === itemsBefore - 1, "✕ on a bullet removes just that bullet");
+const secsBefore = (await deck()).sections.length;
+await page.evaluate(() => removeSection(deck.sections.find(s => s.title === "What to bring").id));
+ok((await deck()).sections.length === secsBefore - 1, "a whole section comes out in one click");
+await page.keyboard.press("Escape");
+await page.click("#btnUndo");
+ok((await deck()).sections.length === secsBefore, "Undo brings it back");
+ok(await page.evaluate(() => !JSON.stringify(deck).includes("✕")), "the ✕ never gets into the text");
+
+console.log("Cover, team, views");
+ok((await deck()).meta.advisor.startsWith("Matthew Solberg"), "Prepared by starts as Matthew Solberg");
+ok((await page.textContent("#pages .cover-band")).includes("Senior Investment Advisor"), "the cover band names the advisor and title");
+ok(!(await deck()).options.sectionBreak, "sections run on down the page by default");
+await page.evaluate(() => setView("leave"));
+await page.waitForTimeout(300);
+ok(await page.locator("#pages .page").count() === 1 && (await page.textContent("#pages")).includes("Important disclosures"), "one-page leave-behind, with the disclosures");
+await shot("18-leave-behind");
+await page.evaluate(() => setView("prep"));
+await page.waitForTimeout(300);
+ok(await page.locator("#pages .page-internal").count() >= 1 && (await page.textContent("#pages")).includes("Questions to ask"), "prep sheet: internal on every page, with the questions to ask");
+await page.evaluate(() => setView("doc"));
+await page.waitForTimeout(200);
+ok(await page.locator("#pages .cover").count() === 1, "back to the document");
+await page.click("#btnFile");
+ok(await page.isVisible("#btnSave"), "File menu holds New, Open, Save");
+await page.keyboard.press("Escape");
+await page.mouse.click(5, 300);
+
+console.log("A real mouse reaches the tools on the page");
+/* Playwright's click jumps straight to a button; a person's mouse travels there.
+   Travel from the block to its toolbar (and from a line to its ✕) in small steps. */
+const travelClick = async (from, to) => {
+  await page.mouse.move(from.x, from.y); await page.waitForTimeout(120);
+  await page.mouse.move(to.x, to.y, {steps: 12}); await page.waitForTimeout(60);
+  await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(300);
+};
+for (const type of ["paragraph", "bullets", "facts", "actions", "table", "chart"]){
+  const pos = await page.evaluate((type) => {
+    const w = document.querySelector('#pages .blk-hit[data-type="' + type + '"]'); if (!w) return null;
+    w.scrollIntoView({block: "center"});
+    const r = w.getBoundingClientRect(), bar = [...w.children].find(c => c.classList.contains("blk-quickbar"));
+    const q = [...bar.children].find(x => x.textContent.includes("Remove")).getBoundingClientRect();
+    return {bid: w.dataset.bid, from: {x: r.x + r.width * 0.4, y: r.y + 20}, to: {x: q.x + q.width / 2, y: q.y + q.height / 2}};
+  }, type);
+  if (!pos) continue;
+  await travelClick(pos.from, pos.to);
+  ok(await page.evaluate(bid => !findBlock(bid), pos.bid), "the mouse reaches ✕ Remove on a " + type);
+  await page.evaluate(() => undo());
+}
+const linePos = await page.evaluate(() => {
+  const li = document.querySelector("#pages .blk-hit li.is-editable, #pages .blk-hit .fact"); li.scrollIntoView({block: "center"});
+  const r = li.getBoundingClientRect(), x = li.querySelector(":scope > .item-del").getBoundingClientRect();
+  return {n: JSON.stringify(deck).length, from: {x: r.x + 30, y: r.y + r.height / 2}, to: {x: x.x + x.width / 2, y: x.y + x.height / 2}};
+});
+await travelClick(linePos.from, linePos.to);
+ok(await page.evaluate(n => JSON.stringify(deck).length < n, linePos.n), "the mouse reaches the ✕ on a single line");
 
 ok(errors.length === 0, "no script errors" + (errors.length ? ":\n    " + errors.join("\n    ") : ""));
 await browser.close();

@@ -260,6 +260,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 .check-row{display:block;width:100%;text-align:left;border:1px solid var(--hair);border-left:3px solid var(--warn);border-radius:5px;
   background:#fff;padding:8px 10px;margin-bottom:5px;cursor:pointer;font-size:12px;line-height:1.4}
 .check-row:hover{background:var(--tint)}
+.check-row.is-soft{border-left-color:var(--hair);color:var(--muted)}
 .check-ok{border:1px solid #cfe6c6;border-left:3px solid var(--shield);background:#f3faf0;border-radius:5px;padding:11px;font-size:12.5px;line-height:1.5;color:var(--gray)}
 .check-ok b{color:var(--deep)}
 
@@ -278,9 +279,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 
 /* tools on each block, shown on hover or when selected */
 .blk-hit{position:relative}
-.blk-quickbar{position:absolute;right:-6px;top:-30px;z-index:30;display:none;gap:3px;padding:3px;background:#fff;border:1px solid #cfd8cf;border-radius:6px;
-  box-shadow:0 4px 14px rgba(0,30,15,.16);white-space:nowrap;font-family:var(--ui);zoom:1.15}
-.pages.edit-on .blk-hit:hover > .blk-quickbar,.blk-hit.is-selected > .blk-quickbar{display:flex}
+/* The toolbar sits just above the block. A real mouse travelling from the block to the
+   toolbar must never lose it, so the toolbar reaches down onto the block (::after). */
+.blk-quickbar{position:absolute;right:-6px;top:-30px;z-index:30;display:flex;gap:3px;padding:3px;background:#fff;border:1px solid #cfd8cf;border-radius:6px;
+  box-shadow:0 4px 14px rgba(0,30,15,.16);white-space:nowrap;font-family:var(--ui);zoom:1.15;visibility:hidden}
+.blk-quickbar::after{content:"";position:absolute;left:0;right:0;top:100%;height:4px}
+.pages.edit-on .blk-hit:hover > .blk-quickbar,.blk-hit.is-selected > .blk-quickbar{visibility:visible;z-index:31}
+.pages:not(.edit-on) .blk-quickbar{display:none}
 .blk-quickbar button{border:1px solid transparent;background:#fff;border-radius:4px;padding:4px 7px;font:600 10.5px/1.1 var(--ui);cursor:pointer;color:var(--deep)}
 .blk-quickbar button:hover{background:var(--tint);border-color:var(--hair)}
 .blk-quickbar button.is-danger{color:var(--danger)}
@@ -364,7 +369,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 
 /* ── Print: the studio disappears, the document remains ─────────────────── */
 @media print{
-  .topbar,.rail,.inspector,.canvas-bar,.modal,.toast,.insert-menu,.blk-quickbar{display:none !important}
+  .topbar,.rail,.inspector,.canvas-bar,.modal,.toast,.insert-menu,.blk-quickbar,.view-banner{display:none !important}
   body{overflow:visible;background:#fff}
   .shell{display:block;height:auto}
   .canvas{display:block;background:#fff}
@@ -396,6 +401,61 @@ kbd{font-family:var(--ui);font-size:11px;border:1px solid #c9d1c9;border-bottom-
 .big-steps textarea{margin:6px 0}
 .help-steps{padding-left:20px}.help-steps li{margin:6px 0}
 mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border-radius:3px;border-bottom:1.5px dashed #D99E14}
+
+/* "Next blank" above the pages (intake.js) */
+.btn-blank{background:#fff4b8;border-color:#e2cf6a;color:#5a4a00}
+.btn-blank:hover{background:#ffec8a}
+
+/* ── v10: fill in the blanks (blanks.js) ───────────────────────────────── */
+.blank-card{border-color:#e2cf6a;background:#fffdf3}
+.blank-card.is-done{background:#fff;border-color:var(--hair)}
+.blank-form{max-height:48vh;overflow:auto;margin:0 -4px;padding:0 4px}
+.bf-sec{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px;font-weight:600}
+.bf-row{display:block;margin:0 0 8px}
+.bf-label{display:block;font-size:12.5px;color:var(--ink);margin-bottom:3px;font-weight:600}
+.bf-label small{font-weight:400;color:var(--muted)}
+.bf-row input{width:100%;padding:7px 9px;border:1px solid #e2cf6a;border-radius:5px;background:#fff}
+/* what Copilot wrote, marked to read over: on screen only */
+.blk-hit.is-tocheck{box-shadow:inset 3px 0 0 var(--warn)}
+.blk-check{position:absolute;left:-4px;top:-22px;z-index:25;font:11px var(--ui);background:#fff4b8;border:1px solid #e2cf6a;color:#5a4a00;border-radius:4px;padding:2px 7px;cursor:pointer;white-space:nowrap}
+.blk-check:hover{background:#ffec8a}
+@media print{.blk-check{display:none !important}.blk-hit.is-tocheck{box-shadow:none !important}}
+.team-row select{width:100%;margin-bottom:4px;padding:5px 7px;border:1px solid var(--hair);border-radius:4px;background:#fff}
+
+/* ── v10: three big choices on Start, the File menu, toasts at the top ──── */
+#pieceGrid{display:block}
+.piece-main{display:grid;grid-template-columns:1fr;gap:7px}
+.piece-main .piece-card{padding:12px 14px}
+.piece-main .piece-card b{font-size:14.5px;margin-bottom:3px}
+.piece-more{margin-top:9px}
+.piece-more > summary{cursor:pointer;font-size:12px;color:var(--kick);line-height:1.4}
+.piece-rest{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+.file-menu{position:relative}
+.file-drop{position:absolute;right:0;top:calc(100% + 6px);z-index:60;background:#fff;color:var(--ink);border:1px solid #cfd8cf;border-radius:7px;
+  box-shadow:0 10px 28px rgba(0,0,0,.22);padding:5px;min-width:230px;display:flex;flex-direction:column}
+.file-drop button{background:none;border:0;text-align:left;padding:8px 10px;border-radius:5px;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+.file-drop button:hover{background:var(--tint)}
+.btn-copilot{background:#fff4b8;border-color:#e2cf6a;color:#3d3200;font-weight:600}
+.btn-copilot:hover{background:#ffec8a}
+.toast{left:calc(var(--rail-w) + (100vw - var(--rail-w)) / 2);bottom:24px;cursor:pointer}
+.view-pick{font-size:12px;padding:3px 6px;border:1px solid #cfd8cf;border-radius:5px;background:#fff}
+.view-banner{background:#3B5B72;color:#fff;font-size:12.5px;padding:7px 14px;display:flex;gap:12px;align-items:center;justify-content:center}
+.view-banner button{background:#fff;color:#3B5B72;border:0;border-radius:4px;padding:3px 9px;cursor:pointer;font-weight:600}
+/* one-click trimming: a ✕ on every bullet, fact row and action step (app.js addItemDeletes) */
+.item-del{display:block;position:absolute;left:-26px;top:50%;transform:translateY(-50%);width:20px;height:20px;padding:0;border-radius:50%;
+  border:1px solid #e3b7ad;background:#fff;color:var(--danger);font:11px/18px var(--ui);text-align:center;cursor:pointer;z-index:20;visibility:hidden}
+.item-del::after{content:"";position:absolute;left:100%;top:-4px;bottom:-4px;width:10px}    /* bridge back to the line */
+.pages.edit-on li:hover > .item-del,.pages.edit-on .fact:hover > .item-del,.pages.edit-on .action:hover > .item-del{visibility:visible}
+.pages:not(.edit-on) .item-del{display:none}
+.item-del:hover{background:var(--danger);color:#fff}
+.pages li,.pages .fact,.pages .action{position:relative}
+@media print{.item-del{display:none !important}}
+/* "Where these figures came from" in a block's settings (views.js) */
+.prov{margin-top:14px;padding-top:10px;border-top:1px solid var(--hair)}
+.prov-h{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--kick);font-weight:600;margin-bottom:4px}
+.prov-row{display:grid;grid-template-columns:78px 1fr;gap:8px;font-size:11.5px;padding:5px 0;border-bottom:1px dashed var(--hair)}
+.prov-row b{color:var(--deep)}
+.prov-row span{color:var(--gray);word-break:break-word}
 </style>
 <style>/* ==========================================================================
    The document — US Letter pages, TD 2026 Premium palette, MHWG house style.
@@ -506,16 +566,27 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 }
 .cover-rule{width:96px;height:3px;margin:22px 0 20px}
 .cover-sub{font-size:15.5px;line-height:1.5;max-width:46ch;margin:0}
-.cover-foot{
-  padding:0 64px 58px; display:flex; justify-content:space-between;
-  align-items:flex-end; gap:24px;
+/* The deep-green band on the bottom edge of every cover: who it is for, the
+   date, and who prepared it, with the team's main line. */
+.cover-band{
+  position:relative; z-index:1; background:var(--deep); color:#fff; border-top:3px solid var(--gold);
+  padding:30px 64px 36px; display:flex; justify-content:space-between; align-items:flex-end; gap:28px;
 }
-.cover-for{font-size:12px;line-height:1.55}
-.cover-for .cf-label{
-  display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:5px;
+.cover-band .cf-label{
+  display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:6px;color:var(--gold);
 }
-.cover-for .cf-name{font-family:var(--f-disp);font-size:19px;letter-spacing:-.01em}
-.cover-meta{text-align:right;font-size:11px;line-height:1.7}
+.cover-band .cf-name{font-family:var(--f-disp);font-size:25px;line-height:1.15;letter-spacing:-.01em;color:#fff}
+.cb-date{font-size:12.5px;color:#D9E2DB;margin-top:6px}
+.cb-by{text-align:right;font-size:11.5px;line-height:1.6;color:#D9E2DB;max-width:56%}
+.cb-by .cb-name{font-family:var(--f-disp);font-size:16px;color:#fff;line-height:1.3}
+.cb-by .cb-title{color:#fff}
+.cb-by .cb-firm{margin-top:6px}
+.cover-draft{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:8.5px;letter-spacing:.14em;color:var(--gold);z-index:2}
+/* the optional cover picture (cover style "picture") */
+.cover-pic{position:relative;z-index:1;margin:0 64px 34px;height:300px;background-size:cover;background-position:center}
+.cover-pic.is-empty{border:1.5px dashed #c9d1c9;background:#F4F8F5;display:flex;align-items:center;justify-content:center;
+  text-align:center;font-size:12px;color:#7A867C;line-height:1.6}
+@media print{.cover-pic.is-empty{visibility:hidden}}
 
 /* clean white — the default. Paper white, generous space, gold hairlines, and one
    solid Premium Green band on the bottom edge. No frame, no tint, no transparency. */
@@ -524,20 +595,19 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .cover[data-style="white"]::before{
   content:"";position:absolute;left:64px;right:64px;top:172px;height:1px;background:var(--gold);z-index:1;
 }
-.cover[data-style="white"]::after{
-  content:"";position:absolute;left:0;right:0;bottom:0;height:16px;background:var(--deep);
-  border-top:3px solid var(--gold);z-index:1;
-}
 .cover[data-style="white"] .cover-kick{color:var(--kick);letter-spacing:.28em}
 .cover[data-style="white"] .cover-title{color:var(--deep);font-size:58px;line-height:1.02;max-width:18ch}
 .cover[data-style="white"] .cover-rule{background:var(--gold);width:72px;height:2px;margin:26px 0 22px}
 .cover[data-style="white"] .cover-sub{color:var(--gray);font-size:16.5px;max-width:42ch}
-.cover[data-style="white"] .cover-foot{
-  margin:0 64px;padding:24px 0 84px;border-top:1px solid var(--gold);
-}
-.cover[data-style="white"] .cf-label{color:var(--kick)}
-.cover[data-style="white"] .cf-name{color:var(--deep);font-size:23px}
-.cover[data-style="white"] .cover-meta{color:var(--gray)}
+/* "With a picture": the clean white cover with a photo panel above the band */
+.cover[data-style="picture"]{background:#fff;color:var(--ink)}
+.cover[data-style="picture"] .cover-frame{display:none}
+.cover[data-style="picture"] .cover-kick{color:var(--kick);letter-spacing:.28em}
+.cover[data-style="picture"] .cover-title{color:var(--deep);font-size:50px;line-height:1.02;max-width:20ch}
+.cover[data-style="picture"] .cover-rule{background:var(--gold);width:72px;height:2px;margin:20px 0 16px}
+.cover[data-style="picture"] .cover-sub{color:var(--gray);font-size:15px;max-width:48ch}
+.cover[data-style="picture"] .cover-gap.gap-a{flex-grow:1;min-height:150px}
+.cover[data-style="picture"] .cover-gap.gap-b{flex-grow:0;height:30px}
 
 /* premium (deep green) */
 .cover[data-style="premium"]{background:var(--deep);color:#fff}
@@ -546,8 +616,8 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .cover[data-style="premium"] .cover-kick{color:var(--gold)}
 .cover[data-style="premium"] .cover-rule{background:var(--gold)}
 .cover[data-style="premium"] .cover-sub{color:rgba(255,255,255,.82)}
-.cover[data-style="premium"] .cf-label{color:var(--gold)}
-.cover[data-style="premium"] .cover-meta{color:rgba(255,255,255,.7)}
+/* on a green cover the band is set apart by its gold rule alone */
+.cover[data-style="premium"] .cover-band,.cover[data-style="photo"] .cover-band{background:transparent}
 
 /* ivory */
 .cover[data-style="ivory"]{background:#FBFAF6;color:var(--ink)}
@@ -556,9 +626,6 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .cover[data-style="ivory"] .cover-title{color:var(--deep)}
 .cover[data-style="ivory"] .cover-rule{background:var(--accent)}
 .cover[data-style="ivory"] .cover-sub{color:var(--gray)}
-.cover[data-style="ivory"] .cf-label{color:var(--kick)}
-.cover[data-style="ivory"] .cover-meta{color:var(--gray)}
-.cover[data-style="ivory"] .cf-name{color:var(--deep)}
 
 /* photograph */
 .cover[data-style="photo"]{background:var(--deep);color:#fff}
@@ -566,13 +633,12 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .cover-scrim{position:absolute;inset:0;background:rgba(0,43,26,.72)}
 .cover[data-style="photo"] .cover-wm .wm-ink{fill:#fff}
 .cover[data-style="photo"] .cover-wm .wm-green{fill:var(--shield)}
-.cover[data-style="photo"] .cover-kick,.cover[data-style="photo"] .cf-label{color:var(--gold)}
+.cover[data-style="photo"] .cover-kick{color:var(--gold)}
 .cover[data-style="photo"] .cover-rule{background:var(--gold)}
 .cover[data-style="photo"] .cover-sub{color:rgba(255,255,255,.85)}
-.cover[data-style="photo"] .cover-meta{color:rgba(255,255,255,.7)}
 /* The scrim is a positioned layer, so the text blocks need their own stacking
    context to sit above it. The frame and wordmark are already absolute. */
-.cover-body,.cover-foot{position:relative;z-index:1}
+.cover-body{position:relative;z-index:1}
 .cover-frame,.cover-wm{z-index:1}
 
 /* ── Section divider page ───────────────────────────────────────────────── */
@@ -600,6 +666,9 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .toc-dots{flex:1;border-bottom:0}
 .toc-page{font-family:var(--f-disp);font-size:14px;color:var(--gray);font-variant-numeric:tabular-nums}
 .toc-note{margin-top:26px;font-size:var(--t-cap);color:var(--gray);line-height:1.5}
+.toc-list.is-long .toc-item{padding:9px 0}
+.toc-list.is-long .toc-name{font-size:17px}
+.doc[data-format="slides"] .toc-list.is-long .toc-item{padding:6px 0}
 
 /* ── Blocks ─────────────────────────────────────────────────────────────── */
 .blk{margin:0 0 var(--gap)}
@@ -617,6 +686,8 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 /* the section's number, set like a private-bank report: small gold figures above the title */
 .blk-secnum{font-family:var(--f-disp);font-size:13px;letter-spacing:.18em;color:var(--gold-dk);margin:0 0 6px}
 .blk-heading:has(.blk-secnum){margin-bottom:calc(var(--gap) + 8px)}
+/* a section that runs on part way down a page: a hairline and some air above it */
+.blk-heading.is-runon{margin-top:18px;padding-top:26px;border-top:1px solid var(--hair)}
 .blk-h3{
   font-family:var(--f-disp);font-size:var(--t-h3);line-height:1.3;color:var(--deep);
   margin:0 0 6px;
@@ -753,6 +824,9 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .team-cell .t-name{font-family:var(--f-disp);font-size:15px;color:var(--deep)}
 .team-cell .t-desig{font-size:10px;color:var(--gold-dk);font-weight:600;margin-top:4px;letter-spacing:.1em}
 .team-cell .t-title{font-size:10.8px;color:var(--gray);margin-top:3px}
+.team-sub{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--kick);font-weight:600;text-align:center;margin:22px 0 2px}
+.team-grid.is-small .team-cell{padding:9px 10px}
+.team-grid.is-small .t-name{font-size:13.5px}
 .contact{text-align:center;padding:22px 0 18px;border-top:1.5px solid var(--gold);margin-top:22px}
 .contact .c-firm{font-family:var(--f-disp);font-size:15px;color:var(--deep)}
 .contact .c-line{font-size:11.8px;color:var(--gray);margin-top:5px;line-height:1.6}
@@ -760,6 +834,7 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
   font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep);
   font-weight:600;margin:18px 0 7px;padding-top:12px;border-top:1px solid var(--hair);
 }
+.disc-h.is-page{font-family:var(--f-disp);font-size:20px;letter-spacing:0;text-transform:none;font-weight:400;border-top:0;padding-top:0;margin:0 0 14px}
 .disc-p{font-size:var(--t-disc);line-height:1.5;color:var(--gray);margin:0 0 6px;text-align:left}
 .disc-draft{font-size:var(--t-disc);color:#b06a4a;margin-bottom:6px;letter-spacing:.04em}
 
@@ -812,6 +887,7 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 mark.needs{background:#FFE8B3;color:#5c3a06;font-weight:600;padding:0 2px;border-radius:2px}
 mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border-radius:3px;border-bottom:1.5px dashed #D99E14}
 @media print{mark.blank{background:#FFF3C4}}
+mark.blank.is-current,mark.needs.is-current{outline:2px solid #D99E14;outline-offset:1px}
 
 /* ── Page style: Classic ─────────────────────────────────────────────────────
    The original inside pages (Oct 2): tighter margins, boxed key numbers, a
@@ -874,8 +950,8 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .doc[data-format="slides"] .cover-wm{left:72px;top:58px}
 .doc[data-format="slides"] .cover-shield{right:72px;top:58px}
 .doc[data-format="slides"] .cover-body{padding:0 72px}
-.doc[data-format="slides"] .cover-foot{padding-left:72px;padding-right:72px}
-.doc[data-format="slides"] .cover[data-style="white"] .cover-foot{margin:0 72px;padding:20px 0 48px}
+.doc[data-format="slides"] .cover-band{padding:22px 72px 26px}
+.doc[data-format="slides"] .cover-pic{margin:0 72px 22px;height:150px}
 .doc[data-format="slides"] .cover[data-style="white"]::before{left:72px;right:72px;top:150px}
 .doc[data-format="slides"] .cover-title{font-size:56px;max-width:22ch}
 .doc[data-format="slides"] .cover[data-style="white"] .cover-title{font-size:64px;max-width:24ch}
@@ -1148,9 +1224,76 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .hh-chart-side .hh-title{margin-bottom:10px}
 .hh-donut{margin-top:3px;margin-bottom:9px}
 .hh-structure .hh-title{margin-top:2px;margin-bottom:6px}
+
+/* slides are landscape: profile band on top, mix and account table side by side */
+.doc[data-format="slides"] .hh-intro{display:none}
+.doc[data-format="slides"] .hh-page-title{font-size:28px}
+.doc[data-format="slides"] .hh-main{display:grid;grid-template-columns:44% 56%;gap:22px;align-items:start}
+.doc[data-format="slides"] .hh-allocation-panel{grid-template-columns:52% 48%;gap:10px;border-bottom:0;padding:0;margin:0}
+.doc[data-format="slides"] .hh-donut{width:150px;height:150px}
+.doc[data-format="slides"] .hh-note{display:none}
+.blk-src{font-size:10px;letter-spacing:.03em;color:#8b978d;margin-top:4px}
+
+/* ── v10: slides read from across a room ────────────────────────────────────
+   Nothing on a slide is set smaller than about 14px (team, disclosures, captions). */
+.doc[data-format="slides"]{ --t-cap:15px; --t-disc:14.5px; }
+.doc[data-format="slides"] .closing-h{font-size:38px}
+.doc[data-format="slides"] .closing-sub{font-size:18px;margin-bottom:12px}
+.doc[data-format="slides"] .team-grid{grid-template-columns:repeat(4,1fr)}
+.doc[data-format="slides"] .team-cell{padding:12px 10px;border-right:1px solid var(--hair)}
+.doc[data-format="slides"] .team-cell:nth-child(4n){border-right:0}
+.doc[data-format="slides"] .team-cell .t-name{font-size:21px}
+.doc[data-format="slides"] .team-cell .t-desig{font-size:13px}
+.doc[data-format="slides"] .team-cell .t-title{font-size:14.5px;line-height:1.35}
+.doc[data-format="slides"] .team-sub{font-size:13px;margin-top:14px}
+.doc[data-format="slides"] .team-grid.is-small .t-name{font-size:18px}
+.doc[data-format="slides"] .contact{padding:14px 0 6px;margin-top:14px}
+.doc[data-format="slides"] .contact .c-firm{font-size:20px}
+.doc[data-format="slides"] .contact .c-line{font-size:15px}
+.doc[data-format="slides"] .disc-h.is-page{font-size:30px}
+.doc[data-format="slides"] .disc-p{line-height:1.45;margin-bottom:7px}
+.doc[data-format="slides"] .disc-draft{font-size:14px}
+.doc[data-format="slides"] .stat .s-label{font-size:14px}
+.doc[data-format="slides"] .stat .s-note{font-size:15px}
+.doc[data-format="slides"] .blk-table th{font-size:14px}
+.doc[data-format="slides"] .blk-src{font-size:13px}
+.doc[data-format="slides"] .page-head{font-size:12px}
+.doc[data-format="slides"] .page-foot{font-size:12px}
+.doc[data-format="slides"] .cover-band .cf-name{font-size:28px}
+.doc[data-format="slides"] .cb-by{font-size:14px}
+.doc[data-format="slides"] .cb-by .cb-name{font-size:19px}
+.doc[data-format="slides"] .cb-date{font-size:15px}
+
+/* ── v10: the account recommendation page, with more air ─────────────────── */
+.rec-profile .rec-family{font-size:10.5px;letter-spacing:.06em;color:var(--gold-dk);margin:-4px 0 10px}
+.recommendation-page .rec-recommendation-title{border-bottom:0;padding-bottom:0;margin-bottom:6px}
+.recommendation-page .rec-family{padding-bottom:8px;border-bottom:1px solid var(--gold);margin-bottom:10px}
+.recommendation-page .rec-commentary{gap:10px 22px;margin:6px 0 12px}
+.recommendation-page .rec-commentary-block{padding:8px 10px;background:var(--tint);border-radius:2px}
+.rec-holding.rec-more span{font-style:italic;color:var(--gray)}
+.recommendation-page .rec-summary{font-size:12px;line-height:16.5px;margin-bottom:8px}
+.recommendation-page .rec-commentary-block span{font-size:10.6px;line-height:14px}
+.recommendation-page .rec-holding{font-size:10.6px;line-height:15.5px}
+.recommendation-page .rec-fit li{font-size:11px;line-height:15px}
+
+/* ── v10: the one-page leave-behind and the prep sheet (views.js) ────────── */
+.lb-head .brand-pair{display:flex;align-items:center;justify-content:space-between;flex-direction:row-reverse;margin-bottom:22px}
+.lb-head .brand-pair svg{width:190px;height:auto;display:block}
+.lb-head .td-shield img{height:40px;width:auto;display:block}
+.lb-kick{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--kick);margin-bottom:8px}
+.lb-title{font-family:var(--f-disp);font-size:30px;line-height:1.08;color:var(--deep);margin:0 0 8px;font-weight:400}
+.lb-meta{font-size:12px;color:var(--gray);padding-bottom:12px;border-bottom:1.5px solid var(--gold)}
+.lb-foot{border-top:1px solid var(--hair);padding-top:10px;margin-top:6px}
+.lb-contact{font-size:10.5px;color:var(--deep);margin-bottom:8px}
+.lb-disc-h{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep);font-weight:600;margin-bottom:3px}
+.lb-disc{font-size:8.4px;line-height:1.38;color:var(--gray);margin:0 0 3px}
+.page-internal{position:absolute;left:0;right:0;top:18px;text-align:center;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:#fff;background:#9A1C08;padding:5px 0;font-weight:600}
+.doc[data-format="slides"] .team-grid.is-small{display:flex;justify-content:center}
+.doc[data-format="slides"] .team-grid.is-small .team-cell{width:25%}
 </style>
 </head>
-<body data-build="9.0">
+<body data-build="10.2">
 
 
 <header class="topbar">
@@ -1166,10 +1309,16 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
     <button class="btn btn-icon" id="btnUndo" title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
     <button class="btn btn-icon" id="btnRedo" title="Redo (Ctrl+Y)" aria-label="Redo">&#8631;</button>
     <span class="tb-sep"></span>
-    <button class="btn" id="btnNew" title="Start a new presentation">New</button>
-    <button class="btn" id="btnOpen" title="Open a saved .mhwg.json file">Open</button>
-    <button class="btn" id="btnSave" title="Save the working file (Ctrl+S)">Save</button>
+    <div class="file-menu">
+      <button class="btn" id="btnFile" aria-haspopup="true" title="New, open, save">File &#9662;</button>
+      <div class="file-drop" id="fileDrop" hidden>
+        <button id="btnNew" title="Start a new presentation">New document</button>
+        <button id="btnOpen" title="Open a saved .mhwg.json file">Open a saved file&hellip;</button>
+        <button id="btnSave" title="Save the working file (Ctrl+S)">Save the working file <kbd>Ctrl+S</kbd></button>
+      </div>
+    </div>
     <span class="tb-sep"></span>
+    <button class="btn btn-copilot" id="btnCopilotTop" title="Copy the one prompt for Copilot; paste Copilot's answer anywhere here">&#10022; Copilot</button>
     <button class="btn" id="btnHelp" title="How this works">Help</button>
     <button class="btn" id="btnPresent" title="Show it full screen, one page at a time">Present</button>
     <button class="btn btn-primary" id="btnExport" title="Export the finished PDF (Ctrl+P)">Export PDF</button>
@@ -1201,7 +1350,7 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
         <div id="pieceGrid" class="piece-grid"></div>
       </div>
 
-      <div class="card step-card">
+      <div class="card step-card" id="dropCard">
         <span class="step-n">2</span>
         <h3>Drop in your reports</h3>
         <div class="dropzone big" id="dropzone">
@@ -1214,7 +1363,7 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
         <div id="sourceList" class="source-list"></div>
       </div>
 
-      <div class="card step-card">
+      <div class="card step-card" id="notesCard">
         <span class="step-n">3</span>
         <h3>Your notes <em>optional</em></h3>
         <textarea id="fldNotes" rows="6" placeholder="Talk or type, in any order: what you discussed, what changed, what you want to recommend, anything they asked about.&#10;&#10;Tip: press Windows + H to dictate."></textarea>
@@ -1249,7 +1398,12 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
       <div class="panel-intro">
         <h2>Edit the draft</h2>
         <p><b>Click any text on the page to type over it.</b> Yellow <mark class="blank">[[blanks]]</mark>
-          are yours to fill. Point at a block for its tools; click it for all its settings.</p>
+          are yours to fill: the form below lists them all. Point at anything for its tools, and press <b>&#10005;</b> to remove what doesn't apply.</p>
+      </div>
+      <div class="card blank-card" id="blankCard">
+        <div class="card-head"><h3>Fill in the blanks</h3><span class="progress-label" id="blankCount"></span></div>
+        <p class="hint">Type straight down the list and press Enter; each answer goes onto the page.</p>
+        <div id="blankForm" class="blank-form"></div>
       </div>
       <div class="card">
         <h3>The cover</h3>
@@ -1362,6 +1516,10 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
         <button class="btn btn-primary btn-wide" id="btnExport2">Export the PDF</button>
         <button class="btn btn-wide" id="btnSave2">Save the working file (.mhwg.json)</button>
         <button class="btn btn-wide" id="btnPresent2">Present full screen</button>
+        <div class="btn-grid mt8">
+          <button class="btn" id="btnLeave" title="The key numbers, what we recommend and what happens next, on one page">One-page summary</button>
+          <button class="btn" id="btnPrep" title="Talking points and questions for you; never for the client">My prep sheet</button>
+        </div>
         <p class="hint">The working file is what you reopen to change the piece later — keep it on the
           work drive with the client file.</p>
       </div>
@@ -1369,7 +1527,7 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
         <summary><h3>Look &amp; pages</h3></summary>
         <div class="field"><span>Cover</span></div>
         <div id="coverPick" class="swatch-grid four"></div>
-        <button class="btn btn-wide mt8" id="btnCoverImage" hidden>Choose the cover photograph&hellip;</button>
+        <button class="btn btn-wide mt8" id="btnCoverImage" hidden>Choose the cover picture&hellip;</button>
         <div class="field"><span>Inside pages</span></div>
         <div id="lookPick" class="swatch-grid two"></div>
         <div class="field"><span>Accent</span></div>
@@ -1385,8 +1543,9 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
         <div class="field"><span>Pages included</span></div>
         <label class="check"><input type="checkbox" id="optToc"> Table of contents</label>
         <label class="check"><input type="checkbox" id="optDividers"> Full-page section dividers</label>
-        <label class="check"><input type="checkbox" id="optSectionBreak"> Each section starts a new page</label>
+        <label class="check"><input type="checkbox" id="optSectionBreak"> Each section starts a new page <em>(slides always do)</em></label>
         <label class="check"><input type="checkbox" id="optTeam"> Closing page: your team &amp; contact</label>
+        <label class="check"><input type="checkbox" id="optSpecialists"> &hellip; with the TD specialists we bring in (trust, estate)</label>
         <label class="check"><input type="checkbox" id="optDisc"> Important disclosures</label>
         <label class="check"><input type="checkbox" id="optConfidential"> "Confidential — prepared for…" footer</label>
         <label class="check"><input type="checkbox" id="optPageNums"> Page numbers</label>
@@ -1417,9 +1576,17 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
         <button class="btn btn-mini" id="btnZoomIn" aria-label="Zoom in">+</button>
       </div>
       <div class="canvas-status" id="pageCount"></div>
+      <select id="viewPick" class="view-pick" aria-label="Show" title="What the pages show">
+        <option value="doc">Show: the document</option>
+        <option value="leave">Show: one-page summary to leave behind</option>
+        <option value="prep">Show: my prep sheet (internal)</option>
+      </select>
+      <button class="btn btn-mini btn-blank" id="btnNextBlank" hidden title="Jump to the next yellow blank and select it, so you just type">Next blank</button>
       <span class="canvas-tip" id="canvasTip">Click text to edit &middot; point at a block for tools</span>
       <label class="check check-inline"><input type="checkbox" id="optEditInline" checked> Edit on the page</label>
     </div>
+    <div class="view-banner" id="viewBanner" hidden><span id="viewBannerText"></span>
+      <button type="button" id="btnViewBack">Back to the document</button></div>
     <div class="pages" id="pages"></div>
   </section>
 
@@ -1479,13 +1646,25 @@ const BRAND = {
   address:"101, 2810 13th Ave SE, Medicine Hat, AB  T1A 3P9",
   phone:"(403) 504-2780",
   web:"advisors.td.com/medicinehatwealthgroup",
-  tagline:"Your goals. Our guidance. One team.",
+  /* in the team's own words, from advisors.td.com/medicinehatwealthgroup */
+  tagline:"Let's build a strategy that fits your life — today and tomorrow.",
+  /* who signs the cover when nobody has been chosen yet (the choice is remembered, app.js) */
+  defaultAdvisor:"Matthew Solberg, CFP®, CIM®",
 
+  /* Titles and designations as on the team website. group: "advisor" (the
+     grid on the closing page and the "Prepared by" list), "service" (client
+     service team) or "specialist" (TD specialists, shown when that option is on).
+     Neil's designations: the website lists them two ways; this is the shorter
+     listing until he confirms. */
   team:[
-    {name:"Neil Mardian",    desig:"CFP®, CIWM, M.Sc.", title:"Investment Advisor"},
-    {name:"Matthew Solberg", desig:"CFP®, CIM®",   title:"Investment Advisor"},
-    {name:"Brian Widmer",    desig:"CFP®, CIM®",   title:"Investment Advisor"},
-    {name:"Shandie Froese",  desig:"B.Sc., CFP®",       title:"Investment Advisor"}
+    {name:"Neil Mardian",       desig:"CFP®, CIWM, M.Sc.", title:"Senior Portfolio Manager, Senior Investment Advisor", group:"advisor"},
+    {name:"Matthew Solberg",    desig:"CFP®, CIM®",        title:"Senior Investment Advisor", group:"advisor"},
+    {name:"Brian Widmer",       desig:"CFP®, CIM®",        title:"Portfolio Manager, Senior Investment Advisor", group:"advisor"},
+    {name:"Shandie Froese",     desig:"B.Sc., CFP®",       title:"Senior Investment Advisor", group:"advisor"},
+    {name:"Denise Butterfield", desig:"",                  title:"Client Service Associate", group:"service"},
+    {name:"Rachel Forster",     desig:"",                  title:"Client Service Associate", group:"service"},
+    {name:"Jane Mozill",        desig:"",                  title:"Executive Trust Officer, TD Wealth Private Trust", group:"specialist"},
+    {name:"Blaine Wilson",      desig:"",                  title:"Estate Planning Advisor, TD Wealth Insurance Services", group:"specialist"}
   ],
 
   draftTag:"DRAFT — pending branch/firm compliance pre-approval",
@@ -2856,6 +3035,8 @@ function readTextFile(file){
        pages: [{ width, height, items: [{ s, x, y, w }] }]   y measured from the top
        lines: [{ page, y, cells: [{ s, x, w }], text }]       cells left to right
        text : the whole document as lines of text
+       donuts: donut charts drawn on pages that mention an asset allocation,
+               measured from their shapes (see pdfDonuts below)
    ========================================================================== */
 
 async function readPdf(file){
@@ -2869,11 +3050,17 @@ async function readPdf(file){
     useSystemFonts: false,
     verbosity: 0
   }).promise;
-  const pages = [];
+  const pages = [], donuts = [];
   for (let n = 1; n <= doc.numPages; n++){
     const page = await doc.getPage(n);
     const view = page.getViewport({scale: 1});
     const content = await page.getTextContent();
+    /* Croesus draws the asset-allocation chart, labels and numbers included, as
+       shapes rather than text, so the chart itself is measured instead */
+    if (n <= 3 && content.items.some(t => /ASSET ALLOCATION/i.test(t.str || ""))){
+      try { pdfDonuts(await pdfFills(page, lib)).forEach(d => donuts.push(Object.assign(d, {page: n - 1}))); }
+      catch (e){ /* a drawing we cannot follow: the report is still read as text */ }
+    }
     pages.push({
       width: view.width, height: view.height,
       items: content.items.filter(t => t.str && t.str.trim()).map(t => ({
@@ -2886,7 +3073,130 @@ async function readPdf(file){
   }
   await doc.destroy();
   const lines = pdfLines(pages);
-  return {pages, lines, text: lines.map(l => l.text).join("\n")};
+  return {pages, lines, donuts, text: lines.map(l => l.text).join("\n")};
+}
+
+/* ── Charts drawn as shapes ─────────────────────────────────────────────── */
+
+/** Every filled shape on a page: {color: "#rrggbb", segs: [{op: "m"|"l"|"c", pts: [[x, y], …]}]},
+    in page points (y up), with transforms and embedded drawings already applied. */
+async function pdfFills(page, lib){
+  const OPS = lib.OPS, list = await page.getOperatorList();
+  const mul = (m, c) => [m[0]*c[0] + m[1]*c[2], m[0]*c[1] + m[1]*c[3], m[2]*c[0] + m[3]*c[2], m[2]*c[1] + m[3]*c[3],
+                         m[4]*c[0] + m[5]*c[2] + c[4], m[4]*c[1] + m[5]*c[3] + c[5]];
+  const hex = (a) => typeof a[0] === "string" ? a[0].toLowerCase()
+    : "#" + Array.from(a).slice(0, 3).map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
+  const FILLS = new Set([OPS.fill, OPS.eoFill, OPS.fillStroke, OPS.eoFillStroke, OPS.closeFillStroke, OPS.closeEOFillStroke]);
+  let ctm = [1, 0, 0, 1, 0, 0], color = "#000000", path = [];
+  const stack = [], out = [];
+  const pt = (x, y) => [ctm[0]*x + ctm[2]*y + ctm[4], ctm[1]*x + ctm[3]*y + ctm[5]];
+  list.fnArray.forEach((fn, i) => {
+    const a = list.argsArray[i];
+    if (fn === OPS.save) stack.push({ctm, color});
+    else if (fn === OPS.restore){ const s = stack.pop(); if (s){ ctm = s.ctm; color = s.color; } }
+    else if (fn === OPS.transform) ctm = mul(a, ctm);
+    else if (fn === OPS.paintFormXObjectBegin){ stack.push({ctm, color}); if (a[0]) ctm = mul(a[0], ctm); }
+    else if (fn === OPS.paintFormXObjectEnd){ const s = stack.pop(); if (s){ ctm = s.ctm; color = s.color; } }
+    else if (fn === OPS.setFillRGBColor) color = hex(a);
+    else if (fn === OPS.constructPath){
+      const ops = a[0], v = a[1];
+      let k = 0, cur = [0, 0];
+      ops.forEach(op => {
+        if (op === OPS.moveTo){ cur = [v[k], v[k+1]]; path.push({op: "m", pts: [pt(cur[0], cur[1])]}); k += 2; }
+        else if (op === OPS.lineTo){ cur = [v[k], v[k+1]]; path.push({op: "l", pts: [pt(cur[0], cur[1])]}); k += 2; }
+        else if (op === OPS.curveTo){ path.push({op: "c", pts: [pt(v[k], v[k+1]), pt(v[k+2], v[k+3]), pt(v[k+4], v[k+5])]}); cur = [v[k+4], v[k+5]]; k += 6; }
+        else if (op === OPS.curveTo2){ path.push({op: "c", pts: [pt(cur[0], cur[1]), pt(v[k], v[k+1]), pt(v[k+2], v[k+3])]}); cur = [v[k+2], v[k+3]]; k += 4; }
+        else if (op === OPS.curveTo3){ path.push({op: "c", pts: [pt(v[k], v[k+1]), pt(v[k+2], v[k+3]), pt(v[k+2], v[k+3])]}); cur = [v[k+2], v[k+3]]; k += 4; }
+        else if (op === OPS.rectangle){
+          const [x, y, w, h] = v.slice(k, k + 4);
+          path.push({op: "m", pts: [pt(x, y)]}, {op: "l", pts: [pt(x + w, y)]}, {op: "l", pts: [pt(x + w, y + h)]}, {op: "l", pts: [pt(x, y + h)]});
+          k += 4;
+        }
+      });
+    }
+    else if (FILLS.has(fn)){ if (path.length) out.push({color, segs: path}); path = []; }
+    else if (fn === OPS.stroke || fn === OPS.closeStroke || fn === OPS.endPath) path = [];
+  });
+  return out;
+}
+
+/** Donut charts among the filled shapes. A donut is a ring of slices, each drawn from
+    the outer arc's start A round to its end B, across to the inner arc and back; the
+    slices chain (one's B is the next one's A) all the way round. Each slice's share
+    is the angle it sweeps, which is exact to far better than the 0.1% a report prints.
+    Returns [{cx, cy, r, slices: [{color, pct}], legend: [{color, x, y}]}]. */
+function pdfDonuts(fills){
+  const same = (p, q) => Math.abs(p[0] - q[0]) < 0.05 && Math.abs(p[1] - q[1]) < 0.05;
+  /* the corners of each shape that could be a slice: A, B (outer) and C, D (inner) */
+  const slices = [];
+  fills.forEach(f => {
+    if (f.segs.length > 14 || f.segs[0].op !== "m" || f.segs.slice(1).some(s => s.op === "m")) return;
+    const v = f.segs.map(s => s.pts[s.pts.length - 1]);
+    const li = f.segs.findIndex((s, i) => i > 0 && s.op === "l" && !same(v[i - 1], v[i]));
+    if (li < 2) return;
+    slices.push({color: f.color, A: v[0], B: v[li - 1], C: v[li], D: v[v.length - 1],
+      outer: f.segs.slice(1, li).filter(s => s.op === "c"), fill: f});
+  });
+  const used = new Set(), out = [];
+  slices.forEach(s0 => {
+    if (used.has(s0)) return;
+    /* follow the chain from this slice until it comes back round */
+    const ring = [s0];
+    let cur = s0;
+    while (ring.length < 40){
+      const nx = slices.find(s => !ring.includes(s) && !used.has(s) && same(s.A, cur.B));
+      if (!nx) break;
+      ring.push(nx); cur = nx;
+    }
+    if (!same(cur.B, s0.A) || ring.length < 2) return;
+    /* the centre: the circle through every point on the outer arcs */
+    const P = [];
+    ring.forEach(s => { P.push(s.A); s.outer.forEach(c => {
+      const [p0, p1, p2] = c.pts, q = P[P.length - 1];
+      P.push([0.125*q[0] + 0.375*p0[0] + 0.375*p1[0] + 0.125*p2[0], 0.125*q[1] + 0.375*p0[1] + 0.375*p1[1] + 0.125*p2[1]], p2);
+    }); });
+    const fit = circleFit(P);
+    if (!fit || fit.r < 8 || P.some(p => Math.abs(Math.hypot(p[0] - fit.cx, p[1] - fit.cy) - fit.r) > Math.max(0.6, fit.r * 0.01))) return;
+    const ang = (p) => Math.atan2(p[1] - fit.cy, p[0] - fit.cx);
+    /* which way round the ring goes, from the biggest slice */
+    const sweep = (s, dir) => { let d = (ang(s.B) - ang(s.A)) * dir; while (d < 0) d += 2 * Math.PI; return d; };
+    const total = (dir) => ring.reduce((n, s) => n + sweep(s, dir), 0);
+    const dir = Math.abs(total(-1) - 2 * Math.PI) < Math.abs(total(1) - 2 * Math.PI) ? -1 : 1;
+    if (Math.abs(total(dir) - 2 * Math.PI) > 0.01) return;
+    ring.forEach(s => used.add(s));
+    out.push({cx: fit.cx, cy: fit.cy, r: fit.r,
+      slices: ring.map(s => ({color: s.color, pct: sweep(s, dir) / (2 * Math.PI) * 100}))});
+  });
+  /* the legend: small squares in the slice colours, beside the chart, top to bottom */
+  out.forEach(d => {
+    d.legend = fills.filter(f => {
+      const xs = f.segs.flatMap(s => s.pts.map(p => p[0])), ys = f.segs.flatMap(s => s.pts.map(p => p[1]));
+      const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys);
+      f._box = {x: Math.min(...xs), y: (Math.max(...ys) + Math.min(...ys)) / 2, w, h};
+      return f.segs.filter(s => s.op === "m").length === 1 && w > 3 && w < 24 && h > 3 && h < 24 &&
+        Math.min(...xs) > d.cx + d.r && Math.min(...xs) < d.cx + d.r * 4 && Math.abs(f._box.y - d.cy) < d.r * 1.6;
+    }).map(f => ({color: f.color, x: f._box.x, y: f._box.y})).sort((a, b) => b.y - a.y)
+      .filter((l, i, all) => all.findIndex(m => m.color === l.color) === i);
+  });
+  return out;
+}
+
+/** Least-squares circle through points: {cx, cy, r}, or null. */
+function circleFit(P){
+  if (P.length < 3) return null;
+  let sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0, sxz = 0, syz = 0, sz = 0;
+  const n = P.length, mx = P.reduce((a, p) => a + p[0], 0) / n, my = P.reduce((a, p) => a + p[1], 0) / n;
+  P.forEach(([x0, y0]) => { const x = x0 - mx, y = y0 - my, z = x*x + y*y;
+    sx += x; sy += y; sxx += x*x; syy += y*y; sxy += x*y; sxz += x*z; syz += y*z; sz += z; });
+  /* solve for x² + y² + Dx + Ey + F = 0 */
+  const M = [[sxx, sxy, sx], [sxy, syy, sy], [sx, sy, n]], R = [-sxz, -syz, -sz];
+  const det = (m) => m[0][0]*(m[1][1]*m[2][2] - m[1][2]*m[2][1]) - m[0][1]*(m[1][0]*m[2][2] - m[1][2]*m[2][0]) + m[0][2]*(m[1][0]*m[2][1] - m[1][1]*m[2][0]);
+  const d0 = det(M);
+  if (Math.abs(d0) < 1e-9) return null;
+  const col = (k) => M.map((row, i) => row.map((v, j) => j === k ? R[i] : v));
+  const D = det(col(0)) / d0, E = det(col(1)) / d0, F = det(col(2)) / d0;
+  const cx = -D / 2, cy = -E / 2, r2 = cx*cx + cy*cy - F;
+  return r2 > 0 ? {cx: cx + mx, cy: cy + my, r: Math.sqrt(r2)} : null;
 }
 
 /** Group text into lines (same height on the page), then left to right. Pieces that
@@ -3045,6 +3355,36 @@ function accountLabelFor(kind, ownerNames, joint, corpName){
 
 const MAIN_CLASS_RE = /^(Cash & Cash Equivalents|Cash and Cash Equivalents|Fixed Income|Canadian Equity|American Equity|U\.?S\.? Equity|Foreign Equity|International Equity|Global Equity|Alternative[s]?(?: Investments)?|Preferred (?:Shares|Equity)|Other(?: Assets)?|Mixed|Balanced)$/i;
 
+/* The "Your asset allocation" chart on the performance page. Croesus draws its labels
+   and numbers as shapes, not text, so each category is known by its colour and its
+   share is measured from the chart (pdfread.js → pdfDonuts), then rounded to one
+   decimal exactly as the report prints it. Legend order is the report's order. */
+const CROESUS_ALLOCATION_COLORS = {
+  "#00b624": "Cash & Cash Equivalents",
+  "#c8009c": "Medium-Term Fixed Income",
+  "#0063be": "Long-Term Fixed Income",
+  "#ffc82e": "Other Fixed Income",
+  "#007770": "Canadian Equity",
+  "#e70033": "American Equity",
+  "#00257b": "Foreign Equity",
+  "#f07b05": "Other"
+};
+function croesusAllocation(doc, warnings){
+  const d = (doc.donuts || [])[0];
+  if (!d) return [];
+  const order = d.legend.map(l => l.color);
+  d.slices.forEach(s => { if (!order.includes(s.color)) order.push(s.color); });
+  let unknown = 0;
+  const out = order.map(color => {
+    const s = d.slices.find(x => x.color === color);
+    const name = CROESUS_ALLOCATION_COLORS[color];
+    if (!name) unknown++;
+    return {name: name || "[[asset class, as named in the report]]", pct: s ? Math.round(s.pct * 10) / 10 : 0, color};
+  });
+  if (unknown) warnings.push("The asset allocation chart has " + unknown + " categor" + (unknown === 1 ? "y" : "ies") + " this program does not know by colour: check the name against the report.");
+  return out;
+}
+
 function parseCroesus(doc){
   const L = doc.lines, found = [];
   const f = {kind:"portfolio-facts", source:"Croesus portfolio report", accounts:[], holdings:[], classes:[], periods:[], years:[], monthly:[]};
@@ -3180,6 +3520,9 @@ function parseCroesus(doc){
   f.holdings = f.holdings.filter(h => !/^ACCOUNT BALANCE/i.test(h.name) || h.value);
   if (f.holdings.length) found.push(f.holdings.length + " holdings");
   if (f.classes.length) found.push("asset mix");
+  f.warnings = [];
+  f.allocation = croesusAllocation(doc, f.warnings);
+  if (f.allocation.length) found.push("asset allocation");
 
   const fx = doc.text.match(/USD\s*1\.000\s*=\s*CAD\s*([\d.]+)/); if (fx) f.usdcad = +fx[1];
   const inc = f.holdings.reduce((n, h) => n + (h.income || 0), 0);
@@ -3386,7 +3729,8 @@ const FACTS_SHAPES = {
   "monthly": [{"date": "03/31/2026", "value": 1250400.00}],
   "accounts": [{"number": "1ABC23S", "kind": "RRSP", "label": "Robert's RRSP", "owners": ["Robert"], "joint": false, "currency": "CAD", "value": 540000.00}],
   "holdings": [{"account": "1ABC23S", "name": "EXAMPLE CDN EQUITY ETF", "symbol": "XYZ", "assetClass": "Canadian Equity", "value": 85000.00, "pct": 6.80, "income": 2550.00, "yield": 3.00}],
-  "classes": [{"name": "Canadian Equity", "value": 610000.00, "pct": 48.78}]
+  "classes": [{"name": "Canadian Equity", "value": 610000.00, "pct": 48.78}],
+  "allocation": [{"name": "Canadian Equity", "pct": 35.4}]
 }`,
   plan: `{
   "kind": "plan-facts",
@@ -3425,7 +3769,7 @@ function normalizeFacts(v){
   if (!v || typeof v !== "object") throw Error("That is not a facts object.");
   const arrs = v.kind === "plan-facts"
     ? ["people", "children", "goals", "assetMix", "education", "income", "savings", "pensions", "property", "debt", "netWorthByYear", "assumptions"]
-    : ["accounts", "holdings", "classes", "periods", "years", "monthly"];
+    : ["accounts", "holdings", "classes", "allocation", "periods", "years", "monthly"];
   arrs.forEach(k => { if (!Array.isArray(v[k])) v[k] = []; });
   if (v.kind === "plan-facts"){ v.insights = v.insights || {}; v.insights.protection = v.insights.protection || []; }
   else {
@@ -3456,6 +3800,9 @@ function normalizeFacts(v){
 
 const VIZ_W = 660;                      /* the content column, in CSS px */
 const SEQ = BRAND.sequence;
+/* Bars and lines are big areas of colour: deep green and gold lead, so the page
+   stays calm; the bright Shield Green comes third. Donuts use the same order. */
+const BAR_SEQ = ["#002B1A", "#CFBD91", "#42BF19", "#3B5B72", "#A4D6DD", "#D99E14", "#855991"];
 const INK = "#1C1C1C";
 
 const svgEsc = (s) => esc(s);
@@ -3580,7 +3927,8 @@ function chartFrame(h, inner){
 /* Legend that flows onto as many rows as it needs within maxW. Long names
    wrap inside their own entry. Returns the markup and the height used
    below the first baseline. */
-function legend(names, x, y, maxW){
+function legend(names, x, y, maxW, seq){
+  seq = seq || SEQ;
   const fs = 11, rowH = 17, limit = maxW || (VIZ_W - x);
   let out = "", cx = x, cy = y, rowExtra = 0;
   names.forEach((n, i) => {
@@ -3588,7 +3936,7 @@ function legend(names, x, y, maxW){
     const textW = Math.max(0, ...lines.map(l => l.length)) * fs * 0.58;
     const w = 14 + textW + 16;
     if (cx > x && cx + w - 16 > x + limit){ cx = x; cy += rowH + rowExtra; rowExtra = 0; }
-    out += `<rect x="${cx}" y="${cy - 8}" width="9" height="9" fill="${SEQ[i % SEQ.length]}"/>` +
+    out += `<rect x="${cx}" y="${cy - 8}" width="9" height="9" fill="${seq[i % seq.length]}"/>` +
            svgLines(lines, cx + 14, cy, 13, `font-size="${fs}" fill="#3C4339"`);
     rowExtra = Math.max(rowExtra, (lines.length - 1) * 13);
     cx += w;
@@ -3615,7 +3963,7 @@ function valueAxis(sc, y, padL, padR, unit){
   let g = "";
   sc.ticks.forEach(t => {
     g += `<line x1="${padL}" x2="${VIZ_W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="#E4E9E2" stroke-width="1"/>` +
-         `<text x="${padL - 9}" y="${y(t) + 4}" font-size="10.5" fill="#8b978d" text-anchor="end">${svgEsc(t === sc.max ? withUnit(t, unit) : nfmt(t))}</text>`;
+         `<text x="${padL - 9}" y="${y(t) + 4}" font-size="10.5" fill="#8b978d" text-anchor="end">${svgEsc(t === 0 ? "0" : withUnit(t, unit))}</text>`;
   });
   return g;
 }
@@ -3625,7 +3973,7 @@ function chartFoot(labels, series, xAt, slotW, plotBottom, padL){
   const xl = xLabels(labels, xAt, slotW, plotBottom + 18);
   const lastLabelY = plotBottom + 18 + (xl.lines - 1) * 13;
   let leg = {svg:"", height:0};
-  if (series.length > 1) leg = legend(series.map(s => s.name || ""), padL, lastLabelY + 20, VIZ_W - padL - 8);
+  if (series.length > 1) leg = legend(series.map(s => s.name || ""), padL, lastLabelY + 20, VIZ_W - padL - 8, BAR_SEQ);
   return {svg:xl.svg + leg.svg, H:lastLabelY + 28 + leg.height};
 }
 
@@ -3663,7 +4011,7 @@ function barChart(labels, series, unit, stacked){
         if (!v) return;
         const from = v > 0 ? pos : neg, to = from + v;
         const ya = y(Math.max(from, to)), yb = y(Math.min(from, to));
-        bars += `<rect x="${cx - bw/2}" y="${ya}" width="${bw}" height="${Math.max(0, yb - ya)}" fill="${SEQ[si % SEQ.length]}"/>`;
+        bars += `<rect x="${cx - bw/2}" y="${ya}" width="${bw}" height="${Math.max(0, yb - ya)}" fill="${BAR_SEQ[si % BAR_SEQ.length]}"/>`;
         if (v > 0) pos = to; else neg = to;
       });
     } else {
@@ -3674,8 +4022,8 @@ function barChart(labels, series, unit, stacked){
         const yy = y(v);
         const top = Math.min(yy, y0), h = Math.abs(y0 - yy);
         const ly = v < 0 ? yy + 14 : yy - 6;
-        bars += `<rect x="${x}" y="${top}" width="${bw - 3}" height="${h}" fill="${SEQ[si % SEQ.length]}"/>` +
-                `<text x="${x + (bw - 3)/2}" y="${ly}" font-size="10.5" fill="#3C4339" text-anchor="middle">${nfmt(v)}</text>`;
+        bars += `<rect x="${x}" y="${top}" width="${bw - 3}" height="${h}" fill="${BAR_SEQ[si % BAR_SEQ.length]}"/>` +
+                `<text x="${x + (bw - 3)/2}" y="${ly}" font-size="10.5" fill="#3C4339" text-anchor="middle">${svgEsc(withUnit(v, unit))}</text>`;
       });
     }
   });
@@ -3697,7 +4045,7 @@ function lineChart(labels, series, unit){
   const g = valueAxis(sc, y, padL, padR, unit);
   let lines = "";
   series.forEach((s, si) => {
-    const col = SEQ[si % SEQ.length];
+    const col = BAR_SEQ[si % BAR_SEQ.length];
     const pts = s.values.map((v, i) => [x(i), y(Number(v) || 0)]);
     lines += `<polyline fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" ` +
              `points="${pts.map(p => p.join(",")).join(" ")}"/>`;
@@ -3707,7 +4055,7 @@ function lineChart(labels, series, unit){
   const base = `<line x1="${padL}" x2="${VIZ_W - padR}" y1="${y(0)}" y2="${y(0)}" stroke="#002B1A" stroke-width="1.2"/>`;
   /* a long run (51 years, 24 months) shows about a dozen evenly spaced labels */
   const step = Math.max(1, Math.ceil(labels.length / 12));
-  const shown = labels.map((l, i) => (i % step === 0 || i === labels.length - 1) && !(i !== labels.length - 1 && labels.length - 1 - i < step / 2) ? l : "");
+  const shown = labels.map((l, i) => (i % step === 0 || i === labels.length - 1) && !(i !== labels.length - 1 && labels.length - 1 - i < step) ? l : "");
   const slotW = labels.length < 2 ? plotW : plotW / (labels.length - 1) * step;
   const foot = chartFoot(shown, series, x, slotW, padT + plotH, padL);
   return chartFrame(foot.H, g + base + lines + foot.svg);
@@ -3733,7 +4081,7 @@ function donutChart(labels, values, unit){
   const p = (ang, rad) => [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)];
   nums.forEach((v, i) => {
     if (!(v > 0)) return;                  /* zero slices draw nothing */
-    const fill = SEQ[i % SEQ.length];
+    const fill = BAR_SEQ[i % BAR_SEQ.length];
     const share = v / total;
     if (share >= 0.9999){
       /* A full ring: an arc can't start and end on the same point, so draw
@@ -3756,7 +4104,7 @@ function donutChart(labels, values, unit){
   rowsData.forEach(d => {
     const i = d.i;
     const pct = asTyped ? nums[i] : (nums[i] / total) * 100;
-    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${SEQ[i % SEQ.length]}"/>` +
+    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${BAR_SEQ[i % BAR_SEQ.length]}"/>` +
             svgLines(d.lines, lx, yy, lh, `font-size="12" fill="${INK}"`) +
             `<text x="${VIZ_W - 4}" y="${yy}" font-size="12" fill="#002B1A" text-anchor="end" font-weight="600">` +
             `${unit === "%" ? nfmt(pct) + "%" : svgEsc(withUnit(nums[i], unit))}</text>`;
@@ -3783,7 +4131,7 @@ function hBarChart(labels, values, unit){
     const tx = nums[i] < 0 ? bx - 6 : zx + w + 8;
     out += svgLines(lines, padL - 12, mid + 4 - (lines.length - 1) * lh / 2, lh, `font-size="12" fill="#3C4339" text-anchor="end"`) +
            `<rect x="${padL}" y="${mid - 8.5}" width="${plotW}" height="17" fill="#F4F8F5"/>` +
-           `<rect x="${bx}" y="${mid - 8.5}" width="${Math.max(1, w)}" height="17" fill="${SEQ[i % SEQ.length]}"/>` +
+           `<rect x="${bx}" y="${mid - 8.5}" width="${Math.max(1, w)}" height="17" fill="${BAR_SEQ[0]}"/>` +
            `<text x="${tx}" y="${mid + 4}" font-size="11.5" fill="#002B1A" font-weight="600"${nums[i] < 0 ? ' text-anchor="end"' : ""}>${svgEsc(withUnit(nums[i], unit))}</text>`;
     y += rowH;
   });
@@ -4000,7 +4348,7 @@ function editable(tag, cls, text, bid, path){
 }
 
 function renderBlock(b){
-  const wrap = el("div", "blk blk-hit blk-" + b.type);
+  const wrap = el("div", "blk blk-hit blk-" + b.type + (b.runOn ? " is-runon" : ""));
   wrap.dataset.bid = b.id;
   wrap.dataset.type = b.type;
   if (b._off != null){ wrap.dataset.off = b._off; wrap.dataset.len = b._len; }
@@ -4164,13 +4512,15 @@ function renderBlock(b){
       if (BLOCK_RENDERERS[b.type]){ BLOCK_RENDERERS[b.type](b, wrap); break; }
       wrap.appendChild(el("p","blk-p", esc(JSON.stringify(b))));
   }
+  /* where the figures came from (smart.js sets it on report charts and tables) */
+  if (b.source && (b.type === "chart" || b.type === "table")) wrap.appendChild(el("div","blk-src", "Source: " + esc(b.source)));
   return wrap;
 }
 
 function looksNumericHeader(b, ci){
   const col = (b.rows || []).map(r => r[ci]).filter(v => v != null && v !== "" && v !== "—");
   if (!col.length) return false;
-  return col.every(v => /^[\s$€£+\-(]?[\d.,]+\s*[%kKMB)]*$/.test(String(v).trim()));
+  return col.every(v => /^[\s$€£+\-−(]{0,2}[\d.,]+\s*[%kKMB)]*$/.test(String(v).trim()));
 }
 
 /* ── Splitting a block across a page break ──────────────────────────────── */
@@ -4272,6 +4622,8 @@ function newPage(deck, ctx){
   p.appendChild(foot);
 
   if (deck.options.draft) p.appendChild(el("div","page-draft", esc(BRAND.draftTag)));
+  /* the prep sheet (views.js): never mistaken for something to hand over */
+  if (deck.internal) p.appendChild(el("div","page-internal","Internal — for the advisor only, not for the client"));
   p._body = body;
   return p;
 }
@@ -4304,21 +4656,36 @@ function coverPage(deck){
   c.appendChild(body);
   c.appendChild(el("div","cover-gap gap-b"));
 
-  const foot = el("div","cover-foot");
-  const forBox = el("div","cover-for");
+  /* an optional picture between the title and the band; an empty one is a
+     placeholder on screen only (render.js never prints an empty frame) */
+  if (deck.cover.style === "picture"){
+    const pic = el("div", "cover-pic" + (deck.cover.image ? "" : " is-empty"));
+    if (deck.cover.image) pic.style.backgroundImage = "url(" + deck.cover.image + ")";
+    else pic.appendChild(el("span", "", "Team photo or a Medicine Hat picture goes here.<br>Finish &rarr; Look &amp; pages &rarr; Choose the cover picture."));
+    c.appendChild(pic);
+  }
+
+  /* the deep-green band: who it is for, when, and who prepared it */
+  const band = el("div","cover-band");
+  const forBox = el("div","cb-for");
   if (deck.meta.client){
     forBox.appendChild(el("span","cf-label","Prepared for"));
     forBox.appendChild(el("div","cf-name", esc(deck.meta.client)));
   }
-  foot.appendChild(forBox);
-  const meta = el("div","cover-meta");
-  if (deck.meta.advisor) meta.appendChild(el("div","", esc(deck.meta.advisor)));
-  meta.appendChild(el("div","", esc(BRAND.firm)));
-  meta.appendChild(el("div","", esc(BRAND.subbrand)));
-  if (deck.meta.date) meta.appendChild(el("div","", esc(prettyDate(deck.meta.date))));
-  if (deck.options.draft) meta.appendChild(el("div","", esc(BRAND.draftTag)));
-  foot.appendChild(meta);
-  c.appendChild(foot);
+  if (deck.meta.date) forBox.appendChild(el("div","cb-date", esc(prettyDate(deck.meta.date))));
+  band.appendChild(forBox);
+  const by = el("div","cb-by");
+  const who = preparedBy(deck);
+  if (who){
+    by.appendChild(el("span","cf-label","Prepared by"));
+    by.appendChild(el("div","cb-name", esc(who.name)));
+    if (who.title) by.appendChild(el("div","cb-title", esc(who.title)));
+  }
+  by.appendChild(el("div","cb-firm", esc(BRAND.firm) + " &middot; " + esc(BRAND.subbrand)));
+  if (deck.contact && deck.contact.phone) by.appendChild(el("div","cb-phone", esc(deck.contact.phone)));
+  band.appendChild(by);
+  c.appendChild(band);
+  if (deck.options.draft) c.appendChild(el("div","cover-draft", esc(BRAND.draftTag)));
 
   p.appendChild(c);
   return p;
@@ -4355,7 +4722,11 @@ function prettyDate(iso){
  * Lay the whole deck out into pages inside `host`.
  * Returns {pages, sectionPages} so the table of contents can be numbered.
  */
+/* the deck being laid out right now (a view's copy, or the document itself) */
+let layoutDeck = null;
+
 function layout(deck, host){
+  layoutDeck = deck;
   host.innerHTML = "";
   const doc = host;
   doc.dataset.accent = deck.design.accent || "gold";
@@ -4369,12 +4740,12 @@ function layout(deck, host){
   const sectionPages = {};
 
   /* front matter -------------------------------------------------------- */
-  pages.push({node: coverPage(deck), numbered:false});
+  if (!deck.noCover) pages.push({node: coverPage(deck), numbered:false});
 
   /* account pages are listed once, under "Our recommendations", not one by one */
   const tocSections = deck.sections.filter(s => !s.accountRecommendation);
   const tocCount = deck.options.toc
-    ? Math.max(1, Math.ceil(tocSections.length / 16))
+    ? Math.max(1, Math.ceil(tocSections.length / tocPerPage(deck)))
     : 0;
   const tocSlots = [];
   for (let i = 0; i < tocCount; i++){
@@ -4403,7 +4774,7 @@ function layout(deck, host){
     const frag = (from, to) => {
       const f = rule.build(b, units.slice(from, to), from === 0);
       f.id = b.id; f._off = from; f._len = to - from;
-      if (b.type === "table" && to < units.length){ f.totalRow = false; f.caption = ""; }
+      if (b.type === "table" && to < units.length){ f.totalRow = false; f.caption = ""; f.source = ""; }
       return f;
     };
     let best = 0;
@@ -4411,6 +4782,8 @@ function layout(deck, host){
       if (M.height(renderBlock(frag(0, k))) <= room) best = k; else break;
     }
     if (best === 0) return false;
+    /* never leave one line, row or item on its own at the top of the next page */
+    if (units.length - best === 1 && best >= 2) best--;
     place(renderBlock(frag(0, best)), room);
     startPage();
     let start = best;
@@ -4430,19 +4803,26 @@ function layout(deck, host){
     return true;
   };
 
+  /* Slides always give each section its own slide. On paper, short sections run
+     on (no half-empty pages) unless "Each section starts a new page" is ticked. */
+  const breakEach = deck.options.sectionBreak || deck.design.format === "slides";
+
   deck.sections.forEach((section, si) => {
     const recPart = section.recommendationOverview || section.recommendation;
     ctx = {section: recPart ? "OUR RECOMMENDATIONS" : (section.runningTitle || section.title || ""),
            recommendation: !!section.recommendation, householdSummary: !!section.recommendationOverview};
+    const ownPage = section.recommendation || section.recommendationOverview || (deck.sections[si - 1] || {}).recommendation;
     if (deck.options.dividers){
       pages.push({node: dividerPage(deck, section, si + 1), numbered:true});
       sectionPages[section.id] = pages.length;   /* provisional; fixed below */
       page = null;
-    } else if ((deck.options.sectionBreak || section.recommendation || section.recommendationOverview || (deck.sections[si - 1] || {}).recommendation) && si > 0){
+    } else if ((breakEach || ownPage) && si > 0){
       page = null;              /* each section opens a page; a recommendation always has its own */
     }
     let items = (section.blocks || []).slice();
-    if (!deck.options.dividers && !section.recommendation && !section.recommendationOverview){
+    if (section.noHeading){
+      /* a view's page (views.js) brings its own heading */
+    } else if (!deck.options.dividers && !section.recommendation && !section.recommendationOverview){
       items = [Object.assign(newBlock("heading"),
                 {id:"sec-" + section.id, level:2, kicker: section.kicker || "", text: section.title || "", num: si + 1})]
               .concat(items);
@@ -4454,21 +4834,47 @@ function layout(deck, host){
     }
     /* the household summary carries its own title, so title and summary never split */
 
+    /* Running on: the section starts part way down the page. It moves to a fresh
+       page when little room is left, or when it is short enough to keep whole
+       on the next page but would be split here (unless nearly half the page
+       is still empty: then it starts here, rather than leave a gap). */
+    let pre = null;
+    if (page && used > 0 && !deck.options.dividers && items.length && items[0].type === "heading"){
+      items[0] = Object.assign({}, items[0], {runOn: true});
+      pre = items.map(b => { const node = renderBlock(b); return {node, h: M.height(node)}; });
+      /* the last block's bottom margin need not fit on the page */
+      const gap = parseFloat(getComputedStyle(doc).getPropertyValue("--gap")) || 15;
+      const total = pre.reduce((n, x) => n + x.h, 0) - gap, room = LIMIT - used;
+      if (room < LIMIT * 0.22 || (total > room && total <= LIMIT * 0.6 && room < LIMIT * 0.45)){
+        page = null;
+        items[0] = Object.assign({}, items[0], {runOn: false});
+        pre = null;
+      }
+    }
+
     items.forEach((b, bi) => {
       if (b.type === "pagebreak"){ page = null; return; }
       if (!page) { startPage(); if (!sectionPages[section.id]) sectionPages[section.id] = pages.length; }
       if (!sectionPages[section.id]) sectionPages[section.id] = pages.length;
 
-      let node = renderBlock(b);
-      let h = M.height(node);
+      let node, h;
+      if (pre && pre[bi]){ node = pre[bi].node; h = pre[bi].h; }
+      else { node = renderBlock(b); h = M.height(node); }
 
       if (h <= LIMIT - used){
-        /* a heading should never be the last thing on a page */
+        /* a heading is never the last thing on a page: it keeps with what follows */
         const isHeading = b.type === "heading";
         if (isHeading && bi < items.length - 1){
-          const nextH = M.height(renderBlock(items[bi + 1]));
+          const nextH = pre && pre[bi + 1] ? pre[bi + 1].h : M.height(renderBlock(items[bi + 1]));
           const room = LIMIT - used - h;
-          if (room < Math.min(nextH, 90)){ startPage(); node = renderBlock(b); h = M.height(node); }
+          /* a list or paragraph can start here and carry on; a chart or picture cannot */
+          const next = items[bi + 1], splits = SPLITTABLE[next.type] && SPLITTABLE[next.type].units(next).length > 1;
+          if (splits ? room < Math.min(nextH, 130) : (room < nextH && nextH <= LIMIT - h)){
+            startPage();
+            if (bi === 0) sectionPages[section.id] = pages.length;
+            if (b.runOn) b = Object.assign({}, b, {runOn: false});
+            node = renderBlock(b); h = M.height(node);
+          }
         }
         place(node, h);
         return;
@@ -4480,6 +4886,7 @@ function layout(deck, host){
       const room = LIMIT - used;
       if (rule && room > 70 && splitAcross(b, rule, room)) return;
       if (used > 0) startPage();
+      if (b.runOn) b = Object.assign({}, b, {runOn: false});
       node = renderBlock(b);
       h = M.height(node);
       if (h > LIMIT && rule && splitAcross(b, rule, LIMIT)) return;
@@ -4528,8 +4935,13 @@ function layout(deck, host){
   return {pages, sectionPages};
 }
 
+/* How many entries fit on one contents page. Past a handful the list is set
+   tighter (.toc-list.is-long) so a long document still fits. */
+function tocPerPage(deck){ return deck.design.format === "slides" ? 7 : 13; }
+
 function fillToc(deck, slots, sectionPages){
-  const perPage = 16;
+  const perPage = tocPerPage(deck);
+  const long = deck.sections.filter(s => !s.accountRecommendation).length > (deck.design.format === "slides" ? 5 : 9);
   slots.forEach((p, pi) => {
     const body = p._body;
     body.innerHTML = "";
@@ -4537,7 +4949,7 @@ function fillToc(deck, slots, sectionPages){
       body.appendChild(el("h2","toc-title","Contents"));
       body.appendChild(el("div","toc-rule"));
     }
-    const list = el("ol","toc-list");
+    const list = el("ol","toc-list" + (long ? " is-long" : ""));
     deck.sections.filter(s => !s.accountRecommendation).slice(pi * perPage, (pi + 1) * perPage).forEach((s, i) => {
       const li = el("li","toc-item");
       li.appendChild(el("span","toc-num", String(pi * perPage + i + 1).padStart(2,"0")));
@@ -4554,34 +4966,60 @@ function fillToc(deck, slots, sectionPages){
   });
 }
 
+/** Team members of one group: "advisor", "service" or "specialist" (brand.js). */
+function teamGroup(deck, group){
+  return (deck.team && deck.team.length ? deck.team : BRAND.team).filter(m => (m.group || "advisor") === group && m.name);
+}
+/** The cover's "Prepared by": the advisor as chosen, with their title from the team list. */
+function preparedBy(deck){
+  const who = String(deck.meta.advisor || "").trim();
+  if (!who) return null;
+  const m = (deck.team || []).find(x => x.name && who.toLowerCase().startsWith(x.name.toLowerCase()));
+  return {name: who, title: m && m.title && who !== BRAND.firm ? m.title : ""};
+}
+
 function closingPages(deck, M, LIMIT){
   const out = [];
-  const deckPage = () => {
-    const p = newPage(deck, {section:"Your team"});
+  const deckPage = (section) => {
+    const p = newPage(deck, {section});
     out.push(p);
     return p;
   };
-  let p = deckPage(), used = 0;
+  let p = null, used = 0;
   const put = (node) => {
     const h = M.height(node) + 3;   /* small allowance: margins between these pieces collapse unevenly */
-    if (h > LIMIT - used && used > 0){ p = deckPage(); used = 0; }
+    if (h > LIMIT - used && used > 0){ const sec = p._section; p = deckPage(sec); p._section = sec; used = 0; }
     p._body.appendChild(node);
     used += h;
   };
-
-  if (deck.options.team){
-    put(el("h2","closing-h","Your Wealth Management Team"));
-    put(el("p","closing-sub", esc(BRAND.tagline)));
-    put(el("div","closing-rule"));
-    const grid = el("div","team-grid");
-    (deck.team && deck.team.length ? deck.team : BRAND.team).forEach(m => {
+  const grid = (members, cls) => {
+    const g = el("div", "team-grid " + (cls || ""));
+    members.forEach(m => {
       const c = el("div","team-cell");
       c.appendChild(el("div","t-name", esc(m.name)));
       if (m.desig) c.appendChild(el("div","t-desig", esc(m.desig)));
       if (m.title) c.appendChild(el("div","t-title", esc(m.title)));
-      grid.appendChild(c);
+      g.appendChild(c);
     });
-    put(grid);
+    return g;
+  };
+
+  if (deck.options.team){
+    p = deckPage("Your team"); p._section = "Your team"; used = 0;
+    put(el("h2","closing-h","Your Wealth Management Team"));
+    put(el("p","closing-sub", esc(BRAND.tagline)));
+    put(el("div","closing-rule"));
+    put(grid(teamGroup(deck, "advisor")));
+    const service = teamGroup(deck, "service");
+    if (service.length){
+      put(el("div","team-sub","Your client service team"));
+      put(grid(service, "is-small"));
+    }
+    const specialists = teamGroup(deck, "specialist");
+    if (deck.options.specialists && specialists.length){
+      put(el("div","team-sub","TD specialists we bring in"));
+      put(grid(specialists, "is-small"));
+    }
 
     const contact = el("div","contact");
     contact.appendChild(el("div","c-firm", esc(deck.contact.firm || BRAND.firm)));
@@ -4593,16 +5031,14 @@ function closingPages(deck, M, LIMIT){
   }
 
   if (deck.options.disclosures){
-    /* on a slide, the disclosures get a slide of their own */
-    if (deck.design.format === "slides" && used > 0){ p = deckPage(); used = 0; }
-    put(el("div","disc-h","Important disclosures"));
+    /* the disclosures have a back page of their own */
+    p = deckPage("Important disclosures"); p._section = "Important disclosures"; used = 0;
+    put(el("div","disc-h is-page","Important disclosures"));
     if (deck.options.draft) put(el("div","disc-draft", esc("[" + BRAND.draftTag + "]")));
     (deck.disclosures || []).forEach(d => put(el("p","disc-p", esc(d))));
   }
   return out;
 }
-
-;
 
 ;
 /* ==========================================================================
@@ -4618,12 +5054,13 @@ const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 function toast(msg, ms){
   const t = $("toast");
   t.textContent = msg; t.hidden = false;
+  t.onclick = () => { t.hidden = true; };      /* click to dismiss */
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.hidden = true; }, ms || 2600);
 }
 
-async function copyText(text, msg){
-  try { await navigator.clipboard.writeText(text); toast(msg || "Copied"); }
+async function copyText(text, msg, ms){
+  try { await navigator.clipboard.writeText(text); toast(msg || "Copied", ms); }
   catch {
     /* some locked-down browsers refuse the clipboard: show it, selected, to copy by hand */
     showModal("Copy this", "<p class='hint'>Press <b>Ctrl+C</b> to copy the selected text.</p><textarea id='copyBox' rows='16' class='mono'></textarea>");
@@ -5210,7 +5647,7 @@ const VISUAL_TYPES = ["chart", "infographic", "image"];
 
 /* Settings on a block (its style, size, chart type…) are not content. */
 const NOT_CONTENT = new Set(["id","type","seed","style","level","tone","cols","size","frame",
-  "chart","graphic","totalRow","numeric","fromNumbers","h","_off","_len"]);
+  "chart","graphic","totalRow","numeric","fromNumbers","h","_off","_len","source","from","runOn"]);
 /** Does this block actually say something? An empty paragraph does not. */
 function hasWords(v, key){
   if (key && NOT_CONTENT.has(key)) return false;
@@ -5403,14 +5840,19 @@ function preflight(){
   if (!deck.meta.date) issues.push({t:"No date on the cover", fix:() => showRail("start")});
   if (!deck.meta.advisor) issues.push({t:"No advisor named on the cover", fix:() => showRail("start")});
 
+  /* One line per section with yellow blanks (the "Fill in the blanks" form
+     lists each one); sections with nothing written at all; then one line for
+     the standard wording still to read over, rather than one per section. */
   deck.sections.forEach(s => {
+    const n = gapCount(s.blocks);
     const st = sectionStatus(s);
-    if (st !== "done"){
-      issues.push({
-        t: '“' + (s.title || "Untitled") + '” ' + (st === "empty" ? "is still empty" : s.smart ? "has pre-written words to read over (or let Copilot write them)" : "is part written"),
-        fix: () => { showRail("build"); jumpToSection(s); }
-      });
-    }
+    const hasSeeds = (s.blocks || []).some(b => b.seed);
+    if (n) issues.push({t:'“' + (s.title || "Untitled") + '”: ' + n + " yellow blank" + (n === 1 ? "" : "s") + " to fill in",
+      fix: () => { showRail("build"); jumpToSection(s); }});
+    else if (s.accountRecommendation && st !== "done") issues.push({t:'“' + (s.title || "Untitled") + '”: no model portfolio chosen yet',
+      fix: () => { showRail("build"); jumpToSection(s); }});
+    else if (st === "empty" && !hasSeeds) issues.push({t:'“' + (s.title || "Untitled") + '” is still empty',
+      fix: () => { showRail("build"); jumpToSection(s); }});
   });
 
   deck.sections.forEach(s => (s.blocks || []).forEach(b => {
@@ -5419,21 +5861,26 @@ function preflight(){
     }
   }));
 
-  deck.sections.forEach(s => {
-    const n = gapCount(s.blocks);
-    if (n) issues.push({t:'“' + (s.title || "Untitled") + '” has ' + n + " yellow blank" + (n === 1 ? "" : "s") + " to fill in",
-      fix: () => { showRail("build"); jumpToSection(s); }});
-  });
+  const chk = toCheckIds();
+  if (chk.length) issues.push({t: chk.length + (chk.length === 1 ? " passage" : " passages") + " Copilot wrote still to read over (marked “Copilot wrote this” on the page)",
+    fix: () => { showRail("build"); selectBlock(chk[0], true); }});
+
+  const standard = deck.sections.filter(s => !s.accountRecommendation && !s.recommendationOverview &&
+    (s.blocks || []).some(b => b.seed && !VISUAL_TYPES.includes(b.type)));
+  if (standard.length) issues.push({
+    t: standard.length + (standard.length === 1 ? " section still has" : " sections still have") +
+       " our standard wording: read it over, trim it, or let Copilot write it from your notes",
+    soft: true, fix: () => showRail("copilot")});
 
   layoutProblems().forEach(c => issues.push({
     t:"Something runs off the bottom of page " + c.page + " and would be cut off in the PDF",
     fix:() => c.node.scrollIntoView({block:"start", behavior:"smooth"})}));
 
   if (!deck.options.disclosures){
-    issues.push({t:"The standard disclosures are switched off", fix:() => showRail("style")});
+    issues.push({t:"The standard disclosures are switched off", fix:() => openFinishCard("optDisc")});
   } else if (JSON.stringify(deck.disclosures) !== JSON.stringify(BRAND.disclosures)){
     issues.push({t:"The disclosures have been changed from the standard wording — compliance needs to see that",
-      fix:() => showRail("style")});
+      fix:() => openFinishCard("fldFirm")});
   }
   if (!deck.options.draft && deck.meta.reviewedHash && deck.meta.reviewedHash !== contentHash()){
     issues.push({t:"The piece has changed since the DRAFT tag came off — put it back on until it is checked again",
@@ -5689,18 +6136,23 @@ function recommendationProfileMarkup(p, fit){
   p = normalizePortfolio(p);
   const d = donutMarkup(p);
   const blocks = p.commentaryBlocks.filter(x => x && (x.title || x.description)).slice(0, 4);
-  const holdings = p.topHoldings.slice(0, 10);
+  const holdings = p.topHoldings.slice(0, 10), moreHoldings = p.topHoldings.length - holdings.length;
+  /* a short title ("Balanced Growth portfolio") with the family name small beneath it */
+  const full = preferredPortfolioTitle(p), cut = full.lastIndexOf(" - ");
+  const short = cut > 0 ? full.slice(cut + 3) + " portfolio" : full, family = cut > 0 ? full.slice(0, cut) : "";
   const fitItems = (fit && fit.length ? fit : p.fitTemplate.length ? p.fitTemplate
     : ["Client-specific rationale is added when this portfolio is selected for an account."]).slice(0, 4);
   const summary = p.recommendationSummary || p.investmentApproach || "";
   return `<div class="rec-profile"><div class="rec-label">Our Recommendation</div>` +
-    `<div class="rec-recommendation-title">${escProfile(preferredPortfolioTitle(p))}</div>` +
+    `<div class="rec-recommendation-title">${escProfile(short)}</div>` +
+    (family ? `<div class="rec-family">${escProfile(family)}</div>` : "") +
     `<div class="rec-label">Investment Approach</div><p class="rec-summary">${escProfile(summary)}</p>` +
     (blocks.length ? `<div class="rec-commentary">${blocks.map(x => `<div class="rec-commentary-block"><b>${escProfile(x.title)}</b><span>${escProfile(x.description)}</span></div>`).join("")}</div>` : "") +
     portfolioStatsMarkup(p) +
     `<div class="rec-snapshot"><div class="rec-donut-wrap"><div class="rec-holdings-title rec-allocation-title">Asset Allocation</div>${d.svg}<div class="rec-legend">${d.legend}</div></div>` +
     `<div class="rec-holdings"><div class="rec-holdings-title">Representative Holdings</div><div class="rec-holdings-head"><span>Holding</span><span>Weight</span></div>` +
-    holdings.map(x => `<div class="rec-holding"><span>${escProfile(x.name)}</span><span>${escProfile(x.weight)}</span></div>`).join("") + `</div></div>` +
+    holdings.map(x => `<div class="rec-holding"><span>${escProfile(x.name)}</span><span>${escProfile(x.weight)}</span></div>`).join("") +
+    (moreHoldings > 0 ? `<div class="rec-holding rec-more"><span>and ${moreHoldings} more</span><span></span></div>` : "") + `</div></div>` +
     `<div class="rec-fit"><h3>How It Fits the Plan</h3><ul>${fitItems.map(x => `<li>${escProfile(x)}</li>`).join("")}</ul></div>` +
     `<div class="rec-asat">${escProfile(portfolioAsAt(p))}</div></div>`;
 }
@@ -6003,6 +6455,17 @@ const cleanFund = (s) => String(s || "").replace(/\s*\/NL\b/g, "").replace(/\s{2
 function mk(type, props){ return Object.assign(newBlock(type), {seed: false}, props); }
 /** A block of pre-written words the advisor (or Copilot) may reword. */
 function slot(type, key, hint, props){ return Object.assign(mk(type, props), {slot: key, slotHint: hint, seed: true}); }
+/** Mark the blocks built from a report: `from` says which report (for "Where did
+    this number come from?", views.js) and charts and tables print a source line. */
+function tagSource(S, from, label){
+  S.forEach(s => (s.blocks || []).forEach(b => {
+    if (!["chart", "table", "stats", "facts"].includes(b.type)) return;
+    if (b.from) return;                     /* already tagged (the "What has changed" page) */
+    b.from = from;
+    if (b.type === "chart" || b.type === "table") b.source = label;
+  }));
+  return S;
+}
 function sec(title, blocks, extra){
   return Object.assign({id: uid(), title, brief: title, kicker: "", summary: "", smart: true, blocks: blocks.filter(Boolean)}, extra || {});
 }
@@ -6117,9 +6580,17 @@ function buildPortfolioReview(P, notes, opts){
       "[[what each account is for]]"})
   ]));
 
-  if ((P.classes || []).length || top.length){
-    const cls = (P.classes || []).filter(c => c.pct || c.value);
+  if ((P.allocation || []).length || (P.classes || []).length || top.length){
+    /* the report's own asset allocation chart when it has one; otherwise the
+       asset-class totals of the holdings list */
+    const alloc = (P.allocation || []).filter(c => c.pct > 0);
+    const cls = alloc.length ? [] : (P.classes || []).filter(c => c.pct || c.value);
+    const groupPct = (re) => Math.round(alloc.filter(c => re.test(c.name)).reduce((n, c) => n + c.pct, 0) * 10) / 10;
     S.push(sec("How your money is invested", [
+      alloc.length ? mk("chart", {chart: "donut", title: "Your asset allocation", labels: alloc.map(c => c.name),
+        series: [{name: "Share", values: alloc.map(c => c.pct)}], unit: "%",
+        caption: "From the asset allocation in the portfolio report, as at " + asOf + ". Equities " + fmPct(groupPct(/Equity/), 1) +
+          ", fixed income " + fmPct(groupPct(/Fixed Income/), 1) + ", cash " + fmPct(groupPct(/^Cash/), 1) + ".", size: "full"}) : null,
       cls.length ? mk("chart", {chart: "donut", title: "Asset mix", labels: cls.map(c => c.name),
         series: [{name: "Share", values: cls.map(c => c.pct != null ? c.pct : Math.round(c.value / total * 1000) / 10)}], unit: "%",
         caption: "As classified in the portfolio report, as at " + asOf + ".", size: "full"}) : null,
@@ -6153,6 +6624,9 @@ function buildPortfolioReview(P, notes, opts){
     ]));
   }
 
+  /* an earlier report of the same household: what has changed since (buildChanges) */
+  if (opts && opts.prev) S.splice(1, 0, ...buildChanges(P, opts.prev));
+
   const sug = portfolioSuggestions(P);
   S.push(sec("What we recommend", [
     slot("lead", "recommend_intro", "One sentence introducing the recommendations.", {text: "[[the main change we are recommending, in one sentence]]"}),
@@ -6165,7 +6639,46 @@ function buildPortfolioReview(P, notes, opts){
       {t: "Put them in place", d: "We complete the paperwork and the trades, and confirm back to you.", who: "Us", when: "Within [[x]] business days"},
       {t: "Next review", d: "We meet again to check progress against the plan.", who: "Together", when: "[[month year]]"}]})
   ]));
-  return S;
+  return tagSource(S, "portfolio", "your portfolio report" + (P.asOf ? ", as at " + P.asOf : ""));
+}
+
+/* ── What has changed since the last report ─────────────────────────────── */
+
+/** Two Croesus reports of one household: P now, Q earlier. Accounts are matched
+    by account number, else by name. Every figure is read, none worked out but
+    the differences. */
+function buildChanges(P, Q){
+  const signed = (n) => (n < 0 ? "−" : "+") + fm$(Math.abs(n));
+  const old = (Q.accounts || []).slice(), rows = [];
+  const match = (a) => old.find(o => (a.number && o.number === a.number) || o.label === a.label);
+  (P.accounts || []).forEach(a => {
+    const o = match(a);
+    if (o) old.splice(old.indexOf(o), 1);
+    rows.push([a.label, o ? fm$(o.value) : "—", fm$(a.value), o && a.value != null && o.value != null ? signed(a.value - o.value) : "—"]);
+  });
+  old.forEach(o => rows.push([o.label, fm$(o.value), "—", "—"]));
+  const tNow = P.total, tThen = Q.total;
+  rows.push(["Total", fm$(tThen), fm$(tNow), tNow != null && tThen != null ? signed(tNow - tThen) : ""]);
+  const blocks = [
+    mk("stats", {cols: 3, items: [
+      {num: fm$(tThen), label: "Then", note: "As at " + (Q.asOf || "[[date]]")},
+      {num: fm$(tNow), label: "Now", note: "As at " + (P.asOf || "[[date]]")},
+      {num: tNow != null && tThen != null ? signed(tNow - tThen) : "[[change]]", label: "Change", note: "Including deposits and withdrawals"}]}),
+    mk("table", {headers: ["Account", "Then", "Now", "Change"], totalRow: true,
+      caption: "Market values. A change includes money put in or taken out, as well as growth. A dash means the account was not there at that date.", rows})
+  ];
+  const A = P.allocation || [], B = Q.allocation || [];
+  if (A.length && B.length){
+    const names = [...new Set(A.map(c => c.name).concat(B.map(c => c.name)))];
+    const pct = (L, n) => { const c = L.find(x => x.name === n); return c ? c.pct : 0; };
+    blocks.push(mk("table", {headers: ["Asset class", "Then", "Now"], totalRow: false,
+      caption: "From the asset allocation in each report.",
+      rows: names.filter(n => pct(A, n) || pct(B, n)).map(n => [n, fmPct(pct(B, n), 1), fmPct(pct(A, n), 1)])}));
+  }
+  blocks.push(slot("paragraph", "portfolio_changes", "What changed between the two reports and why: deposits, withdrawals, markets, changes we made. Keep every figure exactly.",
+    {text: "[[what changed since the last review, and why]]"}));
+  return tagSource([sec("What has changed since " + (Q.asOf || "last time"), blocks)], "portfolio",
+    "your portfolio reports as at " + (Q.asOf || "[[date]]") + " and " + (P.asOf || "[[date]]"));
 }
 
 /* ── Financial plan summary ─────────────────────────────────────────────── */
@@ -6295,17 +6808,17 @@ function buildPlanSummary(F){
   S.push(sec("What we do next", [
     slot("actions", "plan_actions", "Next steps as an action plan. Start from the suggestions; remove any that do not apply.", {items: planSuggestions(F)})
   ]));
-  return S;
+  return tagSource(S, "plan", "your financial plan" + (F.planName ? ", " + F.planName : "") + (F.date ? ", " + F.date : ""));
 }
 
 /* ── Annual review: the portfolio and the plan together ─────────────────── */
 
-function buildAnnualReview(P, F){
+function buildAnnualReview(P, F, prev){
   const S = [sec("Today's agenda", [mk("bullets", {style: "number", items: [
     "What has changed for you this year", P ? "How the portfolio has done" : null, F ? "Where the plan stands" : null,
     "Our recommendations", "Anything on your mind"].filter(Boolean)}),
     slot("paragraph", "changes", "What changed in the client's life this year, from the advisor's notes.", {text: "[[what has changed for you this year]]"})])];
-  if (P) buildPortfolioReview(P).filter(s => !/What we recommend|What happens next/.test(s.title)).forEach(s => S.push(s));
+  if (P) buildPortfolioReview(P, null, {prev}).filter(s => !/What we recommend|What happens next/.test(s.title)).forEach(s => S.push(s));
   if (F) buildPlanSummary(F).filter(s => /Where you stand|Your goals|Closing the gap|What the plan projects/.test(s.title)).forEach(s => S.push(s));
   const items = (P ? portfolioSuggestions(P) : []).concat(F ? planSuggestions(F) : []).slice(0, 7);
   S.push(sec("Our recommendations", [slot("actions", "recommendations", "The recommendations for the year ahead, as an action plan.",
@@ -6323,6 +6836,7 @@ function buildRecommendation(P, profileName){
     P && (P.accounts || []).length ? mk("table", {headers: ["Account today", "Type", "Value"], totalRow: true, caption: "Current market values" + (P.asOf ? " as at " + P.asOf : "") + ".",
       rows: P.accounts.map(a => [a.label, a.kind, fm$(a.value)]).concat([["Total", "", fm$(P.total)]])}) : null
   ]));
+  if (P) tagSource(S, "portfolio", "your portfolio report" + (P.asOf ? ", as at " + P.asOf : ""));
   (P && P.accounts && P.accounts.length ? P.accounts : [{label: "[[account]]", value: null}]).forEach(a => {
     const s = makeRecommendationSection({account: a.label, amount: a.value != null ? fm$(a.value) : "", portfolioId: model ? model.portfolioId : "", howItFits: []});
     s.smart = true;
@@ -6343,8 +6857,10 @@ function householdPairs(d){
     return {s, p: recProfile(b), amount: exact};
   });
   const total = recs.reduce((n, r) => n + r.amount, 0), sums = {};
+  /* the mix is of the accounts that have a portfolio; one still to choose does not dilute it */
+  const placed = recs.filter(r => r.p && r.amount).reduce((n, r) => n + r.amount, 0);
   recs.forEach(r => { if (r.p && r.amount) allocationPairs(r.p).forEach(x => { sums[x.name] = (sums[x.name] || 0) + r.amount * x.value / 100; }); });
-  return {recs, total, pairs: ALLOCATION_ORDER.map(name => ({name, value: total ? Math.round((sums[name] || 0) / total * 1000) / 10 : 0})).filter(x => x.value > .04)};
+  return {recs, total, pairs: ALLOCATION_ORDER.map(name => ({name, value: placed ? Math.round((sums[name] || 0) / placed * 1000) / 10 : 0})).filter(x => x.value > .04)};
 }
 function householdSummaryHTML(){
   const {recs, total, pairs} = householdPairs(deck);
@@ -6396,9 +6912,10 @@ function ensureHouseholdSummary(d){
 
 function smartSections(kind, facts){
   const P = facts && facts.portfolio, F = facts && facts.plan;
-  if (kind === "portfolio_review") return P ? buildPortfolioReview(P) : null;
+  const prev = facts && facts.portfolioPrev;
+  if (kind === "portfolio_review") return P ? buildPortfolioReview(P, null, {prev}) : null;
   if (kind === "plan_summary") return F ? buildPlanSummary(F) : null;
-  if (kind === "annual_review") return (P || F) ? buildAnnualReview(P, F) : null;
+  if (kind === "annual_review") return (P || F) ? buildAnnualReview(P, F, prev) : null;
   if (kind === "recommendation") return buildRecommendation(P, deck.profile);
   return null;
 }
@@ -6427,23 +6944,38 @@ function buildDraft(){
     deck.pendingImages = [];
   }
   ensureHouseholdSummary(deck);
-  /* cover wording to suit the piece */
+  setCoverWording(kind);
+  selectedId = null; openSectionId = null;
+  syncPanels(); render();
+}
+
+/** The cover's title, kicker and subtitle to suit the kind of document. Called on
+    every build, and whenever the kind changes (a dropped plan turns a portfolio
+    review into a plan summary), so the cover never keeps the old label. */
+function setCoverWording(kind){
+  const facts = deck.facts || {};
   const P = facts.portfolio, F = facts.plan;
-  const names = {portfolio_review: "Your Portfolio Review", plan_summary: "Your Financial Plan", annual_review: "Your Annual Review", recommendation: "Our Recommendations"};
-  const kicker = {portfolio_review: "Portfolio review", plan_summary: "Financial plan summary", annual_review: "Annual review", recommendation: "Investment recommendation"};
+  const names = {portfolio_review: "Your Portfolio Review", plan_summary: "Your Financial Plan", annual_review: "Your Annual Review", recommendation: "Our Recommendations", prospect: "Working Together"};
+  const kicker = {portfolio_review: "Portfolio review", plan_summary: "Financial plan summary", annual_review: "Annual review", recommendation: "Investment recommendation", prospect: "Our first conversation"};
   if (names[kind]){
     const sn = surnameOf(deck.meta.client);
     if (!deck.meta.title || Object.values(names).includes(deck.meta.title) || /^The .+ (Plan|Review|Portfolio Review|Portfolio|Recommendation)$/.test(deck.meta.title) || Object.values(TITLE_IDEAS).some(l => l.includes(deck.meta.title)))
-      deck.meta.title = sn ? (kind === "plan_summary" ? "The " + sn + " Plan" : kind === "recommendation" ? "The " + sn + " Portfolio" : "The " + sn + " " + (kind === "annual_review" ? "Review" : "Portfolio Review")) : names[kind];
+      deck.meta.title = kind === "prospect" ? names[kind] : sn ? (kind === "plan_summary" ? "The " + sn + " Plan" : kind === "recommendation" ? "The " + sn + " Portfolio" : "The " + sn + " " + (kind === "annual_review" ? "Review" : "Portfolio Review")) : names[kind];
     deck.meta.kicker = kicker[kind];
     deck.meta.subtitle = {
       portfolio_review: "How your money is invested, how it has done, and what we recommend." + (P && P.asOf ? " As at " + P.asOf + "." : ""),
       plan_summary: "Where you stand, where the plan is headed, and what we do next.",
       annual_review: "The year in review, where the plan stands, and the decisions ahead.",
-      recommendation: "Your investor profile, the household portfolio, and the portfolio we recommend for each account."}[kind];
+      recommendation: "Your investor profile, the household portfolio, and the portfolio we recommend for each account.",
+      prospect: TEMPLATES.prospect.subtitle}[kind];
+  } else {
+    /* the other templates bring their own cover wording */
+    const t = TEMPLATES[kind] || {};
+    const house = !deck.meta.title || Object.values(TITLE_IDEAS).some(l => l.includes(deck.meta.title)) || /^Your .+|^The .+ (Plan|Review|Portfolio Review|Portfolio)$/.test(deck.meta.title);
+    if (house && t.title) deck.meta.title = t.title;
+    deck.meta.kicker = t.kicker || "";
+    deck.meta.subtitle = t.subtitle || "";
   }
-  selectedId = null; openSectionId = null;
-  syncPanels(); render();
 }
 
 /* ── Copilot: fill every slot with one prompt ───────────────────────────── */
@@ -6456,8 +6988,14 @@ function factsDigest(facts){
     if ((P.years || []).length) out.push("- Calendar years: " + P.years.map(y => y.year + " " + fmPct(y.value)).join(", "));
     (P.accounts || []).forEach(a => out.push("- Account " + a.label + " (" + a.kind + "): " + fm$(a.value)));
     combinedHoldings(P).slice(0, 8).forEach(h => out.push("- Holding " + h.name + ": " + fm$(h.value) + " (" + fmPct(h.value / P.total * 100, 1) + ")"));
-    (P.classes || []).forEach(c => out.push("- Asset class " + c.name + ": " + fmPct(c.pct, 2)));
+    if ((P.allocation || []).length) P.allocation.forEach(c => out.push("- Asset allocation " + c.name + ": " + fmPct(c.pct, 1)));
+    else (P.classes || []).forEach(c => out.push("- Asset class " + c.name + ": " + fmPct(c.pct, 2)));
     if (P.income) out.push("- Estimated annual income " + fm$(P.income) + ", yield " + fmPct(P.yield));
+  }
+  const Q = facts && facts.portfolioPrev;
+  if (Q){
+    out.push("EARLIER PORTFOLIO REPORT (as at " + (Q.asOf || "?") + "): total " + fm$(Q.total));
+    (Q.accounts || []).forEach(a => out.push("- Then: account " + a.label + " (" + a.kind + "): " + fm$(a.value)));
   }
   if (F){
     out.push("FINANCIAL PLAN (" + (F.planName || "") + ", " + (F.date || "") + "): net worth " + fm$(F.netWorth) + ", assets " + fm$(F.assets) + ", debts " + fm$(F.liabilities));
@@ -6486,7 +7024,10 @@ function slotPrompt(){
   const notes = String(deck.notes || "").trim();
   const shape = {};
   slots.forEach(({b}) => { shape[b.slot] = b.type === "actions" ? [{t: "…", d: "…", who: "Us", when: "…"}] : b.type === "bullets" ? ["…"] : "…"; });
-  return `I am an investment advisor finishing a ${piece} for a client. The document is already laid out and the figures are already in it. Write the words for the boxes listed below.
+  const blanks = blankPromptPart();         /* blanks.js: the yellow blanks, numbered b1, b2 … */
+  const answer = {slots: shape};
+  if (blanks.lines.length) answer.blanks = blanks.shape;
+  return `I am an investment advisor finishing a ${piece} for a client. The document is already laid out and the figures are already in it. Write the words for the boxes listed below${blanks.lines.length ? ", and fill in the blanks my notes answer" : ""}.
 
 HOW TO WRITE
 - Plain Canadian English, grade 9 reading level, warm and direct. Short sentences. No jargon, no exclamation marks.
@@ -6503,10 +7044,15 @@ FACTS FROM THE REPORTS
 ${factsDigest(deck.facts) || "[none]"}
 
 THE BOXES TO WRITE (key — what goes there — current text)
-${slots.map(({s, b}) => "■ " + b.slot + " (in “" + s.title + "”) — " + (b.slotHint || "") + "\n  current: " + JSON.stringify(slotCurrent(b))).join("\n")}
-
-Return ONLY this JSON, with every key filled in, nothing before or after it:
-${JSON.stringify({slots: shape}, null, 2)}`;
+${slots.length ? slots.map(({s, b}) => "■ " + b.slot + " (in “" + s.title + "”) — " + (b.slotHint || "") + "\n  current: " + JSON.stringify(slotCurrent(b))).join("\n") : "[none]"}
+${blanks.lines.length ? `
+THE BLANKS (key — what goes there — where)
+Fill a blank ONLY when my notes or the facts give the answer, in a few words that read naturally in place
+(for example "March 2027", "about $40,000 a year", "retire at 62"). Otherwise leave it as "".
+${blanks.lines.join("\n")}
+` : ""}
+Return ONLY this JSON, ${slots.length ? "with every box filled in, " : ""}nothing before or after it:
+${JSON.stringify(answer, null, 2)}`;
 }
 /** Copilot's answer -> the slots. Returns how many boxes changed. */
 function applySlotAnswer(text){
@@ -6515,6 +7061,8 @@ function applySlotAnswer(text){
   if (!answers || typeof answers !== "object") throw Error("I could not find the boxes in that answer.");
   let n = 0;
   snapshot();
+  /* the blanks first: they are found by where they sit, before the boxes change */
+  n += applyBlankAnswers(v.blanks);
   slotBlocks().forEach(({b}) => {
     const a = answers[b.slot];
     if (a == null || a === "") return;
@@ -6529,12 +7077,366 @@ function applySlotAnswer(text){
       b.text = Array.isArray(a) ? a.join(" ") : String(a).trim();
     }
     delete b.seed;
+    markToCheck(b.id);                       /* blanks.js: read it over */
     n++;
   });
   if (!n) undoStack.pop();
   syncPanels(); render();
   return n;
 }
+
+;
+/* ==========================================================================
+   content.js — MHWG's ready-written wording.
+
+   1. PROSPECT MEETING — the template for a first meeting with a prospect:
+      what we heard, their situation, what we recommend, what happens next.
+   2. PLANNING TOPICS — sections you add from Edit → "+ Add" (RRIF
+      conversion, CPP and OAS timing, TFSA or RRSP, RESP, life insurance,
+      corporate-owned life insurance …). Each is written
+      in plain language with yellow [[blanks]] for what only you know.
+
+   To change the wording, edit the text here; to add a topic, copy one entry
+   in PLANNING_TOPICS and change it. Rules for anything written here:
+   - General education only, no "you should". Every figure about the client
+     is a [[blank]]; never put a client number in this file.
+   - Government amounts that change every year (TFSA limit, OAS clawback
+     threshold, CPP maximums) are left out or written as [[blanks]], so the
+     wording never goes stale. Amounts below are ones fixed in law.
+   - A block with `slot` is one Copilot writes from your notes (Copilot tab).
+     `slotHint` tells Copilot what goes there.
+   ========================================================================== */
+
+/* ── 1. Prospect meeting ─────────────────────────────────────────────────── */
+
+/* "How we work with you": the six steps from the team website's What We Do
+   page (step names as on the site; the one-line descriptions are ours). */
+function HOW_WE_WORK_BLOCKS(){ return [
+  {type: "lead", text: "Working with us follows six clear steps, so you always know what comes next."},
+  {type: "actions", items: [
+    {t: "Initial Discovery", d: "We get to know you: your goals, your family, what worries you, and what you have today.", who: "", when: ""},
+    {t: "Personal Wealth Strategy Meeting", d: "We present a strategy built around you: your plan, your investor profile and our recommendations.", who: "", when: ""},
+    {t: "Welcome to TD Wealth Private Investment Advice", d: "We open your accounts, move your assets over and look after the paperwork.", who: "", when: ""},
+    {t: "Meet your Team", d: "You meet the people who look after you day to day, so you always know who to call.", who: "", when: ""},
+    {t: "Ongoing Proactive Service", d: "We watch your portfolio and your plan, and reach out when something needs attention.", who: "", when: ""},
+    {t: "Regular Review Meetings", d: "We meet regularly to review progress, update your plan and adjust as life changes.", who: "", when: ""}]},
+  {type: "facts", items: [
+    {k: "Meetings", v: "[[How often we meet, and how]]"},
+    {k: "Reporting", v: "[[The statements and reports you receive]]"}]},
+  {type: "paragraph", text: "You are not hiring one advisor. You are hiring a team, with a dedicated client service group behind it, so there is always someone who knows your file."}
+]; }
+/* "How we can help": the services listed on the team website. */
+function HOW_WE_HELP_BLOCKS(){ return [
+  {type: "lead", text: "A comprehensive approach that reaches beyond investment advice. We coordinate every part of your financial life, and bring in TD specialists where they add value."},
+  {type: "bullets", style: "check", items: [
+    "**Investment management:** portfolios built around your investor profile, monitored and rebalanced.",
+    "**Retirement planning:** when you can retire, and a tax-efficient income that lasts.",
+    "**Tax strategies:** using every account and credit available to you, in the right order.",
+    "**Business succession:** planning the sale or transfer of your business, and life after it.",
+    "**Private banking:** banking, lending and credit arranged alongside your investments.",
+    "**Estate and trust:** wills, trusts and executor support, with TD Wealth Private Trust.",
+    "**Asset protection:** insurance and structures that protect what you have built.",
+    "**Philanthropic planning:** giving to the causes you care about, tax-efficiently."]}
+]; }
+
+TEMPLATES.prospect = {
+  title: "Working Together",
+  subtitle: "What we heard, where you stand today, what we would recommend, and what happens next.",
+  kicker: "Our first conversation",
+  sections: [
+    {title: "Thank you for meeting with us", blocks: blocks(
+      {type: "lead", text: "Thank you for taking the time to meet with us. This summary plays back what we heard, sets out where you stand today, and explains what we would recommend and how we would get started."},
+      {type: "paragraph", slot: "prospect_intro", slotHint: "one or two sentences: how we met and what prompted the conversation",
+        text: "[[How we met, and what prompted the conversation]]"}
+    )},
+    {title: "What we heard", blocks: blocks(
+      {type: "lead", text: "Your words, played back, so you know we were listening."},
+      {type: "bullets", style: "bullet", slot: "prospect_heard", slotHint: "3 to 5 bullets: their priorities, worries and questions, in their own words where possible",
+        items: ["[[What matters most to you]]", "[[A worry or question you raised]]", "[[Something you want to be sure of]]"]},
+      {type: "quote", text: "[[A line in your own words, from the meeting]]", by: ""}
+    )},
+    {title: "Your situation today", blocks: blocks(
+      {type: "lead", slot: "prospect_situation", slotHint: "one or two sentences on where they are in life: family, work, and the next big change",
+        text: "[[Where you are in life: family, work, and the next big change]]"},
+      {type: "facts", items: [
+        {k: "Family", v: "[[Ages, children, anyone you support]]"},
+        {k: "Work", v: "[[Occupation, employer or business]]"},
+        {k: "Planned retirement", v: "[[Age or year]]"},
+        {k: "Household income", v: "[[Approximate]]"},
+        {k: "Investments", v: "[[Approximate total, and where it is held]]"},
+        {k: "Pensions", v: "[[Workplace pension, if any]]"},
+        {k: "Debt", v: "[[Mortgage and other loans]]"}]},
+      {type: "twocol", aTitle: "What is working well", aText: "[[What you have already done right]]",
+        bTitle: "What we would look at more closely", bText: "[[Gaps, risks or questions to answer]]"}
+    )},
+    {title: "What matters most to you", blocks: blocks(
+      {type: "bullets", style: "number", slot: "prospect_goals", slotHint: "their goals, each with a when and a rough amount if they gave one",
+        items: ["[[Goal, and when]]", "[[Goal, and when]]", "[[Goal, and when]]"]},
+      {type: "callout", tone: "note", title: "How we use this",
+        text: "We plan around your goals, not around products. Every recommendation that follows ties back to one of these."}
+    )},
+    {title: "What we would recommend", blocks: blocks(
+      {type: "lead", text: "Based on what you have shared so far, here is where we would start."},
+      {type: "bullets", style: "number", slot: "prospect_recommend", slotHint: "3 to 5 first recommendations, each with one line on why it matters for them",
+        items: ["[[Recommendation, and why it matters for you]]", "[[Recommendation, and why it matters for you]]", "[[Recommendation, and why it matters for you]]"]},
+      {type: "callout", tone: "note", title: "A first view",
+        text: "These recommendations come from our first conversation. We confirm them once we have your full information and have completed your financial plan."}
+    )},
+    {title: "How we would invest", blocks: blocks(
+      {type: "paragraph", text: "We start by agreeing on your investor profile: a mix of growth and stability that suits your goals, your time horizon and your comfort with ups and downs. Each account is then invested in a portfolio suited to its purpose and its tax treatment, and the household as a whole is kept within the range your profile allows."},
+      {type: "infographic", graphic: "steps", title: "From profile to portfolio",
+        items: [{t: "Profile", d: "Agree on the mix that fits you"}, {t: "Portfolio", d: "Match each account to a model portfolio"},
+                {t: "Monitor", d: "Watch the mix and rebalance"}, {t: "Review", d: "Meet regularly and adjust"}]},
+      {type: "paragraph", slot: "prospect_invest", slotHint: "anything specific about how we would invest for them; leave as a blank if the notes say nothing",
+        text: "[[Anything specific about how we would invest for you]]"}
+    )},
+    {title: "Planning beyond the investments", blocks: blocks(
+      {type: "lead", text: "Your investments are one piece. We look at the whole picture so the pieces work together."},
+      {type: "bullets", style: "bullet", items: [
+        "**Retirement income:** when you can retire, and how to draw income in a tax-efficient order.",
+        "**Tax:** using RRSPs, TFSAs and your other accounts in the order that keeps more in your hands.",
+        "**Family:** education savings, helping children get started, and caring for parents.",
+        "**Protection:** insurance sized to what your family would actually need.",
+        "**Estate:** wills, powers of attorney and beneficiaries kept up to date and working together."]}
+    )},
+    {title: "What happens next", blocks: blocks(
+      {type: "actions", items: [
+        {t: "Send us your documents", d: "Your recent statements and the items on the list that follows.", who: "You", when: "[[By when]]"},
+        {t: "We build your plan", d: "We put together your financial plan and our investment recommendation.", who: "Us", when: "[[By when]]"},
+        {t: "Review it together", d: "We walk through the plan and answer your questions. Nothing moves until you are comfortable.", who: "Together", when: "[[Meeting date]]"},
+        {t: "Open accounts and transfer", d: "We open the accounts and handle the transfers from your current institutions.", who: "Us", when: "Once you approve"}]}
+    )},
+    {title: "What to bring", blocks: blocks(
+      {type: "lead", text: "The more complete the picture, the better the plan. Bring what you have; we can help find the rest."},
+      {type: "bullets", style: "bullet", items: [
+        "Recent statements for every investment account, at every institution",
+        "Workplace pension statements, and any pension option or commuted-value letters",
+        "Your last two Notices of Assessment from the Canada Revenue Agency",
+        "Life, disability and critical illness insurance policies, and group benefits booklets",
+        "Mortgage and loan balances, rates and renewal dates",
+        "Your wills, powers of attorney and personal directives, if you have them",
+        "Corporate financial statements, if you own a business"]}
+    )},
+    {title: "How we work with you", blocks: blocks(...HOW_WE_WORK_BLOCKS())}
+  ]
+};
+TITLE_IDEAS.prospect = ["Working Together", "Our First Conversation", "Where We Would Start", "What We Heard"];
+SMART_KINDS.unshift({kind: "prospect", name: "Prospect meeting", note: "What we heard, their situation, what we recommend, what happens next", uses: []});
+
+/* ── 2. Planning topics (Edit → + Add) ───────────────────────────────────── */
+
+/** A copy of one prospect-meeting section, found by its title. */
+function prospectSection(title){
+  const src = TEMPLATES.prospect.sections.find(x => x.title === title);
+  return {title, blocks: blocks(...src.blocks.map(b => structuredClone(b)))};
+}
+
+/* [id, name in the list, group, () => {title, blocks}]. app.js adds these to
+   the "+ Add" list (SECTION_PRESETS), shown under their group. */
+const PLANNING_TOPICS = [
+  ["t_situation", "Your situation today", "Prospect meeting", () => prospectSection("Your situation today")],
+  ["t_recommend", "What we would recommend", "Prospect meeting", () => prospectSection("What we would recommend")],
+  ["t_bring", "What to bring", "Prospect meeting", () => prospectSection("What to bring")],
+  ["t_beyond", "Planning beyond the investments", "Prospect meeting", () => prospectSection("Planning beyond the investments")],
+
+  ["t_howwework", "How we work with you (six steps)", "About us", () => ({title: "How we work with you", blocks: blocks(...HOW_WE_WORK_BLOCKS())})],
+  ["t_howwehelp", "How we can help", "About us", () => ({title: "How we can help", blocks: blocks(...HOW_WE_HELP_BLOCKS())})],
+
+  ["t_rrif", "RRSP to RRIF", "Retirement", () => ({title: "Turning your RRSP into income", blocks: blocks(
+    {type: "lead", text: "An RRSP has to become a source of income by the end of the year you turn 71. Most people convert it to a RRIF, and the timing and order of withdrawals can make a real difference to the tax you pay."},
+    {type: "bullets", style: "bullet", items: [
+      "A RRIF keeps your money invested, tax-deferred, while it pays you an income.",
+      "A minimum amount must come out each year from the year after you open it. The minimum is a percentage of the balance that rises with age, and it can be based on a younger spouse's age to keep it lower.",
+      "Withdrawals are taxed as income. Tax is withheld only on amounts above the minimum.",
+      "From age 65, RRIF income qualifies for the pension income credit and can be split with a spouse.",
+      "Converting earlier than 71, or drawing a little each year before then, can smooth your taxable income over retirement."]},
+    {type: "paragraph", slot: "t_rrif_you", slotHint: "what this means for this client: when to convert, and why", text: "[[What this means for you: when to convert, and why]]"}
+  )})],
+  ["t_cppoas", "CPP and OAS timing", "Retirement", () => ({title: "When to start CPP and OAS", blocks: blocks(
+    {type: "lead", text: "You choose when your government pensions start, and the choice is permanent. Starting later means a larger cheque for life."},
+    {type: "table", caption: "Set in law; your own amounts come from your Service Canada statement", headers: ["", "Earliest", "Standard", "Latest", "Effect of waiting"],
+      rows: [["Canada Pension Plan", "60", "65", "70", "0.6% less a month before 65; 0.7% more a month after 65"],
+             ["Old Age Security", "65", "65", "70", "0.6% more a month for each month you wait past 65"]]},
+    {type: "bullets", style: "bullet", items: [
+      "Waiting suits people in good health who can live on other savings for a few years.",
+      "Starting earlier can make sense when health, cash flow or a shorter outlook point that way.",
+      "OAS is reduced when income passes a threshold set each year, so the rest of your retirement income affects how much of it you keep.",
+      "OAS rises by 10% at age 75."]},
+    {type: "paragraph", slot: "t_cppoas_you", slotHint: "what we suggest for this client and why", text: "[[What we suggest for you, and why]]"}
+  )})],
+  ["t_pension", "Pension options", "Retirement", () => ({title: "Your pension options", blocks: blocks(
+    {type: "lead", text: "Leaving an employer often means choosing between keeping a pension for life or taking its value as a lump sum. Each has real strengths."},
+    {type: "twocol", aTitle: "Keeping the pension", aText: "A guaranteed income for life, with survivor and indexing options set by the plan. Nothing to manage, and no risk of outliving it.",
+      bTitle: "Taking the commuted value", bText: "The value moves into a locked-in account (LIRA) you control and can leave to your family. Any amount above the tax-free transfer limit is paid as taxable cash."},
+    {type: "bullets", style: "bullet", items: ["Your health and family history", "What your spouse would need if you died first", "How strong the pension plan is", "How much other guaranteed income you have", "How you feel about managing investments"]},
+    {type: "paragraph", slot: "t_pension_you", slotHint: "what we suggest for this client and why", text: "[[What we suggest for you, and why]]"}
+  )})],
+  ["t_income", "Retirement income plan", "Retirement", () => ({title: "Your retirement income plan", blocks: blocks(
+    {type: "lead", text: "Retirement income comes from several places. The order you draw from them decides how much tax you pay and how long the money lasts."},
+    {type: "facts", items: [{k: "Government pensions", v: "[[CPP and OAS, and when they start]]"}, {k: "Workplace pension", v: "[[Amount, if any]]"},
+      {k: "RRSP / RRIF", v: "[[Planned withdrawals]]"}, {k: "TFSA", v: "[[Role: flexible, tax-free top-up]]"}, {k: "Non-registered", v: "[[Planned withdrawals]]"}]},
+    {type: "bullets", style: "bullet", items: [
+      "Fill lower tax brackets early in retirement, before government pensions and RRIF minimums begin.",
+      "Keep the TFSA for flexibility: large one-time costs and later years.",
+      "Split eligible pension income with a spouse to even out your tax.",
+      "Keep a cash reserve so a market dip never forces a sale at the wrong time."]},
+    {type: "paragraph", slot: "t_income_you", slotHint: "the order we recommend for this client", text: "[[The order we recommend for you]]"}
+  )})],
+
+  ["t_tfsarrsp", "TFSA or RRSP", "Saving & tax", () => ({title: "TFSA or RRSP?", blocks: blocks(
+    {type: "lead", text: "Both grow tax-free while invested. The difference is when you pay the tax, and that depends on your tax rate today compared with in retirement."},
+    {type: "table", caption: "How the two accounts compare", headers: ["", "RRSP", "TFSA"],
+      rows: [["Going in", "Deductible: lowers your tax this year", "No deduction"],
+             ["Coming out", "Taxed as income", "Tax-free"],
+             ["Room", "18% of last year's earned income, to an annual maximum", "A set amount each year; unused room carries forward"],
+             ["Withdraw and re-contribute", "Room is not returned", "Room comes back the next January"],
+             ["Effect on OAS and benefits", "Withdrawals count as income", "Withdrawals do not"]]},
+    {type: "callout", tone: "note", title: "The rule of thumb", text: "Higher income today than you expect in retirement: the RRSP usually wins. Lower income today, or a need for flexibility: the TFSA usually wins. Many people use both."},
+    {type: "paragraph", slot: "t_tfsarrsp_you", slotHint: "what we suggest for this client and why", text: "[[What we suggest for you, and why]]"}
+  )})],
+  ["t_spousal", "Spousal RRSP and income splitting", "Saving & tax", () => ({title: "Evening out your incomes", blocks: blocks(
+    {type: "lead", text: "Two moderate incomes pay less tax than one high income and one low one. Planning ahead can even out what each of you draws in retirement."},
+    {type: "bullets", style: "bullet", items: [
+      "**Spousal RRSP:** the higher earner contributes and takes the deduction; the money is later withdrawn and taxed in the spouse's hands. Withdrawals within three calendar years of a contribution are taxed back to the contributor.",
+      "**Pension income splitting:** up to half of eligible pension income can be shared with a spouse on your tax returns.",
+      "**CPP sharing:** spouses can share their CPP retirement pensions.",
+      "**TFSAs:** you can give a spouse money to fund their own TFSA."]},
+    {type: "paragraph", slot: "t_spousal_you", slotHint: "how this applies to this couple", text: "[[How this applies to you]]"}
+  )})],
+  ["t_taxloss", "Tax-loss selling", "Saving & tax", () => ({title: "Tax-loss selling", blocks: blocks(
+    {type: "lead", text: "Selling an investment at a loss in a non-registered account can offset capital gains, while staying invested."},
+    {type: "bullets", style: "bullet", items: [
+      "Capital losses offset capital gains this year, can be carried back three years, or carried forward with no time limit.",
+      "The superficial loss rule denies the loss if you, your spouse, or an account you control (including an RRSP or TFSA) buys the same investment within 30 days before or after the sale.",
+      "We can buy a similar, but not identical, investment so the money stays at work.",
+      "For the loss to count this year, the trade must settle by the last business day of December."]},
+    {type: "paragraph", slot: "t_taxloss_you", slotHint: "what we propose for this client", text: "[[What we propose for you]]"}
+  )})],
+  ["t_debt", "Paying down debt or investing", "Saving & tax", () => ({title: "Pay down debt, or invest?", blocks: blocks(
+    {type: "lead", text: "Paying off debt earns a guaranteed return equal to its interest rate. Investing may earn more, but with no guarantee."},
+    {type: "twocol", aTitle: "Pay down debt when", aText: "The rate is high, the debt is not tax-deductible, or being debt-free matters to you more than the last dollar of return.",
+      bTitle: "Invest when", bText: "The rate is low, you can use RRSP or TFSA room, or there is an employer match or government grant on the table."},
+    {type: "paragraph", slot: "t_debt_you", slotHint: "what we suggest for this client", text: "[[What we suggest for you]]"}
+  )})],
+  ["t_corp", "Investing inside a corporation", "Saving & tax", () => ({title: "Investing inside your corporation", blocks: blocks(
+    {type: "lead", text: "Leaving profits in your company to invest can defer personal tax, but corporate investment income has its own rules."},
+    {type: "bullets", style: "bullet", items: [
+      "Passive investment income above $50,000 a year starts to reduce the small business deduction on active business income.",
+      "Capital gains and Canadian dividends are taxed more lightly than interest inside a company, so what you hold matters.",
+      "The capital dividend account lets the tax-free half of capital gains come out to you tax-free.",
+      "How and when you pay yourself, salary or dividends, affects RRSP room, CPP and your overall tax."]},
+    {type: "paragraph", slot: "t_corp_you", slotHint: "what this means for this client's company", text: "[[What this means for your company]]"}
+  )})],
+
+  ["t_resp", "RESP and grants", "Family", () => ({title: "Saving for education", blocks: blocks(
+    {type: "lead", text: "An RESP is the most effective way to save for a child's education, because the government adds to what you put in."},
+    {type: "stats", cols: 3, items: [{num: "20%", label: "Canada Education Savings Grant", note: "On the first $2,500 a year"},
+      {num: "$500", label: "Grant a year", note: "Up to $1,000 with catch-up room"}, {num: "$7,200", label: "Lifetime grant", note: "Per child"}]},
+    {type: "bullets", style: "bullet", items: [
+      "Growth is tax-sheltered. When the money comes out for school, the grant and growth are taxed in the student's hands, usually at little or no tax.",
+      "Unused grant room carries forward, so it is not too late to catch up.",
+      "Families with lower incomes may also qualify for the Canada Learning Bond.",
+      "Lifetime contributions are capped at $50,000 per child."]},
+    {type: "paragraph", slot: "t_resp_you", slotHint: "what we suggest for this family's children", text: "[[What we suggest for your children]]"}
+  )})],
+  ["t_fhsa", "First home savings (FHSA)", "Family", () => ({title: "Saving for a first home", blocks: blocks(
+    {type: "lead", text: "The First Home Savings Account combines the best of an RRSP and a TFSA for first-time buyers."},
+    {type: "bullets", style: "bullet", items: [
+      "Contributions are deductible, like an RRSP: up to $8,000 a year and $40,000 in total.",
+      "Withdrawals for a qualifying first home are tax-free, like a TFSA.",
+      "Up to $8,000 of unused room carries forward to the next year.",
+      "If the home never happens, the money can move to an RRSP without using RRSP room.",
+      "The account can stay open for up to 15 years."]},
+    {type: "paragraph", slot: "t_fhsa_you", slotHint: "how this could work for this client or their children", text: "[[How this could work for you or your children]]"}
+  )})],
+
+  ["t_estate", "Wills, powers of attorney and beneficiaries", "Estate & protection", () => ({title: "Your estate plan", blocks: blocks(
+    {type: "lead", text: "A good estate plan makes sure the right people receive what you leave, with as little tax, delay and cost as possible."},
+    {type: "bullets", style: "bullet", items: [
+      "**Will:** names your executor and says who receives what. Review it after any marriage, separation, birth or move.",
+      "**Enduring power of attorney:** someone you trust to handle your finances if you cannot.",
+      "**Personal directive:** your wishes for health and personal care, and who speaks for you.",
+      "**Beneficiaries:** RRSPs, RRIFs, TFSAs and insurance can name beneficiaries directly, and a spouse can be a TFSA successor holder. This keeps them out of the estate and can save time and fees.",
+      "**Joint ownership:** can simplify things, but has tax and family risks worth talking through."]},
+    {type: "facts", items: [{k: "Wills", v: "[[Date last updated]]"}, {k: "Powers of attorney", v: "[[In place?]]"}, {k: "Beneficiaries", v: "[[Checked on every account?]]"}]},
+    {type: "paragraph", slot: "t_estate_you", slotHint: "what this client should look at next", text: "[[What to look at next]]"}
+  )})],
+  ["t_insurance", "Insurance needs", "Estate & protection", () => ({title: "Protecting your family", blocks: blocks(
+    {type: "lead", text: "Insurance replaces what your family would lose if something happened to you. The right amount comes from your plan, not a rule of thumb."},
+    {type: "table", caption: "What each kind of insurance is for", headers: ["Coverage", "What it protects"],
+      rows: [["Life", "Income, debts and goals your family would need covered"], ["Disability", "Your income if you cannot work"],
+             ["Critical illness", "A lump sum to cover costs during a serious illness"], ["Long-term care", "The cost of care later in life"]]},
+    {type: "facts", items: [{k: "Coverage today", v: "[[What you have now]]"}, {k: "What the plan shows", v: "[[What would be needed]]"}]},
+    {type: "paragraph", slot: "t_insurance_you", slotHint: "what we suggest for this client", text: "[[What we suggest for you]]"}
+  )})],
+
+  ["t_life", "Life insurance: how much, and what kind", "Life insurance", () => ({title: "Life insurance", blocks: blocks(
+    {type: "lead", text: "Life insurance makes sure the people who depend on you can carry on with the plan if you are not there. How much you need, and for how long, comes from your plan."},
+    {type: "bullets", style: "bullet", items: [
+      "**Debts:** the mortgage and any loans, so the family keeps the home.",
+      "**Income:** replacing the income your family would lose, for as long as they would need it.",
+      "**Goals:** education for the children and the retirement your spouse was counting on.",
+      "**Final costs and taxes:** funeral costs, and the tax due on death on RRSPs, RRIFs and investments that have grown.",
+      "**Legacy:** what you want to leave to family or to charity."]},
+    {type: "table", caption: "The main kinds of life insurance", headers: ["", "Term", "Permanent (whole life or universal life)"],
+      rows: [["How long it lasts", "A set period, such as 10 or 20 years, often renewable", "For life, as long as the policy is kept in force"],
+             ["Cost", "Lower to start; rises at renewal", "Higher, but can be set to stay level"],
+             ["Cash value", "None", "Builds a cash value that grows tax-sheltered within limits"],
+             ["Best suited to", "Needs that end: the mortgage, the working years, the children at home", "Needs that last: tax on death, estate equalization, legacy"]]},
+    {type: "facts", items: [{k: "Coverage today", v: "[[Personal and group coverage you have now]]"}, {k: "What the plan shows", v: "[[Coverage needed, and for how long]]"},
+      {k: "Gap", v: "[[Difference]]"}]},
+    {type: "callout", tone: "note", title: "Group coverage", text: "Coverage through work usually ends when you leave the job, and is often a multiple of salary rather than what the family would actually need."},
+    {type: "paragraph", slot: "t_life_you", slotHint: "what we suggest for this client's life insurance and why", text: "[[What we suggest for you, and why]]"}
+  )})],
+  ["t_life_estate", "Life insurance in your estate plan", "Life insurance", () => ({title: "Life insurance and your estate", blocks: blocks(
+    {type: "lead", text: "Life insurance can do things in an estate plan that savings cannot: it pays out in cash, at the moment it is needed, tax-free to the people you name."},
+    {type: "bullets", style: "bullet", items: [
+      "**Paying the tax on death:** on death, RRSPs and RRIFs are generally taxed as income and investments as if sold, unless they pass to a spouse. A policy can cover that bill so assets do not have to be sold.",
+      "**Straight to your beneficiaries:** a death benefit paid to a named beneficiary goes directly to them, outside the estate, without waiting for probate.",
+      "**Equalizing an estate:** when a cottage, farm or business goes to one child, insurance can leave an equal share to the others.",
+      "**Joint last-to-die:** one policy on a couple that pays on the second death, when the estate's tax is usually due.",
+      "**Giving to charity:** a policy can fund a larger gift than you could make from savings, with tax receipts for the estate or along the way."]},
+    {type: "paragraph", slot: "t_life_estate_you", slotHint: "how this applies to this client's estate", text: "[[How this applies to your estate]]"}
+  )})],
+  ["t_corp_life", "Corporate-owned life insurance", "Life insurance", () => ({title: "Life insurance owned by your corporation", blocks: blocks(
+    {type: "lead", text: "If you own a business, the company can own and pay for life insurance. Because premiums are paid with corporate dollars, which are often taxed at a lower rate than personal income, this can be an efficient way to pay for coverage you need anyway."},
+    {type: "bullets", style: "bullet", items: [
+      "**The capital dividend account:** when the company receives a death benefit, the amount above the policy's adjusted cost basis is added to its capital dividend account. That amount can then be paid out to the shareholders or the estate as a tax-free capital dividend.",
+      "**Tax on the shares at death:** a death benefit can give the company the cash to deal with the tax on your shares, without selling the business or its assets.",
+      "**Buy-sell agreements:** insurance on each owner funds the purchase of a partner's shares, so the surviving owners keep the business and the family is paid fairly.",
+      "**Key person coverage:** protects the company if the loss of an owner or key employee would hurt the business.",
+      "**Surplus earnings:** the cash value of an exempt permanent policy grows tax-sheltered inside the company, and that growth does not count as passive investment income for the small business deduction."]},
+    {type: "callout", tone: "note", title: "Premiums", text: "Premiums for a corporate-owned policy are generally not tax-deductible. Who owns the policy, who pays, and who is named as beneficiary all matter for tax, and are set with your accountant."},
+    {type: "facts", items: [{k: "Corporation", v: "[[Name and what it holds]]"}, {k: "Coverage in the company today", v: "[[Policies, if any]]"},
+      {k: "Shareholders", v: "[[Who owns the shares]]"}, {k: "Agreements", v: "[[Buy-sell or shareholder agreement in place?]]"}]},
+    {type: "paragraph", slot: "t_corp_life_you", slotHint: "how corporate-owned insurance could fit this client's company", text: "[[How this could fit your company]]"}
+  )})],
+  ["t_life_strategies", "Insured retirement and estate strategies", "Life insurance", () => ({title: "Insured retirement and estate strategies", blocks: blocks(
+    {type: "lead", text: "For business owners and families with more than they will spend, permanent life insurance can serve the estate and, in some cases, retirement as well."},
+    {type: "table", caption: "Illustrative strategies; every one depends on health, age, tax and the company's structure", headers: ["Strategy", "How it works", "What to weigh"],
+      rows: [["Corporate estate transfer", "Surplus money the company does not need is moved, over time, from taxable investments into an exempt permanent policy. At death, the benefit flows through the capital dividend account.", "Money moved into the policy is less flexible than investments. Suits money meant for the next generation."],
+             ["Insured retirement program", "The policy's cash value builds up. In retirement, a lender may lend against it, and the loan is repaid from the death benefit.", "Loans are at the lender's discretion and interest rates can change. Policy values are not guaranteed to grow as illustrated. Tax rules can change."],
+             ["Shareholder-owned, company-paid", "The owner holds the policy and the company pays the premiums.", "Usually a taxable benefit to the shareholder; ownership is decided with your accountant."]]},
+    {type: "callout", tone: "note", title: "How we would approach it", text: "We start from your plan: what the company and family need, and what is surplus. We then work with [[the insurance specialist we work with]] and your accountant before anything is put in place."},
+    {type: "paragraph", slot: "t_life_strategies_you", slotHint: "which strategy might suit this client and what we would look at next", text: "[[Which strategy might suit you, and what we would look at next]]"}
+  )})],
+
+  ["t_market", "Market update", "Markets & fees", () => ({title: "The markets this period", blocks: blocks(
+    {type: "lead", slot: "t_market_lead", slotHint: "one sentence on how markets behaved this period, from the notes only", text: "[[The period in one sentence]]"},
+    {type: "bullets", style: "bullet", slot: "t_market_points", slotHint: "3 to 4 points on what drove markets, from the notes or the firm's commentary only",
+      items: ["[[What moved markets]]", "[[Interest rates and inflation]]", "[[Canada and the rest of the world]]"]},
+    {type: "callout", tone: "note", title: "What it means for you", text: "[[What it means for your portfolio and plan]]"},
+    {type: "paragraph", text: "Markets move up and down in the short term. Your portfolio is built for your goals and time horizon, so we change it when your life changes, not because of the headlines."}
+  )})],
+  ["t_fees", "Fees and how we are paid", "Markets & fees", () => ({title: "What you pay, and what you receive", blocks: blocks(
+    {type: "lead", text: "You will always know what you pay and what you receive for it. Here it is in plain language."},
+    {type: "facts", items: [{k: "How we are paid", v: "[[Fee arrangement, as in the account agreement]]"}, {k: "What it costs", v: "[[Fee schedule as agreed]]"},
+      {k: "Fund costs", v: "[[Management expense ratios of the funds held, if any]]"}, {k: "Tax", v: "[[Whether fees are deductible on non-registered accounts]]"}]},
+    {type: "bullets", style: "bullet", items: ["Your financial plan, reviewed and updated as life changes", "Portfolio management and rebalancing", "Tax, retirement, education and estate planning", "A team you can reach, who knows your file"]},
+    {type: "paragraph", text: "Every fee appears on your statements and in the annual report on charges and compensation."}
+  )})]
+];
+
 
 ;
 /* ==========================================================================
@@ -6861,7 +7763,7 @@ function readPresentation(v){
   const sections = [];
   v.sections.forEach((s, i) => sections.push(...normalizeSection(s, i, warn)));
   const out = {sections, meta, design, cover, options, warnings};
-  if (Array.isArray(v.team) && v.team.length) out.team = v.team.map(t => ({name:S(t.name), desig:S(t.desig), title:S(t.title)}));
+  if (Array.isArray(v.team) && v.team.length) out.team = v.team.map(t => ({name:S(t.name), desig:S(t.desig), title:S(t.title), group:S(t.group) || "advisor"}));
   if (v.contact && typeof v.contact === "object") out.contact = v.contact;
   if (Array.isArray(v.disclosures) && v.disclosures.length) out.disclosures = v.disclosures.map(S);
   return out;
@@ -7211,18 +8113,45 @@ function doBuild(){ buildDraft(); builtPrint = deckPrint(); }
 
 /* ── What are you making ─────────────────────────────────────────────────── */
 
+/* The three documents made most often get the big cards; the rest sit under "More". */
+const MAIN_KINDS = ["prospect", "portfolio_review", "plan_summary"];
 function buildPieceGrid(){
   const grid = $("pieceGrid");
+  const wasOpen = !!grid.querySelector("details.piece-more[open]");
   grid.innerHTML = "";
   const facts = deck.facts || {};
-  SMART_KINDS.forEach(c => {
+  const card = (c) => {
     const ready = c.uses.length && c.uses.some(u => facts[u]);
-    const card = el("button", "piece-card" + (deck.meta.kind === c.kind ? " is-on" : "") + (ready ? " is-ready" : ""),
+    const b = el("button", "piece-card" + (deck.meta.kind === c.kind ? " is-on" : "") + (ready ? " is-ready" : ""),
       "<b>" + esc(c.name) + (ready ? ' <i class="ready-dot" title="Your report is in">●</i>' : "") + "</b><span>" + esc(c.note) + "</span>");
-    card.type = "button";
-    card.onclick = () => switchPiece(c.kind);
-    grid.appendChild(card);
-  });
+    b.type = "button";
+    b.onclick = () => switchPiece(c.kind);
+    return b;
+  };
+  const main = el("div", "piece-main");
+  MAIN_KINDS.forEach(k => { const c = SMART_KINDS.find(x => x.kind === k); if (c) main.appendChild(card(c)); });
+  grid.appendChild(main);
+  const rest = SMART_KINDS.filter(c => !MAIN_KINDS.includes(c.kind));
+  const more = el("details", "piece-more");
+  if (wasOpen || rest.some(c => c.kind === deck.meta.kind)) more.open = true;
+  more.appendChild(el("summary", "", "More: " + esc(rest.map(c => c.name.toLowerCase()).join(", "))));
+  const box = el("div", "piece-rest");
+  rest.forEach(c => box.appendChild(card(c)));
+  more.appendChild(box);
+  grid.appendChild(more);
+  orderStartSteps();
+}
+/** A piece built from notes (a prospect meeting) asks for the notes first and the
+    reports second; a piece built from a report asks for the report first. */
+function orderStartSteps(){
+  const drop = $("dropCard"), notes = $("notesCard");
+  if (!drop || !notes) return;
+  const k = SMART_KINDS.find(c => c.kind === deck.meta.kind);
+  const notesFirst = !k || !k.uses.length;
+  if (notesFirst) drop.before(notes); else notes.before(drop);
+  notes.querySelector(".step-n").textContent = notesFirst ? "2" : "3";
+  drop.querySelector(".step-n").textContent = notesFirst ? "3" : "2";
+  notes.querySelector("h3 em").textContent = notesFirst ? "dictate what you heard" : "optional";
 }
 function switchPiece(kind){
   if (deck.meta.kind === kind) return;
@@ -7244,8 +8173,10 @@ async function intakePdf(file){
     return;
   }
   const kind = detectReport(doc);
-  if (kind === "croesus") setFacts("portfolio", parseCroesus(doc), file.name);
-  else if (kind === "plan") setFacts("plan", parsePlan(doc), file.name);
+  /* each figure's source line is kept, for "Where did this number come from?" (views.js) */
+  const withLines = (f) => Object.assign(f, {sourceLines: compactLines(doc)});
+  if (kind === "croesus") setFacts("portfolio", withLines(parseCroesus(doc)), file.name);
+  else if (kind === "plan") setFacts("plan", withLines(parsePlan(doc)), file.name);
   else unknownReport(file.name, doc.text);
 }
 
@@ -7254,14 +8185,29 @@ function setFacts(key, facts, fileName){
   snapshot();
   deck.facts = deck.facts || {};
   facts.file = fileName || facts.file || "";
+  /* A second portfolio report of the same household, at another date: the earlier
+     one is kept for a "What has changed" page (smart.js buildChanges). */
+  const cur = deck.facts.portfolio;
+  let kept = "";
+  if (key === "portfolio" && cur && cur.asOf && facts.asOf && cur.asOf !== facts.asOf &&
+      (!cur.household || !facts.household || surnameOf(cur.household) === surnameOf(facts.household))){
+    const tCur = Date.parse(cur.asOf), tNew = Date.parse(facts.asOf);
+    if (tNew < tCur){ deck.facts.portfolioPrev = facts; facts = cur; kept = facts.asOf; }
+    else { deck.facts.portfolioPrev = cur; kept = cur.asOf; }
+  }
   deck.facts[key] = facts;
   if (!deck.meta.client && facts.household) deck.meta.client = facts.household;
   /* if the kind of document does not use this report, pick one that does */
   const k = SMART_KINDS.find(x => x.kind === deck.meta.kind);
-  if (!k || !k.uses.some(u => deck.facts[u])) deck.meta.kind = key === "plan" ? "plan_summary" : "portfolio_review";
+  if (!k || !k.uses.some(u => deck.facts[u])){
+    deck.meta.kind = key === "plan" ? "plan_summary" : "portfolio_review";
+    setCoverWording(deck.meta.kind);          /* the cover follows the kind, built or not */
+  }
   if (auto) doBuild(); else { syncPanels(); render(); }
   const what = key === "plan" ? "Financial plan" : "Portfolio report";
-  toast(what + " read: " + (facts.found || []).join(", ") + (auto ? ". The draft is laid out." : ". Press Build my draft to use it."), 7000);
+  toast(what + " read: " + (facts.found || []).join(", ") + (auto ? ". The draft is laid out." : ". Press Build my draft to use it.") +
+    (kept ? " The report as at " + deck.facts.portfolioPrev.asOf + " is kept for a “What has changed” page." : ""), 7000);
+  if ((facts.warnings || []).length) alert(what + " — please check:\n\n" + facts.warnings.join("\n"));
 }
 
 function unknownReport(name, text){
@@ -7319,6 +8265,11 @@ function buildSources(){
     row("Portfolio report" + (P.file ? " · " + P.file : ""), [P.household, P.total != null ? fm$(P.total) : "", P.asOf ? "as at " + P.asOf : ""].filter(Boolean).join(" · ") +
       "\nFound " + (P.found || []).join(", "), "portfolio");
   }
+  if (f.portfolioPrev){
+    const Q = f.portfolioPrev;
+    row("Earlier portfolio report" + (Q.file ? " · " + Q.file : ""), [Q.total != null ? fm$(Q.total) : "", Q.asOf ? "as at " + Q.asOf : ""].filter(Boolean).join(" · ") +
+      "\nUsed for the “What has changed” page", "portfolioPrev");
+  }
   if (f.plan){
     const F = f.plan;
     row("Financial plan" + (F.file ? " · " + F.file : ""), [F.household, F.planName, F.date].filter(Boolean).join(" · ") +
@@ -7363,25 +8314,71 @@ function setProfile(name){
   syncPanels(); render();
 }
 
+/* ── Next blank: walk the yellow blanks on the page ─────────────────────── */
+
+/* Each press selects the next [[blank]] (or NEEDS ADVISOR INPUT note) on the
+   page, so the advisor just types over it. lastBlank remembers where we were,
+   because the pages are laid out again after every edit. */
+let lastBlank = null;      /* {bid, i, order} of the blank shown last */
+function goNextBlank(){
+  const marks = $$("#pages mark.blank, #pages mark.needs");
+  if (!marks.length){ toast("No blanks left: every yellow blank is filled in."); updateBlankButton(); return; }
+  const hits = $$("#pages .blk-hit").map(h => h.dataset.bid);
+  const where = marks.map(m => {
+    const hit = m.closest(".blk-hit");
+    const bid = hit ? hit.dataset.bid : "";
+    return {m, bid, order: hits.indexOf(bid), i: hit ? $$("mark.blank, mark.needs", hit).indexOf(m) : 0};
+  });
+  let k = 0;
+  if (lastBlank){
+    const same = where.findIndex(w => w.bid === lastBlank.bid && w.i === lastBlank.i);
+    /* still there (skipped): go past it; filled: the next one from the same place */
+    k = same >= 0 ? (same + 1) % where.length
+      : Math.max(0, where.findIndex(w => w.order > lastBlank.order || (w.bid === lastBlank.bid && w.i >= lastBlank.i)));
+  }
+  const w = where[k];
+  lastBlank = {bid: w.bid, i: w.i, order: w.order};
+  marks.forEach(x => x.classList.remove("is-current"));
+  w.m.classList.add("is-current");
+  w.m.scrollIntoView({block: "center", behavior: "smooth"});
+  const ed = w.m.closest('[contenteditable="true"]');
+  if (ed){
+    ed.focus();
+    const r = document.createRange();
+    r.selectNodeContents(w.m);
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(r);
+  } else if (w.bid && findBlock(w.bid)) selectBlock(w.bid, false);
+}
+/** The count on the "Next blank" button above the pages; hidden when there are none. */
+function updateBlankButton(){
+  const btn = $("btnNextBlank");
+  if (!btn) return;
+  const n = gapCount(deck.sections.map(s => s.blocks));
+  btn.hidden = !n;
+  btn.innerHTML = n + (n === 1 ? " blank" : " blanks") + " &middot; <b>Next &rarr;</b>";
+}
+
 /* ── Copilot: one prompt, one answer ─────────────────────────────────────── */
 
 function updateSlotStatus(){
-  const n = slotBlocks().length, todo = slotBlocks().filter(x => x.b.seed).length, gaps = gapCount(deck.sections.map(s => s.blocks));
+  const n = slotBlocks().length, todo = slotBlocks().filter(x => x.b.seed).length, gaps = collectBlanks().length;
   $("slotStatus").textContent = n ? n + " boxes for Copilot to write" + (todo < n ? " (" + (n - todo) + " already done)" : "") + " · " + gaps + " yellow blank" + (gaps === 1 ? "" : "s") + " left"
+    : gaps ? gaps + " yellow blank" + (gaps === 1 ? "" : "s") + " for Copilot to fill from your notes"
     : "This draft has no pre-written boxes, so the prompt asks Copilot to write the whole document from your notes.";
 }
 function copySlotPrompt(){
-  const has = slotBlocks().length;
+  const has = slotBlocks().length || collectBlanks().length;
   copyText(has ? slotPrompt() : wholeTextPrompt().replace("NOTES:\n[paste your notes here, or attach the plan, meeting notes and statements]", "NOTES:\n" + (deck.notes || "[paste your notes here]")),
-    "Prompt copied — paste it into Copilot and press Enter. Then paste Copilot's answer in box 3.");
+    "Prompt copied. Paste it into Copilot and press Enter, then copy Copilot's answer and paste it anywhere here (Ctrl+V).", 6000);
 }
 function applySlots(){
   const t = $("slotAnswer").value.trim();
   if (!t){ toast("Paste Copilot's answer into box 3 first."); return; }
-  if (slotBlocks().length && /"slots"|^\s*(```|\{)/.test(t)){
+  if ((slotBlocks().length || deck.blankKeys) && /"slots"|"blanks"|^\s*(```|\{)/.test(t)){
     try {
       const n = applySlotAnswer(t);
-      if (n){ $("slotAnswer").value = ""; updateSlotStatus(); toast(n + " boxes written by Copilot. Read them over — Undo takes them back.", 5000); showRail("build"); }
+      if (n){ $("slotAnswer").value = ""; updateSlotStatus(); toast(n + (n === 1 ? " box" : " boxes and blanks") + " written by Copilot, each marked to read over. Undo takes them all back.", 6000); showRail("build"); }
       else toast("None of the boxes matched — make sure you copied Copilot's whole answer.");
     } catch (e){ alert(e.message); }
     return;
@@ -7397,9 +8394,19 @@ function wireIntake(){
     doBuild(); showRail("build");
     toast("Draft laid out — fill in the yellow blanks, or let Copilot write the words (tab 3).", 5000);
   };
+  $("btnNextBlank").onclick = goNextBlank;
   $("btnCopySlots").onclick = copySlotPrompt;
   $("btnApplySlots").onclick = applySlots;
   $("slotAnswer").addEventListener("paste", () => setTimeout(applySlots, 60));
+  /* Copilot's answer can be pasted anywhere on the screen, not only in box 3:
+     anything that looks like the answer to the one prompt goes in by itself. */
+  document.addEventListener("paste", (e) => {
+    const t = (e.clipboardData && e.clipboardData.getData("text/plain")) || "";
+    if (!/"(slots|blanks)"\s*:/.test(t) || e.target.id === "slotAnswer" || (e.target.closest && e.target.closest("#modal"))) return;
+    e.preventDefault(); e.stopPropagation();
+    $("slotAnswer").value = t;
+    applySlots();
+  }, true);
   $("btnExtractPortfolio").onclick = () => copyText(extractionPrompt("portfolio"), "Prompt copied — attach the statement in Copilot, paste, and bring the answer back to the box above.");
   $("btnExtractPlan").onclick = () => copyText(extractionPrompt("plan"), "Prompt copied — attach the plan in Copilot, paste, and bring the answer back to the box above.");
 }
@@ -7413,6 +8420,433 @@ function syncIntake(){
 
 ;
 /* ==========================================================================
+   blanks.js — the yellow [[blanks]] as one short form, and "check" marks.
+
+   1. FILL IN THE BLANKS (Edit tab). Every [[blank]] and [NEEDS ADVISOR
+      INPUT] note in the document is listed as one row with a box to type in.
+      Type, press Enter, and the page fills itself. collectBlanks() finds
+      them; fillBlank() writes one answer into the deck.
+   2. COPILOT FILLS BLANKS FROM YOUR NOTES. The one Copilot prompt
+      (smart.js slotPrompt) also lists the blanks, numbered b1, b2 …;
+      blankPromptPart() writes that list and remembers which blank each
+      number is (deck.blankKeys); applyBlankAnswers() puts Copilot's answers
+      back.
+   3. "CHECK" MARKS. Anything Copilot wrote is marked to read over
+      (deck.toCheck = {blockId: true}). The mark shows on screen only, never
+      in the PDF. Editing the block, or pressing "✓ Looks right" on it,
+      clears the mark. The Finish checklist lists what is left.
+   ========================================================================== */
+
+/* Block types that are drawn from settings, never typed into. */
+const BLANK_SKIP_TYPES = ["recommendation", "householdSummary"];
+/* Keys that are settings, not words. */
+const BLANK_SKIP_KEYS = new Set(["id", "type", "seed", "src", "slot", "slotHint", "chart", "graphic", "style",
+  "tone", "size", "frame", "unit", "level", "cols", "source", "from"]);
+
+/** Every blank in the document, in reading order:
+    [{bid, path, raw, occ, label, context, section, inSlot}] */
+function collectBlanks(d){
+  d = d || deck;
+  const out = [];
+  d.sections.forEach(s => {
+    if (s.accountRecommendation || s.recommendationOverview) return;
+    (s.blocks || []).forEach(b => {
+      if (BLANK_SKIP_TYPES.includes(b.type)) return;
+      walkStrings(b, "", (str, path) => {
+        const seen = {};
+        (str.match(GAP_RE) || []).forEach(raw => {
+          const occ = seen[raw] = (seen[raw] == null ? 0 : seen[raw] + 1);
+          out.push({bid: b.id, path, raw, occ, label: blankLabel(raw), context: blankContext(b, path),
+                    section: s.title || "", inSlot: !!b.slot});
+        });
+      });
+    });
+  });
+  return out;
+}
+function walkStrings(v, path, fn){
+  if (typeof v === "string"){ if (v.indexOf("[") >= 0) fn(v, path); return; }
+  if (Array.isArray(v)){ v.forEach((x, i) => walkStrings(x, path ? path + "." + i : String(i), fn)); return; }
+  if (v && typeof v === "object") Object.keys(v).forEach(k => {
+    if (!BLANK_SKIP_KEYS.has(k) && !k.startsWith("_")) walkStrings(v[k], path ? path + "." + k : k, fn);
+  });
+}
+/** "[[By when]]" -> "By when"; "[NEEDS ADVISOR INPUT: pension amount]" -> "pension amount" */
+function blankLabel(raw){
+  const t = raw.replace(/^\[\[|\]\]$/g, "").replace(/^\[(NEEDS ADVISOR INPUT|SOURCE CONFLICT)\s*:?\s*|\]$/gi, "").trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : "Advisor input";
+}
+/** A few words that say where the blank sits: the fact row's label, the action's title. */
+function blankContext(b, path){
+  const m = path.match(/^items\.(\d+)\.(\w+)$/);
+  if (!m) return "";
+  const it = (b.items || [])[+m[1]] || {};
+  const name = m[2] === "k" || m[2] === "t" ? "" : richToPlain(it.k || it.t || it.label || "");
+  return name && !/\[\[|\[NEEDS/i.test(name) ? name : "";
+}
+function getPath(obj, path){
+  return String(path).split(".").reduce((o, k) => o == null ? o : o[/^\d+$/.test(k) ? +k : k], obj);
+}
+/** Put `text` in place of one blank. Returns true when it was still there. */
+function fillBlank(item, text){
+  const found = findBlock(item.bid);
+  if (!found) return false;
+  const cur = getPath(found.block, item.path);
+  if (typeof cur !== "string") return false;
+  let at = -1, from = 0;
+  for (let k = 0; k <= item.occ; k++){
+    const i = cur.indexOf(item.raw, from);
+    if (i < 0) break;
+    at = i; from = i + item.raw.length;
+  }
+  if (at < 0) at = cur.indexOf(item.raw);
+  if (at < 0) return false;
+  setPath(found.block, item.path, cur.slice(0, at) + text + cur.slice(at + item.raw.length));
+  delete found.block.seed;
+  return true;
+}
+
+/* ── 1. The form on the Edit tab ─────────────────────────────────────────── */
+
+function buildBlankForm(focusAt){
+  const host = $("blankForm");
+  if (!host) return;
+  /* never rebuild under the person's fingers */
+  if (focusAt == null && host.contains(document.activeElement)) return;
+  const items = collectBlanks();
+  $("blankCount").textContent = items.length ? items.length + " to fill" : "all filled";
+  $("blankCard").classList.toggle("is-done", !items.length);
+  host.innerHTML = "";
+  if (!items.length){
+    host.appendChild(el("p", "hint", "No blanks left. Every yellow blank in the document is filled in."));
+    return;
+  }
+  let lastSection = null;
+  items.forEach((it, i) => {
+    if (it.section !== lastSection){
+      host.appendChild(el("div", "bf-sec", esc(it.section || "Untitled section")));
+      lastSection = it.section;
+    }
+    const row = el("label", "bf-row");
+    row.appendChild(el("span", "bf-label", esc(it.label) + (it.context ? " <small>· " + esc(it.context) + "</small>" : "")));
+    const inp = document.createElement("input");
+    inp.placeholder = "Type, then Enter";
+    inp.dataset.i = i;
+    const commit = () => {
+      const v = inp.value.trim();
+      if (!v || inp.dataset.done) return;
+      inp.dataset.done = "1";
+      snapshot();
+      if (!fillBlank(it, v)){ undoStack.pop(); toast("That blank has already been filled on the page."); }
+      render(); buildOutline();
+      buildBlankForm(i);
+    };
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter"){ e.preventDefault(); commit(); }
+      if (e.key === "ArrowDown" || (e.key === "Tab" && !e.shiftKey && !inp.value)){
+        const next = host.querySelector('input[data-i="' + (i + 1) + '"]');
+        if (next){ e.preventDefault(); next.focus(); }
+      }
+    });
+    inp.addEventListener("change", commit);
+    /* show where it is on the page */
+    inp.addEventListener("focus", () => showBlankOnPage(it));
+    row.appendChild(inp);
+    host.appendChild(row);
+  });
+  if (focusAt != null){
+    const inputs = host.querySelectorAll("input");
+    const target = inputs[Math.min(focusAt, inputs.length - 1)];
+    if (target) target.focus();
+  }
+}
+function showBlankOnPage(it){
+  $$("#pages mark.is-current").forEach(m => m.classList.remove("is-current"));
+  const marks = $$('#pages .blk-hit[data-bid="' + it.bid + '"] mark.blank, #pages .blk-hit[data-bid="' + it.bid + '"] mark.needs')
+    .filter(m => m.textContent === it.raw);
+  const m = marks[Math.min(it.occ, marks.length - 1)] || marks[0];
+  if (!m) return;
+  m.classList.add("is-current");
+  m.scrollIntoView({block: "center", behavior: "smooth"});
+}
+
+/* ── 2. Copilot fills blanks from the notes ──────────────────────────────── */
+
+/** The numbered list of blanks for the Copilot prompt. Blanks inside a box
+    Copilot rewrites anyway (a slot) are left out. Remembers b1, b2 … on the deck. */
+function blankPromptPart(){
+  const items = collectBlanks().filter(it => !it.inSlot);
+  deck.blankKeys = {};
+  const shape = {};
+  const lines = items.map((it, i) => {
+    const key = "b" + (i + 1);
+    deck.blankKeys[key] = {bid: it.bid, path: it.path, raw: it.raw, occ: it.occ};
+    shape[key] = "";
+    return "■ " + key + " — " + it.label + (it.context ? " (" + it.context + ")" : "") + " — in “" + it.section + "”";
+  });
+  return {lines, shape};
+}
+/** Copilot's {"b1": "…"} answers into the blanks. Returns how many were filled. */
+function applyBlankAnswers(map){
+  if (!map || typeof map !== "object" || !deck.blankKeys) return 0;
+  /* fill from the last blank backwards, so two in one sentence do not shift each other */
+  const keys = Object.keys(map).filter(k => deck.blankKeys[k]).sort((a, b) => +b.slice(1) - +a.slice(1));
+  let n = 0;
+  keys.forEach(k => {
+    const v = String(map[k] == null ? "" : map[k]).trim();
+    if (!v || /^\[\[.*\]\]$/.test(v) || /^(unknown|n\/a|none|not stated)$/i.test(v)) return;
+    if (fillBlank(deck.blankKeys[k], v)){ markToCheck(deck.blankKeys[k].bid); n++; }
+  });
+  return n;
+}
+
+/* ── 3. "Check" marks on what Copilot wrote ──────────────────────────────── */
+
+function markToCheck(bid){ deck.toCheck = deck.toCheck || {}; deck.toCheck[bid] = true; }
+function clearToCheck(bid){ if (deck.toCheck && deck.toCheck[bid]){ delete deck.toCheck[bid]; return true; } return false; }
+/** Ids still marked, in reading order (blocks that were deleted drop out). */
+function toCheckIds(){
+  const marks = deck.toCheck || {};
+  const out = [];
+  deck.sections.forEach(s => (s.blocks || []).forEach(b => { if (marks[b.id]) out.push(b.id); }));
+  return out;
+}
+/** On screen only: a thin amber edge and a "check" tag (print CSS hides both). */
+function decorateToCheck(){
+  const marks = deck.toCheck || {};
+  $$("#pages .blk-hit").forEach(w => {
+    const on = !!marks[w.dataset.bid];
+    w.classList.toggle("is-tocheck", on);
+    if (on && !w.querySelector(":scope > .blk-check")){
+      const tag = el("button", "blk-check", "Copilot wrote this &middot; <b>&#10003; Looks right</b>");
+      tag.type = "button";
+      tag.title = "Read it over; press when it is right (editing it clears the mark too)";
+      tag.addEventListener("mousedown", e => e.preventDefault());
+      tag.onclick = (e) => { e.stopPropagation(); snapshot(); clearToCheck(w.dataset.bid); render(); };
+      w.appendChild(tag);
+    }
+  });
+}
+
+;
+/* ==========================================================================
+   views.js — other ways to show the same document, and where figures came from.
+
+   1. ONE-PAGE LEAVE-BEHIND (viewMode "leave"): the key numbers, what we
+      recommend and what happens next on a single page, with the standard
+      disclosures in small type at the foot. Made from the document, never
+      typed separately, so it always agrees with it.
+   2. PRIVATE PREP SHEET (viewMode "prep"): talking points, questions to ask
+      (the blanks still open), what to watch for and your notes. Every page
+      says INTERNAL — it is for you, never for the client.
+   3. "WHERE DID THIS NUMBER COME FROM?" Blocks built from a report carry
+      `from` ("portfolio" or "plan"). Their settings panel lists each figure
+      with the line of the report it was read from (sourceLinesFor).
+
+   Both views are drawn by the same layout engine as the document (render.js),
+   from a throw-away copy (viewDeck). The canvas bar's "Show" list and the
+   Finish tab switch between them; nothing in the document changes.
+   ========================================================================== */
+
+/** Switch what the canvas shows: "doc", "leave" or "prep". */
+function setView(mode){
+  viewMode = mode || "doc";
+  if ($("viewPick")) $("viewPick").value = viewMode;
+  $("viewBanner").hidden = viewMode === "doc";
+  $("viewBannerText").textContent = viewMode === "leave"
+    ? "One-page summary to leave behind: made from the document. Change the document, and this follows."
+    : "Your prep sheet: internal, for you only. It never goes in the client's document.";
+  clearSelection();
+  zoom = 0;
+  render();
+}
+/** What the canvas and the PDF show right now. */
+function shownDeck(){ return viewMode === "doc" ? deck : viewDeck(); }
+function viewDeck(){ return viewMode === "leave" ? leaveBehindDeck() : prepSheetDeck(); }
+
+/* A deck-shaped copy with no cover, contents or closing pages. */
+function bareDeck(sections, extra){
+  return Object.assign({
+    meta: Object.assign({}, deck.meta),
+    cover: deck.cover,
+    design: Object.assign({}, deck.design, {format: "report"}),
+    options: {toc: false, dividers: false, sectionBreak: false, team: false, disclosures: false, specialists: false,
+      draft: deck.options.draft, confidential: deck.options.confidential, pageNumbers: true, watermark: false, runningHead: false},
+    noCover: true,
+    sections,
+    team: deck.team, contact: deck.contact, disclosures: deck.disclosures
+  }, extra || {});
+}
+const vb = (type, props) => Object.assign(newBlock(type), {id: "v-" + uid()}, props);
+/** The first block of a type in sections whose title matches. */
+function findIn(re, type){
+  for (const s of deck.sections){
+    if (s.accountRecommendation || !re.test(s.title || "")) continue;
+    const b = (s.blocks || []).find(x => x.type === type && (x.items || []).length);
+    if (b) return b;
+  }
+  return null;
+}
+
+/* ── 1. The one-page leave-behind ────────────────────────────────────────── */
+
+function leaveBehindDeck(){
+  const blocks = [vb("lbHead", {})];
+  const stats = deck.sections.flatMap(s => s.accountRecommendation ? [] : s.blocks || []).find(b => b.type === "stats" && !b.seed);
+  if (stats) blocks.push(Object.assign(structuredClone(stats), {id: "v-" + uid()}));
+
+  const heard = findIn(/heard|matters most|goals/i, "bullets");
+  if (heard){
+    blocks.push(vb("heading", {level: 3, text: "What we heard", kicker: ""}));
+    blocks.push(vb("bullets", {style: "bullet", items: heard.items.slice(0, 4)}));
+  }
+  const recActions = findIn(/recommend/i, "actions"), recBullets = findIn(/recommend/i, "bullets");
+  const recs = recActions ? recActions.items.map(x => x.t + (x.d ? ": " + String(x.d).split(/(?<=[.!?])\s/)[0] : ""))
+             : recBullets ? recBullets.items : [];
+  const accounts = deck.sections.filter(s => s.accountRecommendation);
+  if (recs.length || accounts.length){
+    blocks.push(vb("heading", {level: 3, text: "What we recommend", kicker: ""}));
+    const items = recs.slice(0, 5);
+    accounts.slice(0, 6).forEach(s => {
+      const r = (s.blocks || []).find(b => b.type === "recommendation"), p = r && recProfile(r);
+      items.push("**" + (s.accountName || "Account") + "**" + (s.accountAmount ? " (" + s.accountAmount + ")" : "") + ": " + (p ? preferredPortfolioTitle(p) : "[[portfolio]]"));
+    });
+    blocks.push(vb("bullets", {style: "number", items}));
+  }
+  const next = findIn(/next|do next/i, "actions");
+  if (next){
+    blocks.push(vb("heading", {level: 3, text: "What happens next", kicker: ""}));
+    blocks.push(vb("bullets", {style: "check", items: next.items.slice(0, 5).map(x => x.t + ([x.who, x.when].filter(Boolean).length ? " — " + [x.who, x.when].filter(Boolean).join(", ") : ""))}));
+  }
+  blocks.push(vb("lbFoot", {}));
+  return bareDeck([{id: "v-leave", title: "Summary", noHeading: true, blocks}],
+    {design: Object.assign({}, deck.design, {format: "report", density: "compact"})});
+}
+
+BLOCK_RENDERERS.lbHead = (b, wrap) => {
+  const d = layoutDeck || deck;
+  const box = el("div", "lb-head");
+  box.appendChild(brandPair());
+  box.appendChild(el("div", "lb-kick", "Meeting summary" + (d.meta.kicker ? " &middot; " + esc(d.meta.kicker) : "")));
+  box.appendChild(el("h1", "lb-title", esc(d.meta.title || "")));
+  const who = preparedBy(d);
+  box.appendChild(el("div", "lb-meta", [d.meta.client ? "Prepared for <b>" + esc(d.meta.client) + "</b>" : "",
+    d.meta.date ? esc(prettyDate(d.meta.date)) : "", who ? "Prepared by " + esc(who.name) : ""].filter(Boolean).join(" &middot; ")));
+  wrap.appendChild(box);
+};
+BLOCK_RENDERERS.lbFoot = (b, wrap) => {
+  const d = layoutDeck || deck;
+  const box = el("div", "lb-foot");
+  box.appendChild(el("div", "lb-contact", esc(d.contact.firm || BRAND.firm) + " &middot; " + esc(BRAND.subbrand) + " &middot; " +
+    [esc(d.contact.address), esc(d.contact.phone), esc(d.contact.web)].filter(Boolean).join(" &middot; ")));
+  /* the standard disclosures always print, in small type */
+  box.appendChild(el("div", "lb-disc-h", "Important disclosures"));
+  (d.disclosures || []).forEach(t => box.appendChild(el("p", "lb-disc", esc(t))));
+  wrap.appendChild(box);
+};
+
+/* ── 2. The private prep sheet ───────────────────────────────────────────── */
+
+function prepSheetDeck(){
+  const f = deck.facts || {}, P = f.portfolio, F = f.plan;
+  const kind = (SMART_KINDS.find(k => k.kind === deck.meta.kind) || {}).name || "Document";
+  const S = [];
+  const plain = (t) => richToPlain(t).replace(/\[\[([^\]]+)\]\]/g, "($1)");
+
+  S.push({id: "v-p1", title: "Before the meeting", blocks: [vb("facts", {items: [
+    {k: "Client", v: deck.meta.client || "(not named yet)"},
+    {k: "Document", v: kind + (deck.meta.date ? ", " + prettyDate(deck.meta.date) : "")},
+    P && {k: "Portfolio report", v: (P.file || "read") + (P.asOf ? ", as at " + P.asOf : "")},
+    f.portfolioPrev && {k: "Earlier report", v: (f.portfolioPrev.file || "read") + (f.portfolioPrev.asOf ? ", as at " + f.portfolioPrev.asOf : "")},
+    F && {k: "Financial plan", v: (F.file || "read") + (F.date ? ", " + F.date : "")},
+    deck.profile && {k: "Investor profile", v: deck.profile}].filter(Boolean)})]});
+
+  const digest = factsDigest(f).split("\n").filter(x => x.trim());
+  if (digest.length) S.push({id: "v-p2", title: "Key figures", blocks: [vb("bullets", {style: "bullet",
+    items: digest.slice(0, 22).map(x => x.replace(/^-\s*/, ""))})]});
+
+  const points = [];
+  deck.sections.forEach(s => {
+    if (s.accountRecommendation || s.recommendationOverview) return;
+    const b = (s.blocks || []).find(x => ["lead", "paragraph", "callout"].includes(x.type) && hasWords(x.text));
+    const t = b ? plain(b.text) : "";
+    points.push("**" + (s.title || "Untitled") + ":** " + (t.length > 170 ? t.slice(0, 167).replace(/\s+\S*$/, "") + " …" : t || "(nothing written yet)"));
+  });
+  if (points.length) S.push({id: "v-p3", title: "Talking points, in order", blocks: [vb("bullets", {style: "number", items: points})]});
+
+  const seen = new Set(), asks = [];
+  collectBlanks().forEach(it => {
+    const k = it.label.toLowerCase();
+    if (seen.has(k)) return;
+    seen.add(k);
+    asks.push(it.label + (it.context ? " (" + it.context + ")" : "") + " — " + it.section);
+  });
+  if (asks.length) S.push({id: "v-p4", title: "Questions to ask (still blank in the document)", blocks: [vb("bullets", {style: "check", items: asks.slice(0, 24)})]});
+
+  const watch = [];
+  (P && P.warnings || []).concat(F && F.warnings || []).forEach(w => watch.push(w));
+  if (P) portfolioSuggestions(P).forEach(x => watch.push("**" + x.t + ":** " + plain(x.d)));
+  if (F) planSuggestions(F).slice(0, 4).forEach(x => watch.push("**" + x.t + ":** " + plain(x.d)));
+  const chk = toCheckIds().length;
+  if (chk) watch.push(chk + " passage" + (chk === 1 ? "" : "s") + " Copilot wrote still to read over.");
+  if (watch.length) S.push({id: "v-p5", title: "Things to watch for", blocks: [vb("bullets", {style: "bullet", items: watch.slice(0, 14)})]});
+
+  if (String(deck.notes || "").trim()) S.push({id: "v-p6", title: "Your notes", blocks:
+    String(deck.notes).trim().slice(0, 3000).split(/\n\s*\n/).map(p => vb("paragraph", {text: p.replace(/\s*\n\s*/g, " ")}))});
+
+  return bareDeck(S, {internal: true,
+    meta: Object.assign({}, deck.meta, {title: "Prep sheet: " + (deck.meta.client || deck.meta.title || "")}),
+    options: {toc: false, dividers: false, sectionBreak: false, team: false, disclosures: false, specialists: false,
+      draft: false, confidential: true, pageNumbers: true, watermark: false, runningHead: true}});
+}
+
+/* ── 3. Where did this number come from? ─────────────────────────────────── */
+
+/** The figures in a block ($ amounts and percentages), each with the report
+    lines that show the same number: [{fig, hits: [{p, t}]}] */
+function sourceLinesFor(b){
+  const facts = (deck.facts || {})[b.from];
+  if (!facts) return null;
+  const lines = facts.sourceLines || [];
+  const text = JSON.stringify(Object.assign({}, b, {source: "", caption: "", id: ""}));
+  const figs = [...new Set(text.match(/-?\$[\d,]+(?:\.\d+)?|-?\d+(?:\.\d+)?%/g) || [])].slice(0, 14);
+  return figs.map(fig => {
+    const core = fig.replace(/[$%-]/g, "");
+    /* "$638,535" is "638,535" or "638,535.12" in the report; "16.37%" is "16.37" */
+    const re = new RegExp("(^|[^\\d.,])" + core.replace(/[.,]/g, m => "\\" + m) + (fig.includes("%") ? "(?!\\d)" : "(?![\\d,])(\\.\\d+)?(?!\\d)"));
+    return {fig, hits: lines.filter(l => re.test(l.t)).slice(0, 2)};
+  });
+}
+/** The "Where these figures came from" box in the block's settings panel. */
+function provenanceBox(b){
+  const facts = (deck.facts || {})[b.from];
+  if (!facts) return null;
+  const box = el("div", "prov");
+  const what = b.from === "plan" ? "the financial plan" : "the portfolio report";
+  box.appendChild(el("div", "prov-h", "Where these figures came from"));
+  box.appendChild(el("p", "insp-note", "Read from " + what + (facts.file ? " <b>" + esc(facts.file) + "</b>" : "") +
+    (facts.asOf ? ", as at " + esc(facts.asOf) : facts.date ? ", " + esc(facts.date) : "") + ", on this computer."));
+  const found = sourceLinesFor(b) || [];
+  if (!(facts.sourceLines || []).length){
+    box.appendChild(el("p", "insp-note", "Drop the report in again to see the line each figure came from."));
+    return box;
+  }
+  found.forEach(x => {
+    const row = el("div", "prov-row");
+    row.appendChild(el("b", "", esc(x.fig)));
+    row.appendChild(el("span", "", x.hits.length ? x.hits.map(h => "page " + h.p + ": " + esc(h.t.length > 110 ? h.t.slice(0, 107) + "…" : h.t)).join("<br>")
+      : "<i>worked out from the report (a total, a share or a rounding), not printed in it</i>"));
+    box.appendChild(row);
+  });
+  return box;
+}
+/** Kept with the facts when a report is read, so the source of each figure can be shown. */
+function compactLines(doc){
+  return (doc.lines || []).filter(l => /\d/.test(l.text)).slice(0, 4000).map(l => ({p: l.page + 1, t: l.text.replace(/\s{2,}/g, "  ").slice(0, 220)}));
+}
+
+;
+/* ==========================================================================
    app.js — the studio: state, the five tabs, editing, import, export.
 
    One rule runs through this file: the deck object is the truth. Every edit
@@ -7422,6 +8856,10 @@ function syncIntake(){
 
 
 const AUTOSAVE_KEY = "mhwg.presentation.working-copy";
+const ADVISOR_KEY = "mhwg.presentation.advisor";     /* "Prepared by", remembered on this computer */
+function rememberedAdvisor(){
+  try { return localStorage.getItem(ADVISOR_KEY) || BRAND.defaultAdvisor; } catch (e){ return BRAND.defaultAdvisor; }
+}
 
 /* ── State ──────────────────────────────────────────────────────────────── */
 
@@ -7432,6 +8870,7 @@ let openSectionId = null;        /* the section expanded in the Build outline */
 let undoStack = [], redoStack = [];
 let zoom = 0;                    /* 0 = fit to the window */
 let relayoutTimer = null;
+let viewMode = "doc";            /* "doc" the document · "leave" one-page leave-behind · "prep" private prep sheet (views.js) */
 
 function todayISO(){
   const t = new Date();
@@ -7441,10 +8880,11 @@ function newDeck(kind){
   const t = TEMPLATES[kind] || {title:"Our Recommendations", subtitle:"", kicker:"Investment recommendation", sections:[]};
   return {
     version: 1,
-    meta:{ kind, title:t.title, subtitle:t.subtitle, kicker:t.kicker, client:"", advisor:"", date:todayISO(), docTitle:"" },
+    meta:{ kind, title:t.title, subtitle:t.subtitle, kicker:t.kicker, client:"", advisor:rememberedAdvisor(), date:todayISO(), docTitle:"" },
     cover:{style:"white", image:""},
     design:{accent:"gold", density:"comfortable", look:"private", format:"report"},
-    options:{ toc:true, dividers:false, sectionBreak:true, team:true, disclosures:true,
+    /* sections run on down the page (no half-empty pages); see layout() in render.js */
+    options:{ toc:true, dividers:false, sectionBreak:false, team:true, disclosures:true, specialists:false,
       draft:true, confidential:true, pageNumbers:true, watermark:false, runningHead:true },
     /* Starter content is marked `seed`; any edit clears the mark. */
     sections:(t.sections || []).map(s => ({
@@ -7556,10 +8996,11 @@ function autosave(){
 
 function render(){
   const host = $("pages");
-  const edit = $("optEditInline").checked;
+  /* the leave-behind and the prep sheet are made from the document, not typed into (views.js) */
+  const edit = $("optEditInline").checked && viewMode === "doc";
   const keepTop = host.scrollTop, keepLeft = host.scrollLeft;
   host.className = "pages doc" + (edit ? " edit-on" : "");
-  const result = layout(deck, host);
+  const result = layout(shownDeck(), host);
   $("pageCount").textContent = result.pages.length + (result.pages.length === 1 ? " page" : " pages");
   if (edit){
     $$(".is-editable", host).forEach(n => {
@@ -7571,18 +9012,28 @@ function render(){
   if (selectedId){
     $$('.blk-hit[data-bid="' + selectedId + '"]', host).forEach(n => n.classList.add("is-selected"));
   }
-  decorateBlocks();
+  if (viewMode === "doc"){
+    decorateBlocks();
+    decorateToCheck();        /* blanks.js: what Copilot wrote, to read over */
+  }
   applyZoom();
   /* laying out again rebuilds every page; put the view back where the person was */
   host.scrollTop = keepTop; host.scrollLeft = keepLeft;
   updateChips();
+  updateBlankButton();
+  buildBlankForm();
   const print = deckPrint();
   if (print !== lastPrint){ lastPrint = print; markDirty(); }
   updateUndoButtons();
 }
 function relayoutSoon(){
   clearTimeout(relayoutTimer);
-  relayoutTimer = setTimeout(() => { render(); buildOutline(); }, 260);
+  relayoutTimer = setTimeout(() => {
+    /* never lay the pages out again under someone typing on them: wait until they leave the text */
+    const a = document.activeElement;
+    if (a && a.closest && a.closest("#pages .is-editable")){ relayoutSoon(); return; }
+    render(); buildOutline();
+  }, 260);
 }
 function applyZoom(){
   const host = $("pages");
@@ -7612,6 +9063,7 @@ function decorateBlocks(){
       if (!sec) return;
       btn("+ Block", "Add a block at the top of this section", (b) => showInsertMenu(b, {sectionId: sec.id, top: true}));
       btn("✦ Copilot", "Write this section with Copilot", () => { showRail("copilot"); setPromptKind("section", sec.id); });
+      btn("✕ Remove section", "Take this whole section out (Undo brings it back)", () => removeSection(sec.id), "is-danger");
     } else if (w.dataset.type === "recommendation"){
       btn("Edit recommendation", "Change the account, amount, portfolio or points", () => selectBlock(bid, false));
       btn("Delete page", "Remove this recommendation page", () => {
@@ -7621,13 +9073,56 @@ function decorateBlocks(){
     } else {
       btn("+ Add below", "Insert a block below this one", (b) => showInsertMenu(b, {after: bid}));
       btn("✦ Copilot", "Improve or write this with Copilot", () => openBlockCopilot(bid));
+      btn("⚙", "All the settings for this block", () => selectBlock(bid, false));
+      const fb = findBlock(bid);
+      if (fb && fb.block.from) btn("Source", "Where these figures came from in the report", () => {
+        selectBlock(bid, false);
+        const pv = $("inspectorBody").querySelector(".prov");
+        if (pv) pv.scrollIntoView({block: "start", behavior: "smooth"});
+      });
       btn("↑", "Move up", () => moveBlock(bid, -1));
       btn("↓", "Move down", () => moveBlock(bid, 1));
       btn("⧉", "Duplicate", () => duplicateBlock(bid));
-      btn("✕", "Delete", () => deleteBlock(bid), "is-danger");
+      btn("✕ Remove", "Take this block out (Undo brings it back)", () => deleteBlock(bid), "is-danger");
     }
     w.appendChild(bar);
+    addItemDeletes(w);
   });
+}
+/* Trimming is as easy as filling in: every bullet, fact row and action step gets
+   its own small ✕ (on screen only), so a generous template is cut down in clicks. */
+function addItemDeletes(w){
+  const found = findBlock(w.dataset.bid);
+  if (!found || !["bullets", "facts", "actions"].includes(found.block.type)) return;
+  const off = +(w.dataset.off || 0);
+  const rows = found.block.type === "bullets" ? $$("li.is-editable", w) : $$(found.block.type === "facts" ? ".fact" : ".action", w);
+  rows.forEach((row, i) => {
+    if (row.querySelector(":scope > .item-del")) return;
+    const x = el("button", "item-del", "✕");
+    x.type = "button";
+    x.title = "Remove this line (Undo brings it back)";
+    x.setAttribute("contenteditable", "false");
+    x.addEventListener("mousedown", e => e.preventDefault());
+    x.onclick = (e) => { e.stopPropagation(); removeItem(found.block.id, off + i); };
+    row.appendChild(x);
+  });
+}
+function removeItem(bid, i){
+  const found = findBlock(bid);
+  if (!found || !found.block.items || found.block.items[i] === undefined) return;
+  snapshot();
+  found.block.items.splice(i, 1);
+  delete found.block.seed;
+  if (!found.block.items.length) found.section.blocks = found.section.blocks.filter(b => b !== found.block);
+  buildOutline(); render();
+}
+function removeSection(id){
+  const at = deck.sections.findIndex(s => s.id === id);
+  if (at < 0) return;
+  snapshot();
+  const [gone] = deck.sections.splice(at, 1);
+  clearSelection(); syncPanels(); render();
+  toast("“" + (gone.title || "Section") + "” removed — Undo (Ctrl+Z) brings it back");
 }
 
 function showInsertMenu(anchor, where){
@@ -7661,7 +9156,8 @@ const FIELD_MAP = [
 const OPTION_MAP = [
   ["optToc","toc"], ["optDividers","dividers"], ["optSectionBreak","sectionBreak"], ["optTeam","team"],
   ["optDisc","disclosures"], ["optDraft","draft"], ["optConfidential","confidential"],
-  ["optPageNums","pageNumbers"], ["optWatermark","watermark"], ["optRunningHead","runningHead"]
+  ["optPageNums","pageNumbers"], ["optWatermark","watermark"], ["optRunningHead","runningHead"],
+  ["optSpecialists","specialists"]
 ];
 
 function syncPanels(){
@@ -7697,14 +9193,14 @@ function swatchRow(host, items, current, cls, onPick){
 function buildSwatches(){
   swatchRow($("formatPick"), [["report", "Report", "Portrait — print or email"], ["slides", "Slides", "Landscape — screen or TV"]],
     deck.design.format || "report", "fmt-swatch", id => { deck.design.format = id; zoom = 0; });
-  swatchRow($("coverPick"), [["white", "Clean white"], ["ivory", "Ivory"], ["premium", "Premium green"], ["photo", "Photograph"]],
+  swatchRow($("coverPick"), [["white", "Clean white"], ["picture", "With a picture"], ["ivory", "Ivory"], ["premium", "Premium green"], ["photo", "Full photograph"]],
     deck.cover.style || "white", "cover-swatch", id => {
       deck.cover.style = id;
       if (id === "photo" && !deck.cover.image) setTimeout(() => $("btnCoverImage").click(), 50);
     });
   swatchRow($("lookPick"), [["private", "Private bank", "Open, gold hairlines"], ["classic", "Classic", "Boxed, green headers"]],
     deck.design.look || "private", "look-swatch", id => { deck.design.look = id; });
-  $("btnCoverImage").hidden = deck.cover.style !== "photo";
+  $("btnCoverImage").hidden = deck.cover.style !== "photo" && deck.cover.style !== "picture";
 }
 
 function buildTitlePicker(){
@@ -7716,7 +9212,8 @@ function buildTitlePicker(){
 function buildAdvisorPicker(){
   const sel = $("fldAdvisor");
   const cur = deck.meta.advisor || "";
-  const opts = [""].concat(deck.team.map(m => m.name + (m.desig ? ", " + m.desig : ""))).concat([BRAND.firm]);
+  const opts = [""].concat(deck.team.filter(m => (m.group || "advisor") === "advisor" && m.name)
+    .map(m => m.name + (m.desig ? ", " + m.desig : ""))).concat([BRAND.firm]);
   if (cur && !opts.includes(cur)) opts.push(cur);
   sel.innerHTML = opts.map(o => '<option value="' + esc(o) + '">' + esc(o || "— choose —") + "</option>").join("");
   sel.value = cur;
@@ -7733,6 +9230,10 @@ function buildTeamEditor(){
       inp.oninput = () => { deck.team[i][k] = inp.value; relayoutSoon(); };
       row.appendChild(inp);
     });
+    const grp = inspSelect([{id:"advisor", name:"Advisor"}, {id:"service", name:"Client service"}, {id:"specialist", name:"TD specialist"}],
+      m.group || "advisor", v => { snapshot(); deck.team[i].group = v; buildAdvisorPicker(); render(); });
+    grp.title = "Where they appear on the closing page";
+    row.appendChild(grp);
     row.appendChild(inspBtn("Remove", () => { snapshot(); deck.team.splice(i, 1); buildTeamEditor(); render(); }, "btn-danger"));
     host.appendChild(row);
   });
@@ -7903,22 +9404,21 @@ const SECTION_PRESETS = [
     {type:"table", caption:"Illustrative — figures rounded, before tax", headers:["Option","What it does","Trade-off"],
       rows:[["Option A","",""],["Option B","",""]]},
     {type:"twocol", aTitle:"What this does well", aText:"", bTitle:"What to watch", bText:""})})],
-  ["how", "How we work", () => ({title:"How we work", blocks:blocks(
-    {type:"infographic", graphic:"steps", title:"Our process",
-      items:[{t:"Discover",d:"Understand the whole picture"},{t:"Plan",d:"Model the options"},{t:"Implement",d:"Put the plan to work"},{t:"Review",d:"Adjust as life changes"}]},
-    {type:"paragraph", text:"What working with us is actually like."})})],
+  ["how", "How we work with you", () => ({title:"How we work with you", blocks:blocks(...HOW_WE_WORK_BLOCKS())})],   /* content.js */
   ["team", "The team behind the plan", () => ({title:"The team behind the plan", blocks:blocks(
     {type:"paragraph", text:"You are not hiring one advisor — you are hiring a team, with a dedicated service group behind it."})})],
   ["next", "What happens next", () => ({title:"What happens next", blocks:blocks(
     {type:"actions", items:[{t:"Confirm the plan", d:"Review and confirm the agreed direction.", who:"You", when:"Next meeting"},
                             {t:"Implement", d:"Complete the agreed account and portfolio changes.", who:"Us", when:"After approval"}]})})]
-];
+].concat(PLANNING_TOPICS.map(([id, name, group, make]) => [id, name, make, group]));   /* content.js */
 function addPresetSection(id){
   const p = SECTION_PRESETS.find(x => x[0] === id) || SECTION_PRESETS[0];
   const made = p[2]();
   snapshot();
   const sec = {id:uid(), title:made.title, brief:made.title, kicker:"", summary:"",
     blocks:made.blocks.map(b => Object.assign(b, {seed:true}))};
+  /* a topic added twice gets its own Copilot boxes */
+  sec.blocks.forEach(b => { if (b.slot) b.slot += "_" + sec.id; });
   deck.sections.push(sec);
   currentSectionId = openSectionId = sec.id;
   selectedId = null;
@@ -7993,24 +9493,38 @@ function buildCheckList(){
   } else {
     host.appendChild(el("p", "hint", "Worth fixing before anyone sees it. Click one to go to it."));
     issues.forEach(is => {
-      const row = el("button", "check-row", esc(is.t));
+      const row = el("button", "check-row" + (is.soft ? " is-soft" : ""), esc(is.t));
       row.onclick = is.fix;
       host.appendChild(row);
     });
   }
 }
 function updateChips(){
-  const p = deckProgress();
-  $("buildChip").textContent = p.total ? p.done + "/" + p.total : "";
-  const n = preflight().length;
+  /* Edit: yellow blanks left. Finish: things to fix (the "read it over" reminder does not count). */
+  const blanks = collectBlanks().length;
+  $("buildChip").textContent = blanks ? String(blanks) : "✓";
+  $("buildChip").className = blanks ? "is-warn" : "is-ok";
+  $("buildChip").title = blanks ? blanks + " yellow blanks to fill in" : "Every blank is filled in";
+  const n = preflight().filter(is => !is.soft).length;
   $("finishChip").textContent = n ? String(n) : "✓";
   $("finishChip").className = n ? "is-warn" : "is-ok";
   if ($("rail").querySelector('.panel.is-active[data-panel="finish"]')) buildCheckList();
 }
+/** Finish tab, with the folded card that holds the field `id` opened and in view. */
+function openFinishCard(id){
+  showRail("finish");
+  const f = $(id);
+  if (!f) return;
+  const card = f.closest("details");
+  if (card) card.open = true;
+  f.scrollIntoView({block: "center", behavior: "smooth"});
+}
 
 /* ── Inspector ──────────────────────────────────────────────────────────── */
 
-function selectBlock(id, scroll){
+/** quiet: select without opening the settings panel (clicking text to type) —
+    the panel opens from the block's "Settings" button or a click on the block. */
+function selectBlock(id, scroll, quiet){
   selectedId = id;
   const found = findBlock(id);
   if (found){ currentSectionId = found.section.id; if (!found.section.accountRecommendation) openSectionId = found.section.id; }
@@ -8019,7 +9533,7 @@ function selectBlock(id, scroll){
   nodes.forEach(n => n.classList.add("is-selected"));
   if (scroll && nodes[0]) nodes[0].scrollIntoView({block:"center", behavior:"smooth"});
   buildOutline();
-  buildInspector();
+  if (!quiet || !$("inspector").hidden) buildInspector();
 }
 function clearSelection(){
   selectedId = null;
@@ -8083,6 +9597,7 @@ function buildInspector(){
   ["btnBlockUp", "btnBlockDown", "btnBlockDup", "btnBlockCopilot"].forEach(id => { $(id).hidden = isRec; });
   if (isRec){ buildRecommendationInspector(b, body); return; }
   body.appendChild(el("p", "insp-note insp-sec", "In “" + esc(found.section.title || "section") + "”" + (b.seed ? " · <b>still sample text</b>" : "")));
+  const prov = b.from && provenanceBox(b);            /* views.js: where the figures came from */
 
   /* `look` edits (chart type, title, size) change how it looks, not what it says,
      so they never clear a chart's "still sample numbers" mark */
@@ -8207,6 +9722,7 @@ function buildInspector(){
     default:
       body.appendChild(el("p","insp-note","Nothing to set on this block."));
   }
+  if (prov) body.appendChild(prov);
 }
 
 /* ── Numbers for charts ─────────────────────────────────────────────────── */
@@ -8514,9 +10030,17 @@ function migrate(d){
   d.meta = d.meta || {};
   d.cover = d.cover || {style:"white", image:""};
   d.design = Object.assign({accent:"gold", density:"comfortable", look:"private", format:"report"}, d.design || {});
-  d.options = Object.assign({toc:true, dividers:false, sectionBreak:true, team:true, disclosures:true,
+  d.options = Object.assign({toc:true, dividers:false, sectionBreak:true, team:true, disclosures:true, specialists:false,
     draft:true, confidential:true, pageNumbers:true, watermark:false, runningHead:true}, d.options || {});
   d.team = d.team && d.team.length ? d.team : BRAND.team.map(m => Object.assign({}, m));
+  /* v10: titles from the team website, and the client service team and TD specialists */
+  d.team.forEach(m => {
+    const b = BRAND.team.find(x => x.name === m.name);
+    if (b && !m.group) m.group = b.group;
+    if (b && m.title === "Investment Advisor") m.title = b.title;
+  });
+  if (!d.team.some(m => m.group === "service" || m.group === "specialist"))
+    BRAND.team.filter(m => m.group !== "advisor").forEach(m => d.team.push(Object.assign({}, m)));
   d.contact = Object.assign({firm:BRAND.firm, address:BRAND.address, phone:BRAND.phone, web:BRAND.web}, d.contact || {});
   d.disclosures = d.disclosures && d.disclosures.length ? d.disclosures : BRAND.disclosures.slice();
   d.sections = (d.sections || []).map(s => Object.assign({id:uid(), title:"", blocks:[]}, s));
@@ -8530,6 +10054,7 @@ function migrate(d){
   d.sections.forEach(s => { if (s.recommendationOverview && !(s.blocks || []).some(b => b.type === "householdSummary")) s.blocks = [{id: uid(), type: "householdSummary"}]; });
   d.drafts = d.drafts && typeof d.drafts === "object" ? d.drafts : {};
   d.sources = d.sources && typeof d.sources === "object" ? d.sources : {};
+  d.toCheck = d.toCheck && typeof d.toCheck === "object" ? d.toCheck : {};
   delete d.wizard;
   /* No network, ever: a picture must be embedded in the file. */
   const local = v => !v || /^data:image\//i.test(v);
@@ -8549,8 +10074,8 @@ function layoutProblems(){
 }
 function exportPdf(force){
   commitEdits();
-  const gaps = gapCount(deck.sections.map(s => s.blocks));
-  if (gaps && force !== true && force !== "gaps"){
+  const gaps = gapCount(shownDeck().sections.map(s => s.blocks));
+  if (gaps && force !== true && force !== "gaps" && viewMode !== "prep"){
     showModal("Notes for the advisor are still in the text", `
       <p>${gaps} place${gaps === 1 ? "" : "s"} still say <b>[NEEDS ADVISOR INPUT]</b> or
       <b>[SOURCE CONFLICT]</b> — they are highlighted on the page and would print in the PDF.</p>
@@ -8573,9 +10098,11 @@ function exportPdf(force){
     $("btnPrintAnyway").onclick = () => exportPdf(true);
     return;
   }
-  const slides = deck.design.format === "slides";
-  showModal("Export the PDF", `
-    <p>The PDF comes out of the browser's own print engine, so the type stays sharp and selectable.</p>
+  const slides = deck.design.format === "slides" && viewMode === "doc";
+  showModal(viewMode === "prep" ? "Export your prep sheet" : viewMode === "leave" ? "Export the one-page summary" : "Export the PDF", `
+    ${viewMode === "prep" ? '<div class="callout">This is your internal prep sheet. Every page says so; it is not for the client.</div>' : ""}
+    <p>The PDF comes out of the browser's own print engine, so the type stays sharp and selectable.
+      It is named for you: <b>${esc(pdfName())}.pdf</b></p>
     <h3>In the print window</h3>
     <ol>
       <li><b>Destination:</b> Save as PDF</li>
@@ -8586,12 +10113,26 @@ function exportPdf(force){
     </ol>
     <div class="callout">These settings stick after the first time on this computer.</div>
     <div class="modal-actions"><button class="btn btn-primary" id="btnDoPrint">Open the print window</button></div>`);
-  $("btnDoPrint").onclick = () => { hideModal(); setPrintPage(); setTimeout(() => window.print(), 60); };
+  $("btnDoPrint").onclick = () => { hideModal(); setPrintPage(); printNamed(); };
+}
+/** The browser names the PDF after the page title, so it is set for the print:
+    "Kowalchuk – Portfolio Review – 2026-10-08". */
+function pdfName(){
+  const who = surnameOf(deck.meta.client) || deck.meta.client || deck.meta.title || "Presentation";
+  const kind = (SMART_KINDS.find(k => k.kind === deck.meta.kind) || {}).name || "";
+  const what = viewMode === "leave" ? "Summary" : viewMode === "prep" ? "Prep sheet (internal)" : kind.replace(/\b\w/g, c => c.toUpperCase());
+  return [who, what, deck.meta.date].filter(Boolean).join(" – ").replace(/[\\/:*?"<>|]/g, "");
+}
+function printNamed(){
+  const keep = document.title;
+  document.title = pdfName();
+  window.addEventListener("afterprint", () => { document.title = keep; }, {once: true});
+  setTimeout(() => window.print(), 60);
 }
 function setPrintPage(){
   let st = $("printPageSize");
   if (!st){ st = document.createElement("style"); st.id = "printPageSize"; document.head.appendChild(st); }
-  st.textContent = deck.design.format === "slides" ? "@page{size:13.333in 7.5in;margin:0}" : "@page{size:letter;margin:0}";
+  st.textContent = shownDeck().design.format === "slides" ? "@page{size:13.333in 7.5in;margin:0}" : "@page{size:letter;margin:0}";
 }
 
 /* ── Present: full screen, one page at a time ───────────────────────────── */
@@ -8641,7 +10182,8 @@ function presentGo(i){
   ["accent", "density", "look", "format"].forEach(k => holder.dataset[k] = $("presentHost").dataset[k] || "");
   const p = presentPages[presentAt].cloneNode(true);
   p.querySelectorAll("[contenteditable]").forEach(n => n.removeAttribute("contenteditable"));
-  p.querySelectorAll(".page-overflow,.blk-tag,.blk-quickbar").forEach(n => n.remove());
+  p.querySelectorAll(".page-overflow,.blk-tag,.blk-quickbar,.blk-check,.item-del").forEach(n => n.remove());
+  p.querySelectorAll(".is-tocheck").forEach(n => n.classList.remove("is-tocheck"));
   const w = parseFloat(getComputedStyle($("presentHost")).getPropertyValue("--pw")) || 1280;
   const h = parseFloat(getComputedStyle($("presentHost")).getPropertyValue("--ph")) || 720;
   p.style.zoom = Math.min(window.innerWidth / w, (window.innerHeight - 34) / h);
@@ -8700,7 +10242,7 @@ function newPresentation(){
   if (!deckIsStarter() && !confirm("Start a new presentation?\n\nSave this one first if you need it. (Undo brings it back.)")) return;
   snapshot();
   const keep = {team: deck.team, contact: deck.contact, design: deck.design, cover: deck.cover};
-  deck = Object.assign(newDeck("portfolio_review"), keep);
+  deck = Object.assign(newDeck("prospect"), keep);   /* prospect meetings are the most common piece */
   selectedId = null; currentSectionId = null; openSectionId = null;
   syncPanels(); render();
   builtPrint = deckPrint();
@@ -8730,9 +10272,15 @@ function wire(){
   $("docTitle").oninput = () => { deck.meta.docTitle = $("docTitle").value; markDirty(); };
   $("btnUndo").onclick = undo;
   $("btnRedo").onclick = redo;
-  $("btnNew").onclick = newPresentation;
-  $("btnOpen").onclick = () => pickFile(".json", async f => openAnyJSON(await readTextFile(f)));
-  $("btnSave").onclick = saveDeck;
+  /* the File menu: New, Open, Save */
+  $("btnFile").onclick = () => { $("fileDrop").hidden = !$("fileDrop").hidden; };
+  const fileItem = (id, fn) => { $(id).onclick = () => { $("fileDrop").hidden = true; fn(); }; };
+  fileItem("btnNew", newPresentation);
+  fileItem("btnOpen", () => pickFile(".json", async f => openAnyJSON(await readTextFile(f))));
+  fileItem("btnSave", saveDeck);
+  document.addEventListener("mousedown", (e) => { if (!e.target.closest(".file-menu")) $("fileDrop").hidden = true; });
+  /* the one Copilot button: copies the prompt; the answer can be pasted anywhere (intake.js) */
+  $("btnCopilotTop").onclick = copySlotPrompt;
   $("btnSave2").onclick = saveDeck;
   $("btnPresent").onclick = present;
   $("btnPresent2").onclick = present;
@@ -8776,7 +10324,10 @@ function wire(){
   $("btnCoverImage").onclick = () => pickFile("image/*", async f => {
     snapshot(); deck.cover.image = await readImage(f); deck.cover.style = "photo"; buildSwatches(); render();
   });
-  $("btnAddMember").onclick = () => { snapshot(); deck.team.push({name:"", desig:"", title:""}); buildTeamEditor(); render(); };
+  $("btnAddMember").onclick = () => { snapshot(); deck.team.push({name:"", desig:"", title:"", group:"advisor"}); buildTeamEditor(); render(); };
+  $("fldAdvisor").addEventListener("change", () => {
+    try { localStorage.setItem(ADVISOR_KEY, deck.meta.advisor || ""); } catch (e){}
+  });
   $("fldDisclosures").oninput = () => {
     deck.disclosures = $("fldDisclosures").value.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
     relayoutSoon();
@@ -8787,7 +10338,15 @@ function wire(){
   };
 
   /* build */
-  $("presetPick").innerHTML = SECTION_PRESETS.map(([id, name]) => '<option value="' + id + '">' + esc(name) + "</option>").join("");
+  /* general sections first, then the planning topics under their groups */
+  const groups = [];
+  SECTION_PRESETS.forEach(([id, name, , group]) => {
+    const g = group || "Sections";
+    let at = groups.find(x => x.g === g);
+    if (!at) groups.push(at = {g, items: []});
+    at.items.push('<option value="' + id + '">' + esc(name) + "</option>");
+  });
+  $("presetPick").innerHTML = groups.map(x => '<optgroup label="' + esc(x.g) + '">' + x.items.join("") + "</optgroup>").join("");
   $("btnAddSection").onclick = () => addPresetSection($("presetPick").value);
   $("btnAddRec").onclick = openRecommendationDialog;
   $("btnBorrow").onclick = showBorrowDialog;
@@ -8838,15 +10397,22 @@ function wire(){
   /* the page itself */
   const host = $("pages");
   host.addEventListener("click", (e) => {
-    if (e.target.closest(".blk-quickbar")) return;
+    if (e.target.closest(".blk-quickbar") || viewMode !== "doc") return;
     const hit = e.target.closest(".blk-hit");
-    if (hit && !hit.dataset.bid.startsWith("sec-")) selectBlock(hit.dataset.bid, false);
+    if (hit && !hit.dataset.bid.startsWith("sec-")) selectBlock(hit.dataset.bid, false, !!e.target.closest(".is-editable"));
     else if (hit){ currentSectionId = hit.dataset.bid.slice(4); clearSelection(); }
     else if (!e.target.closest(".is-editable")) clearSelection();
   });
+  /* the text of an editable, without the on-screen ✕ a bullet carries */
+  const edHTML = (ed) => {
+    if (!ed.querySelector(".item-del")) return ed.innerHTML;
+    const c = ed.cloneNode(true);
+    c.querySelectorAll(".item-del").forEach(n => n.remove());
+    return c.innerHTML;
+  };
   host.addEventListener("focusin", (e) => {
     const ed = e.target.closest(".is-editable");
-    if (ed) ed._before = ed.innerHTML;
+    if (ed) ed._before = edHTML(ed);
   });
   /* Pasting onto the page goes in as plain text: rich paste from Word or Outlook can
      carry pictures that are web links, which the browser would fetch. */
@@ -8867,20 +10433,20 @@ function wire(){
   });
   host.addEventListener("focusout", (e) => {
     const ed = e.target.closest(".is-editable");
-    if (!ed || ed.innerHTML === ed._before) return;
+    if (!ed || edHTML(ed) === ed._before) return;
     const bid = ed.dataset.bid;
     if (bid && bid.startsWith("sec-")){
       const sec = deck.sections.find(s => "sec-" + s.id === bid);
       if (!sec) return;
       snapshot();
-      sec[ed.dataset.path === "kicker" ? "kicker" : "title"] = htmlToRich(ed.innerHTML);
+      sec[ed.dataset.path === "kicker" ? "kicker" : "title"] = htmlToRich(edHTML(ed));
       buildOutline(); render();
       return;
     }
     const found = findBlock(bid);
     if (!found) return;
     snapshot();
-    let path = ed.dataset.path, value = htmlToRich(ed.innerHTML);
+    let path = ed.dataset.path, value = htmlToRich(edHTML(ed));
     /* a block split across pages: write back into this fragment's part only */
     const frag = ed.closest(".blk");
     if (frag && frag.dataset.off != null){
@@ -8898,6 +10464,7 @@ function wire(){
     }
     setPath(found.block, path, value);
     delete found.block.seed;
+    clearToCheck(found.block.id);       /* edited, so read over */
     buildOutline(); render();
     if (selectedId === found.block.id) buildInspector();
   });
@@ -8906,6 +10473,11 @@ function wire(){
     if (e.key === "Escape" && e.target.closest(".is-editable")) e.target.blur();
   });
   $("optEditInline").onchange = render;
+  /* what the canvas shows: the document, the leave-behind or the prep sheet (views.js) */
+  $("viewPick").onchange = () => setView($("viewPick").value);
+  $("btnViewBack").onclick = () => setView("doc");
+  $("btnLeave").onclick = () => setView("leave");
+  $("btnPrep").onclick = () => setView("prep");
 
   /* zoom */
   $("btnZoomIn").onclick = () => { zoom = Math.min(1.6, (zoom || fitZoom()) + 0.1); applyZoom(); };
@@ -8958,7 +10530,7 @@ function boot(){
     const saved = localStorage.getItem(AUTOSAVE_KEY);
     if (saved) restored = JSON.parse(saved);
   } catch (e){}
-  deck = restored && restored.sections ? migrate(restored) : newDeck("portfolio_review");
+  deck = restored && restored.sections ? migrate(restored) : newDeck("prospect");
   $$("[data-wordmark]").forEach(n => n.appendChild(wordmark()));
   wire();
   syncPanels();

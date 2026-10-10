@@ -54,7 +54,7 @@ const VISUAL_TYPES = ["chart", "infographic", "image"];
 
 /* Settings on a block (its style, size, chart type…) are not content. */
 const NOT_CONTENT = new Set(["id","type","seed","style","level","tone","cols","size","frame",
-  "chart","graphic","totalRow","numeric","fromNumbers","h","_off","_len"]);
+  "chart","graphic","totalRow","numeric","fromNumbers","h","_off","_len","source","from","runOn"]);
 /** Does this block actually say something? An empty paragraph does not. */
 function hasWords(v, key){
   if (key && NOT_CONTENT.has(key)) return false;
@@ -247,14 +247,19 @@ function preflight(){
   if (!deck.meta.date) issues.push({t:"No date on the cover", fix:() => showRail("start")});
   if (!deck.meta.advisor) issues.push({t:"No advisor named on the cover", fix:() => showRail("start")});
 
+  /* One line per section with yellow blanks (the "Fill in the blanks" form
+     lists each one); sections with nothing written at all; then one line for
+     the standard wording still to read over, rather than one per section. */
   deck.sections.forEach(s => {
+    const n = gapCount(s.blocks);
     const st = sectionStatus(s);
-    if (st !== "done"){
-      issues.push({
-        t: '“' + (s.title || "Untitled") + '” ' + (st === "empty" ? "is still empty" : s.smart ? "has pre-written words to read over (or let Copilot write them)" : "is part written"),
-        fix: () => { showRail("build"); jumpToSection(s); }
-      });
-    }
+    const hasSeeds = (s.blocks || []).some(b => b.seed);
+    if (n) issues.push({t:'“' + (s.title || "Untitled") + '”: ' + n + " yellow blank" + (n === 1 ? "" : "s") + " to fill in",
+      fix: () => { showRail("build"); jumpToSection(s); }});
+    else if (s.accountRecommendation && st !== "done") issues.push({t:'“' + (s.title || "Untitled") + '”: no model portfolio chosen yet',
+      fix: () => { showRail("build"); jumpToSection(s); }});
+    else if (st === "empty" && !hasSeeds) issues.push({t:'“' + (s.title || "Untitled") + '” is still empty',
+      fix: () => { showRail("build"); jumpToSection(s); }});
   });
 
   deck.sections.forEach(s => (s.blocks || []).forEach(b => {
@@ -263,21 +268,26 @@ function preflight(){
     }
   }));
 
-  deck.sections.forEach(s => {
-    const n = gapCount(s.blocks);
-    if (n) issues.push({t:'“' + (s.title || "Untitled") + '” has ' + n + " yellow blank" + (n === 1 ? "" : "s") + " to fill in",
-      fix: () => { showRail("build"); jumpToSection(s); }});
-  });
+  const chk = toCheckIds();
+  if (chk.length) issues.push({t: chk.length + (chk.length === 1 ? " passage" : " passages") + " Copilot wrote still to read over (marked “Copilot wrote this” on the page)",
+    fix: () => { showRail("build"); selectBlock(chk[0], true); }});
+
+  const standard = deck.sections.filter(s => !s.accountRecommendation && !s.recommendationOverview &&
+    (s.blocks || []).some(b => b.seed && !VISUAL_TYPES.includes(b.type)));
+  if (standard.length) issues.push({
+    t: standard.length + (standard.length === 1 ? " section still has" : " sections still have") +
+       " our standard wording: read it over, trim it, or let Copilot write it from your notes",
+    soft: true, fix: () => showRail("copilot")});
 
   layoutProblems().forEach(c => issues.push({
     t:"Something runs off the bottom of page " + c.page + " and would be cut off in the PDF",
     fix:() => c.node.scrollIntoView({block:"start", behavior:"smooth"})}));
 
   if (!deck.options.disclosures){
-    issues.push({t:"The standard disclosures are switched off", fix:() => showRail("style")});
+    issues.push({t:"The standard disclosures are switched off", fix:() => openFinishCard("optDisc")});
   } else if (JSON.stringify(deck.disclosures) !== JSON.stringify(BRAND.disclosures)){
     issues.push({t:"The disclosures have been changed from the standard wording — compliance needs to see that",
-      fix:() => showRail("style")});
+      fix:() => openFinishCard("fldFirm")});
   }
   if (!deck.options.draft && deck.meta.reviewedHash && deck.meta.reviewedHash !== contentHash()){
     issues.push({t:"The piece has changed since the DRAFT tag came off — put it back on until it is checked again",

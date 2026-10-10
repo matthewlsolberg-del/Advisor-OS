@@ -8,6 +8,9 @@
 
 const VIZ_W = 660;                      /* the content column, in CSS px */
 const SEQ = BRAND.sequence;
+/* Bars and lines are big areas of colour: deep green and gold lead, so the page
+   stays calm; the bright Shield Green comes third. Donuts use the same order. */
+const BAR_SEQ = ["#002B1A", "#CFBD91", "#42BF19", "#3B5B72", "#A4D6DD", "#D99E14", "#855991"];
 const INK = "#1C1C1C";
 
 const svgEsc = (s) => esc(s);
@@ -132,7 +135,8 @@ function chartFrame(h, inner){
 /* Legend that flows onto as many rows as it needs within maxW. Long names
    wrap inside their own entry. Returns the markup and the height used
    below the first baseline. */
-function legend(names, x, y, maxW){
+function legend(names, x, y, maxW, seq){
+  seq = seq || SEQ;
   const fs = 11, rowH = 17, limit = maxW || (VIZ_W - x);
   let out = "", cx = x, cy = y, rowExtra = 0;
   names.forEach((n, i) => {
@@ -140,7 +144,7 @@ function legend(names, x, y, maxW){
     const textW = Math.max(0, ...lines.map(l => l.length)) * fs * 0.58;
     const w = 14 + textW + 16;
     if (cx > x && cx + w - 16 > x + limit){ cx = x; cy += rowH + rowExtra; rowExtra = 0; }
-    out += `<rect x="${cx}" y="${cy - 8}" width="9" height="9" fill="${SEQ[i % SEQ.length]}"/>` +
+    out += `<rect x="${cx}" y="${cy - 8}" width="9" height="9" fill="${seq[i % seq.length]}"/>` +
            svgLines(lines, cx + 14, cy, 13, `font-size="${fs}" fill="#3C4339"`);
     rowExtra = Math.max(rowExtra, (lines.length - 1) * 13);
     cx += w;
@@ -167,7 +171,7 @@ function valueAxis(sc, y, padL, padR, unit){
   let g = "";
   sc.ticks.forEach(t => {
     g += `<line x1="${padL}" x2="${VIZ_W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="#E4E9E2" stroke-width="1"/>` +
-         `<text x="${padL - 9}" y="${y(t) + 4}" font-size="10.5" fill="#8b978d" text-anchor="end">${svgEsc(t === sc.max ? withUnit(t, unit) : nfmt(t))}</text>`;
+         `<text x="${padL - 9}" y="${y(t) + 4}" font-size="10.5" fill="#8b978d" text-anchor="end">${svgEsc(t === 0 ? "0" : withUnit(t, unit))}</text>`;
   });
   return g;
 }
@@ -177,7 +181,7 @@ function chartFoot(labels, series, xAt, slotW, plotBottom, padL){
   const xl = xLabels(labels, xAt, slotW, plotBottom + 18);
   const lastLabelY = plotBottom + 18 + (xl.lines - 1) * 13;
   let leg = {svg:"", height:0};
-  if (series.length > 1) leg = legend(series.map(s => s.name || ""), padL, lastLabelY + 20, VIZ_W - padL - 8);
+  if (series.length > 1) leg = legend(series.map(s => s.name || ""), padL, lastLabelY + 20, VIZ_W - padL - 8, BAR_SEQ);
   return {svg:xl.svg + leg.svg, H:lastLabelY + 28 + leg.height};
 }
 
@@ -215,7 +219,7 @@ function barChart(labels, series, unit, stacked){
         if (!v) return;
         const from = v > 0 ? pos : neg, to = from + v;
         const ya = y(Math.max(from, to)), yb = y(Math.min(from, to));
-        bars += `<rect x="${cx - bw/2}" y="${ya}" width="${bw}" height="${Math.max(0, yb - ya)}" fill="${SEQ[si % SEQ.length]}"/>`;
+        bars += `<rect x="${cx - bw/2}" y="${ya}" width="${bw}" height="${Math.max(0, yb - ya)}" fill="${BAR_SEQ[si % BAR_SEQ.length]}"/>`;
         if (v > 0) pos = to; else neg = to;
       });
     } else {
@@ -226,8 +230,8 @@ function barChart(labels, series, unit, stacked){
         const yy = y(v);
         const top = Math.min(yy, y0), h = Math.abs(y0 - yy);
         const ly = v < 0 ? yy + 14 : yy - 6;
-        bars += `<rect x="${x}" y="${top}" width="${bw - 3}" height="${h}" fill="${SEQ[si % SEQ.length]}"/>` +
-                `<text x="${x + (bw - 3)/2}" y="${ly}" font-size="10.5" fill="#3C4339" text-anchor="middle">${nfmt(v)}</text>`;
+        bars += `<rect x="${x}" y="${top}" width="${bw - 3}" height="${h}" fill="${BAR_SEQ[si % BAR_SEQ.length]}"/>` +
+                `<text x="${x + (bw - 3)/2}" y="${ly}" font-size="10.5" fill="#3C4339" text-anchor="middle">${svgEsc(withUnit(v, unit))}</text>`;
       });
     }
   });
@@ -249,7 +253,7 @@ function lineChart(labels, series, unit){
   const g = valueAxis(sc, y, padL, padR, unit);
   let lines = "";
   series.forEach((s, si) => {
-    const col = SEQ[si % SEQ.length];
+    const col = BAR_SEQ[si % BAR_SEQ.length];
     const pts = s.values.map((v, i) => [x(i), y(Number(v) || 0)]);
     lines += `<polyline fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" ` +
              `points="${pts.map(p => p.join(",")).join(" ")}"/>`;
@@ -259,7 +263,7 @@ function lineChart(labels, series, unit){
   const base = `<line x1="${padL}" x2="${VIZ_W - padR}" y1="${y(0)}" y2="${y(0)}" stroke="#002B1A" stroke-width="1.2"/>`;
   /* a long run (51 years, 24 months) shows about a dozen evenly spaced labels */
   const step = Math.max(1, Math.ceil(labels.length / 12));
-  const shown = labels.map((l, i) => (i % step === 0 || i === labels.length - 1) && !(i !== labels.length - 1 && labels.length - 1 - i < step / 2) ? l : "");
+  const shown = labels.map((l, i) => (i % step === 0 || i === labels.length - 1) && !(i !== labels.length - 1 && labels.length - 1 - i < step) ? l : "");
   const slotW = labels.length < 2 ? plotW : plotW / (labels.length - 1) * step;
   const foot = chartFoot(shown, series, x, slotW, padT + plotH, padL);
   return chartFrame(foot.H, g + base + lines + foot.svg);
@@ -285,7 +289,7 @@ function donutChart(labels, values, unit){
   const p = (ang, rad) => [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)];
   nums.forEach((v, i) => {
     if (!(v > 0)) return;                  /* zero slices draw nothing */
-    const fill = SEQ[i % SEQ.length];
+    const fill = BAR_SEQ[i % BAR_SEQ.length];
     const share = v / total;
     if (share >= 0.9999){
       /* A full ring: an arc can't start and end on the same point, so draw
@@ -308,7 +312,7 @@ function donutChart(labels, values, unit){
   rowsData.forEach(d => {
     const i = d.i;
     const pct = asTyped ? nums[i] : (nums[i] / total) * 100;
-    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${SEQ[i % SEQ.length]}"/>` +
+    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${BAR_SEQ[i % BAR_SEQ.length]}"/>` +
             svgLines(d.lines, lx, yy, lh, `font-size="12" fill="${INK}"`) +
             `<text x="${VIZ_W - 4}" y="${yy}" font-size="12" fill="#002B1A" text-anchor="end" font-weight="600">` +
             `${unit === "%" ? nfmt(pct) + "%" : svgEsc(withUnit(nums[i], unit))}</text>`;
@@ -335,7 +339,7 @@ function hBarChart(labels, values, unit){
     const tx = nums[i] < 0 ? bx - 6 : zx + w + 8;
     out += svgLines(lines, padL - 12, mid + 4 - (lines.length - 1) * lh / 2, lh, `font-size="12" fill="#3C4339" text-anchor="end"`) +
            `<rect x="${padL}" y="${mid - 8.5}" width="${plotW}" height="17" fill="#F4F8F5"/>` +
-           `<rect x="${bx}" y="${mid - 8.5}" width="${Math.max(1, w)}" height="17" fill="${SEQ[i % SEQ.length]}"/>` +
+           `<rect x="${bx}" y="${mid - 8.5}" width="${Math.max(1, w)}" height="17" fill="${BAR_SEQ[0]}"/>` +
            `<text x="${tx}" y="${mid + 4}" font-size="11.5" fill="#002B1A" font-weight="600"${nums[i] < 0 ? ' text-anchor="end"' : ""}>${svgEsc(withUnit(nums[i], unit))}</text>`;
     y += rowH;
   });

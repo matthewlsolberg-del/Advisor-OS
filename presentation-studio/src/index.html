@@ -27,10 +27,16 @@
     <button class="btn btn-icon" id="btnUndo" title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
     <button class="btn btn-icon" id="btnRedo" title="Redo (Ctrl+Y)" aria-label="Redo">&#8631;</button>
     <span class="tb-sep"></span>
-    <button class="btn" id="btnNew" title="Start a new presentation">New</button>
-    <button class="btn" id="btnOpen" title="Open a saved .mhwg.json file">Open</button>
-    <button class="btn" id="btnSave" title="Save the working file (Ctrl+S)">Save</button>
+    <div class="file-menu">
+      <button class="btn" id="btnFile" aria-haspopup="true" title="New, open, save">File &#9662;</button>
+      <div class="file-drop" id="fileDrop" hidden>
+        <button id="btnNew" title="Start a new presentation">New document</button>
+        <button id="btnOpen" title="Open a saved .mhwg.json file">Open a saved file&hellip;</button>
+        <button id="btnSave" title="Save the working file (Ctrl+S)">Save the working file <kbd>Ctrl+S</kbd></button>
+      </div>
+    </div>
     <span class="tb-sep"></span>
+    <button class="btn btn-copilot" id="btnCopilotTop" title="Copy the one prompt for Copilot; paste Copilot's answer anywhere here">&#10022; Copilot</button>
     <button class="btn" id="btnHelp" title="How this works">Help</button>
     <button class="btn" id="btnPresent" title="Show it full screen, one page at a time">Present</button>
     <button class="btn btn-primary" id="btnExport" title="Export the finished PDF (Ctrl+P)">Export PDF</button>
@@ -62,7 +68,7 @@
         <div id="pieceGrid" class="piece-grid"></div>
       </div>
 
-      <div class="card step-card">
+      <div class="card step-card" id="dropCard">
         <span class="step-n">2</span>
         <h3>Drop in your reports</h3>
         <div class="dropzone big" id="dropzone">
@@ -75,7 +81,7 @@
         <div id="sourceList" class="source-list"></div>
       </div>
 
-      <div class="card step-card">
+      <div class="card step-card" id="notesCard">
         <span class="step-n">3</span>
         <h3>Your notes <em>optional</em></h3>
         <textarea id="fldNotes" rows="6" placeholder="Talk or type, in any order: what you discussed, what changed, what you want to recommend, anything they asked about.&#10;&#10;Tip: press Windows + H to dictate."></textarea>
@@ -110,7 +116,12 @@
       <div class="panel-intro">
         <h2>Edit the draft</h2>
         <p><b>Click any text on the page to type over it.</b> Yellow <mark class="blank">[[blanks]]</mark>
-          are yours to fill. Point at a block for its tools; click it for all its settings.</p>
+          are yours to fill: the form below lists them all. Point at anything for its tools, and press <b>&#10005;</b> to remove what doesn't apply.</p>
+      </div>
+      <div class="card blank-card" id="blankCard">
+        <div class="card-head"><h3>Fill in the blanks</h3><span class="progress-label" id="blankCount"></span></div>
+        <p class="hint">Type straight down the list and press Enter; each answer goes onto the page.</p>
+        <div id="blankForm" class="blank-form"></div>
       </div>
       <div class="card">
         <h3>The cover</h3>
@@ -223,6 +234,10 @@
         <button class="btn btn-primary btn-wide" id="btnExport2">Export the PDF</button>
         <button class="btn btn-wide" id="btnSave2">Save the working file (.mhwg.json)</button>
         <button class="btn btn-wide" id="btnPresent2">Present full screen</button>
+        <div class="btn-grid mt8">
+          <button class="btn" id="btnLeave" title="The key numbers, what we recommend and what happens next, on one page">One-page summary</button>
+          <button class="btn" id="btnPrep" title="Talking points and questions for you; never for the client">My prep sheet</button>
+        </div>
         <p class="hint">The working file is what you reopen to change the piece later — keep it on the
           work drive with the client file.</p>
       </div>
@@ -230,7 +245,7 @@
         <summary><h3>Look &amp; pages</h3></summary>
         <div class="field"><span>Cover</span></div>
         <div id="coverPick" class="swatch-grid four"></div>
-        <button class="btn btn-wide mt8" id="btnCoverImage" hidden>Choose the cover photograph&hellip;</button>
+        <button class="btn btn-wide mt8" id="btnCoverImage" hidden>Choose the cover picture&hellip;</button>
         <div class="field"><span>Inside pages</span></div>
         <div id="lookPick" class="swatch-grid two"></div>
         <div class="field"><span>Accent</span></div>
@@ -246,8 +261,9 @@
         <div class="field"><span>Pages included</span></div>
         <label class="check"><input type="checkbox" id="optToc"> Table of contents</label>
         <label class="check"><input type="checkbox" id="optDividers"> Full-page section dividers</label>
-        <label class="check"><input type="checkbox" id="optSectionBreak"> Each section starts a new page</label>
+        <label class="check"><input type="checkbox" id="optSectionBreak"> Each section starts a new page <em>(slides always do)</em></label>
         <label class="check"><input type="checkbox" id="optTeam"> Closing page: your team &amp; contact</label>
+        <label class="check"><input type="checkbox" id="optSpecialists"> &hellip; with the TD specialists we bring in (trust, estate)</label>
         <label class="check"><input type="checkbox" id="optDisc"> Important disclosures</label>
         <label class="check"><input type="checkbox" id="optConfidential"> "Confidential — prepared for…" footer</label>
         <label class="check"><input type="checkbox" id="optPageNums"> Page numbers</label>
@@ -278,9 +294,17 @@
         <button class="btn btn-mini" id="btnZoomIn" aria-label="Zoom in">+</button>
       </div>
       <div class="canvas-status" id="pageCount"></div>
+      <select id="viewPick" class="view-pick" aria-label="Show" title="What the pages show">
+        <option value="doc">Show: the document</option>
+        <option value="leave">Show: one-page summary to leave behind</option>
+        <option value="prep">Show: my prep sheet (internal)</option>
+      </select>
+      <button class="btn btn-mini btn-blank" id="btnNextBlank" hidden title="Jump to the next yellow blank and select it, so you just type">Next blank</button>
       <span class="canvas-tip" id="canvasTip">Click text to edit &middot; point at a block for tools</span>
       <label class="check check-inline"><input type="checkbox" id="optEditInline" checked> Edit on the page</label>
     </div>
+    <div class="view-banner" id="viewBanner" hidden><span id="viewBannerText"></span>
+      <button type="button" id="btnViewBack">Back to the document</button></div>
     <div class="pages" id="pages"></div>
   </section>
 

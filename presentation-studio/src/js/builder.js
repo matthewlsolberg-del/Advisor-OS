@@ -342,7 +342,7 @@ function rebuildRail(){
   $("fldHousehold").value = h.name;
   $("fldDate").value = h.date;
   const adv = $("fldAdvisor");
-  const opts = [""].concat(BRAND.team.map(m => m.name + (m.desig ? ", " + m.desig : ""))).concat([BRAND.firm]);
+  const opts = [""].concat(BRAND.team.filter(m => m.group === "advisor").map(m => m.name + (m.desig ? ", " + m.desig : ""))).concat([BRAND.firm]);
   if (h.advisor && !opts.includes(h.advisor)) opts.push(h.advisor);
   adv.innerHTML = opts.map(o => '<option value="' + esc(o) + '">' + esc(o || "— choose —") + "</option>").join("");
   adv.value = h.advisor;

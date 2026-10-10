@@ -260,6 +260,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 .check-row{display:block;width:100%;text-align:left;border:1px solid var(--hair);border-left:3px solid var(--warn);border-radius:5px;
   background:#fff;padding:8px 10px;margin-bottom:5px;cursor:pointer;font-size:12px;line-height:1.4}
 .check-row:hover{background:var(--tint)}
+.check-row.is-soft{border-left-color:var(--hair);color:var(--muted)}
 .check-ok{border:1px solid #cfe6c6;border-left:3px solid var(--shield);background:#f3faf0;border-radius:5px;padding:11px;font-size:12.5px;line-height:1.5;color:var(--gray)}
 .check-ok b{color:var(--deep)}
 
@@ -278,9 +279,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 
 /* tools on each block, shown on hover or when selected */
 .blk-hit{position:relative}
-.blk-quickbar{position:absolute;right:-6px;top:-30px;z-index:30;display:none;gap:3px;padding:3px;background:#fff;border:1px solid #cfd8cf;border-radius:6px;
-  box-shadow:0 4px 14px rgba(0,30,15,.16);white-space:nowrap;font-family:var(--ui);zoom:1.15}
-.pages.edit-on .blk-hit:hover > .blk-quickbar,.blk-hit.is-selected > .blk-quickbar{display:flex}
+/* The toolbar sits just above the block. A real mouse travelling from the block to the
+   toolbar must never lose it, so the toolbar reaches down onto the block (::after). */
+.blk-quickbar{position:absolute;right:-6px;top:-30px;z-index:30;display:flex;gap:3px;padding:3px;background:#fff;border:1px solid #cfd8cf;border-radius:6px;
+  box-shadow:0 4px 14px rgba(0,30,15,.16);white-space:nowrap;font-family:var(--ui);zoom:1.15;visibility:hidden}
+.blk-quickbar::after{content:"";position:absolute;left:0;right:0;top:100%;height:4px}
+.pages.edit-on .blk-hit:hover > .blk-quickbar,.blk-hit.is-selected > .blk-quickbar{visibility:visible;z-index:31}
+.pages:not(.edit-on) .blk-quickbar{display:none}
 .blk-quickbar button{border:1px solid transparent;background:#fff;border-radius:4px;padding:4px 7px;font:600 10.5px/1.1 var(--ui);cursor:pointer;color:var(--deep)}
 .blk-quickbar button:hover{background:var(--tint);border-color:var(--hair)}
 .blk-quickbar button.is-danger{color:var(--danger)}
@@ -364,7 +369,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(66,191,25,.35);bo
 
 /* ── Print: the studio disappears, the document remains ─────────────────── */
 @media print{
-  .topbar,.rail,.inspector,.canvas-bar,.modal,.toast,.insert-menu,.blk-quickbar{display:none !important}
+  .topbar,.rail,.inspector,.canvas-bar,.modal,.toast,.insert-menu,.blk-quickbar,.view-banner{display:none !important}
   body{overflow:visible;background:#fff}
   .shell{display:block;height:auto}
   .canvas{display:block;background:#fff}
@@ -396,6 +401,61 @@ kbd{font-family:var(--ui);font-size:11px;border:1px solid #c9d1c9;border-bottom-
 .big-steps textarea{margin:6px 0}
 .help-steps{padding-left:20px}.help-steps li{margin:6px 0}
 mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border-radius:3px;border-bottom:1.5px dashed #D99E14}
+
+/* "Next blank" above the pages (intake.js) */
+.btn-blank{background:#fff4b8;border-color:#e2cf6a;color:#5a4a00}
+.btn-blank:hover{background:#ffec8a}
+
+/* ── v10: fill in the blanks (blanks.js) ───────────────────────────────── */
+.blank-card{border-color:#e2cf6a;background:#fffdf3}
+.blank-card.is-done{background:#fff;border-color:var(--hair)}
+.blank-form{max-height:48vh;overflow:auto;margin:0 -4px;padding:0 4px}
+.bf-sec{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px;font-weight:600}
+.bf-row{display:block;margin:0 0 8px}
+.bf-label{display:block;font-size:12.5px;color:var(--ink);margin-bottom:3px;font-weight:600}
+.bf-label small{font-weight:400;color:var(--muted)}
+.bf-row input{width:100%;padding:7px 9px;border:1px solid #e2cf6a;border-radius:5px;background:#fff}
+/* what Copilot wrote, marked to read over: on screen only */
+.blk-hit.is-tocheck{box-shadow:inset 3px 0 0 var(--warn)}
+.blk-check{position:absolute;left:-4px;top:-22px;z-index:25;font:11px var(--ui);background:#fff4b8;border:1px solid #e2cf6a;color:#5a4a00;border-radius:4px;padding:2px 7px;cursor:pointer;white-space:nowrap}
+.blk-check:hover{background:#ffec8a}
+@media print{.blk-check{display:none !important}.blk-hit.is-tocheck{box-shadow:none !important}}
+.team-row select{width:100%;margin-bottom:4px;padding:5px 7px;border:1px solid var(--hair);border-radius:4px;background:#fff}
+
+/* ── v10: three big choices on Start, the File menu, toasts at the top ──── */
+#pieceGrid{display:block}
+.piece-main{display:grid;grid-template-columns:1fr;gap:7px}
+.piece-main .piece-card{padding:12px 14px}
+.piece-main .piece-card b{font-size:14.5px;margin-bottom:3px}
+.piece-more{margin-top:9px}
+.piece-more > summary{cursor:pointer;font-size:12px;color:var(--kick);line-height:1.4}
+.piece-rest{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+.file-menu{position:relative}
+.file-drop{position:absolute;right:0;top:calc(100% + 6px);z-index:60;background:#fff;color:var(--ink);border:1px solid #cfd8cf;border-radius:7px;
+  box-shadow:0 10px 28px rgba(0,0,0,.22);padding:5px;min-width:230px;display:flex;flex-direction:column}
+.file-drop button{background:none;border:0;text-align:left;padding:8px 10px;border-radius:5px;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+.file-drop button:hover{background:var(--tint)}
+.btn-copilot{background:#fff4b8;border-color:#e2cf6a;color:#3d3200;font-weight:600}
+.btn-copilot:hover{background:#ffec8a}
+.toast{left:calc(var(--rail-w) + (100vw - var(--rail-w)) / 2);bottom:24px;cursor:pointer}
+.view-pick{font-size:12px;padding:3px 6px;border:1px solid #cfd8cf;border-radius:5px;background:#fff}
+.view-banner{background:#3B5B72;color:#fff;font-size:12.5px;padding:7px 14px;display:flex;gap:12px;align-items:center;justify-content:center}
+.view-banner button{background:#fff;color:#3B5B72;border:0;border-radius:4px;padding:3px 9px;cursor:pointer;font-weight:600}
+/* one-click trimming: a ✕ on every bullet, fact row and action step (app.js addItemDeletes) */
+.item-del{display:block;position:absolute;left:-26px;top:50%;transform:translateY(-50%);width:20px;height:20px;padding:0;border-radius:50%;
+  border:1px solid #e3b7ad;background:#fff;color:var(--danger);font:11px/18px var(--ui);text-align:center;cursor:pointer;z-index:20;visibility:hidden}
+.item-del::after{content:"";position:absolute;left:100%;top:-4px;bottom:-4px;width:10px}    /* bridge back to the line */
+.pages.edit-on li:hover > .item-del,.pages.edit-on .fact:hover > .item-del,.pages.edit-on .action:hover > .item-del{visibility:visible}
+.pages:not(.edit-on) .item-del{display:none}
+.item-del:hover{background:var(--danger);color:#fff}
+.pages li,.pages .fact,.pages .action{position:relative}
+@media print{.item-del{display:none !important}}
+/* "Where these figures came from" in a block's settings (views.js) */
+.prov{margin-top:14px;padding-top:10px;border-top:1px solid var(--hair)}
+.prov-h{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--kick);font-weight:600;margin-bottom:4px}
+.prov-row{display:grid;grid-template-columns:78px 1fr;gap:8px;font-size:11.5px;padding:5px 0;border-bottom:1px dashed var(--hair)}
+.prov-row b{color:var(--deep)}
+.prov-row span{color:var(--gray);word-break:break-word}
 
 /* ==========================================================================
    Portfolio Builder — additions to studio.css (the rail) and to the document
@@ -597,16 +657,27 @@ body.builder{--rail-w:440px}
 }
 .cover-rule{width:96px;height:3px;margin:22px 0 20px}
 .cover-sub{font-size:15.5px;line-height:1.5;max-width:46ch;margin:0}
-.cover-foot{
-  padding:0 64px 58px; display:flex; justify-content:space-between;
-  align-items:flex-end; gap:24px;
+/* The deep-green band on the bottom edge of every cover: who it is for, the
+   date, and who prepared it, with the team's main line. */
+.cover-band{
+  position:relative; z-index:1; background:var(--deep); color:#fff; border-top:3px solid var(--gold);
+  padding:30px 64px 36px; display:flex; justify-content:space-between; align-items:flex-end; gap:28px;
 }
-.cover-for{font-size:12px;line-height:1.55}
-.cover-for .cf-label{
-  display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:5px;
+.cover-band .cf-label{
+  display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:6px;color:var(--gold);
 }
-.cover-for .cf-name{font-family:var(--f-disp);font-size:19px;letter-spacing:-.01em}
-.cover-meta{text-align:right;font-size:11px;line-height:1.7}
+.cover-band .cf-name{font-family:var(--f-disp);font-size:25px;line-height:1.15;letter-spacing:-.01em;color:#fff}
+.cb-date{font-size:12.5px;color:#D9E2DB;margin-top:6px}
+.cb-by{text-align:right;font-size:11.5px;line-height:1.6;color:#D9E2DB;max-width:56%}
+.cb-by .cb-name{font-family:var(--f-disp);font-size:16px;color:#fff;line-height:1.3}
+.cb-by .cb-title{color:#fff}
+.cb-by .cb-firm{margin-top:6px}
+.cover-draft{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:8.5px;letter-spacing:.14em;color:var(--gold);z-index:2}
+/* the optional cover picture (cover style "picture") */
+.cover-pic{position:relative;z-index:1;margin:0 64px 34px;height:300px;background-size:cover;background-position:center}
+.cover-pic.is-empty{border:1.5px dashed #c9d1c9;background:#F4F8F5;display:flex;align-items:center;justify-content:center;
+  text-align:center;font-size:12px;color:#7A867C;line-height:1.6}
+@media print{.cover-pic.is-empty{visibility:hidden}}
 
 /* clean white — the default. Paper white, generous space, gold hairlines, and one
    solid Premium Green band on the bottom edge. No frame, no tint, no transparency. */
@@ -615,20 +686,19 @@ body.builder{--rail-w:440px}
 .cover[data-style="white"]::before{
   content:"";position:absolute;left:64px;right:64px;top:172px;height:1px;background:var(--gold);z-index:1;
 }
-.cover[data-style="white"]::after{
-  content:"";position:absolute;left:0;right:0;bottom:0;height:16px;background:var(--deep);
-  border-top:3px solid var(--gold);z-index:1;
-}
 .cover[data-style="white"] .cover-kick{color:var(--kick);letter-spacing:.28em}
 .cover[data-style="white"] .cover-title{color:var(--deep);font-size:58px;line-height:1.02;max-width:18ch}
 .cover[data-style="white"] .cover-rule{background:var(--gold);width:72px;height:2px;margin:26px 0 22px}
 .cover[data-style="white"] .cover-sub{color:var(--gray);font-size:16.5px;max-width:42ch}
-.cover[data-style="white"] .cover-foot{
-  margin:0 64px;padding:24px 0 84px;border-top:1px solid var(--gold);
-}
-.cover[data-style="white"] .cf-label{color:var(--kick)}
-.cover[data-style="white"] .cf-name{color:var(--deep);font-size:23px}
-.cover[data-style="white"] .cover-meta{color:var(--gray)}
+/* "With a picture": the clean white cover with a photo panel above the band */
+.cover[data-style="picture"]{background:#fff;color:var(--ink)}
+.cover[data-style="picture"] .cover-frame{display:none}
+.cover[data-style="picture"] .cover-kick{color:var(--kick);letter-spacing:.28em}
+.cover[data-style="picture"] .cover-title{color:var(--deep);font-size:50px;line-height:1.02;max-width:20ch}
+.cover[data-style="picture"] .cover-rule{background:var(--gold);width:72px;height:2px;margin:20px 0 16px}
+.cover[data-style="picture"] .cover-sub{color:var(--gray);font-size:15px;max-width:48ch}
+.cover[data-style="picture"] .cover-gap.gap-a{flex-grow:1;min-height:150px}
+.cover[data-style="picture"] .cover-gap.gap-b{flex-grow:0;height:30px}
 
 /* premium (deep green) */
 .cover[data-style="premium"]{background:var(--deep);color:#fff}
@@ -637,8 +707,8 @@ body.builder{--rail-w:440px}
 .cover[data-style="premium"] .cover-kick{color:var(--gold)}
 .cover[data-style="premium"] .cover-rule{background:var(--gold)}
 .cover[data-style="premium"] .cover-sub{color:rgba(255,255,255,.82)}
-.cover[data-style="premium"] .cf-label{color:var(--gold)}
-.cover[data-style="premium"] .cover-meta{color:rgba(255,255,255,.7)}
+/* on a green cover the band is set apart by its gold rule alone */
+.cover[data-style="premium"] .cover-band,.cover[data-style="photo"] .cover-band{background:transparent}
 
 /* ivory */
 .cover[data-style="ivory"]{background:#FBFAF6;color:var(--ink)}
@@ -647,9 +717,6 @@ body.builder{--rail-w:440px}
 .cover[data-style="ivory"] .cover-title{color:var(--deep)}
 .cover[data-style="ivory"] .cover-rule{background:var(--accent)}
 .cover[data-style="ivory"] .cover-sub{color:var(--gray)}
-.cover[data-style="ivory"] .cf-label{color:var(--kick)}
-.cover[data-style="ivory"] .cover-meta{color:var(--gray)}
-.cover[data-style="ivory"] .cf-name{color:var(--deep)}
 
 /* photograph */
 .cover[data-style="photo"]{background:var(--deep);color:#fff}
@@ -657,13 +724,12 @@ body.builder{--rail-w:440px}
 .cover-scrim{position:absolute;inset:0;background:rgba(0,43,26,.72)}
 .cover[data-style="photo"] .cover-wm .wm-ink{fill:#fff}
 .cover[data-style="photo"] .cover-wm .wm-green{fill:var(--shield)}
-.cover[data-style="photo"] .cover-kick,.cover[data-style="photo"] .cf-label{color:var(--gold)}
+.cover[data-style="photo"] .cover-kick{color:var(--gold)}
 .cover[data-style="photo"] .cover-rule{background:var(--gold)}
 .cover[data-style="photo"] .cover-sub{color:rgba(255,255,255,.85)}
-.cover[data-style="photo"] .cover-meta{color:rgba(255,255,255,.7)}
 /* The scrim is a positioned layer, so the text blocks need their own stacking
    context to sit above it. The frame and wordmark are already absolute. */
-.cover-body,.cover-foot{position:relative;z-index:1}
+.cover-body{position:relative;z-index:1}
 .cover-frame,.cover-wm{z-index:1}
 
 /* ── Section divider page ───────────────────────────────────────────────── */
@@ -691,6 +757,9 @@ body.builder{--rail-w:440px}
 .toc-dots{flex:1;border-bottom:0}
 .toc-page{font-family:var(--f-disp);font-size:14px;color:var(--gray);font-variant-numeric:tabular-nums}
 .toc-note{margin-top:26px;font-size:var(--t-cap);color:var(--gray);line-height:1.5}
+.toc-list.is-long .toc-item{padding:9px 0}
+.toc-list.is-long .toc-name{font-size:17px}
+.doc[data-format="slides"] .toc-list.is-long .toc-item{padding:6px 0}
 
 /* ── Blocks ─────────────────────────────────────────────────────────────── */
 .blk{margin:0 0 var(--gap)}
@@ -708,6 +777,8 @@ body.builder{--rail-w:440px}
 /* the section's number, set like a private-bank report: small gold figures above the title */
 .blk-secnum{font-family:var(--f-disp);font-size:13px;letter-spacing:.18em;color:var(--gold-dk);margin:0 0 6px}
 .blk-heading:has(.blk-secnum){margin-bottom:calc(var(--gap) + 8px)}
+/* a section that runs on part way down a page: a hairline and some air above it */
+.blk-heading.is-runon{margin-top:18px;padding-top:26px;border-top:1px solid var(--hair)}
 .blk-h3{
   font-family:var(--f-disp);font-size:var(--t-h3);line-height:1.3;color:var(--deep);
   margin:0 0 6px;
@@ -844,6 +915,9 @@ body.builder{--rail-w:440px}
 .team-cell .t-name{font-family:var(--f-disp);font-size:15px;color:var(--deep)}
 .team-cell .t-desig{font-size:10px;color:var(--gold-dk);font-weight:600;margin-top:4px;letter-spacing:.1em}
 .team-cell .t-title{font-size:10.8px;color:var(--gray);margin-top:3px}
+.team-sub{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--kick);font-weight:600;text-align:center;margin:22px 0 2px}
+.team-grid.is-small .team-cell{padding:9px 10px}
+.team-grid.is-small .t-name{font-size:13.5px}
 .contact{text-align:center;padding:22px 0 18px;border-top:1.5px solid var(--gold);margin-top:22px}
 .contact .c-firm{font-family:var(--f-disp);font-size:15px;color:var(--deep)}
 .contact .c-line{font-size:11.8px;color:var(--gray);margin-top:5px;line-height:1.6}
@@ -851,6 +925,7 @@ body.builder{--rail-w:440px}
   font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep);
   font-weight:600;margin:18px 0 7px;padding-top:12px;border-top:1px solid var(--hair);
 }
+.disc-h.is-page{font-family:var(--f-disp);font-size:20px;letter-spacing:0;text-transform:none;font-weight:400;border-top:0;padding-top:0;margin:0 0 14px}
 .disc-p{font-size:var(--t-disc);line-height:1.5;color:var(--gray);margin:0 0 6px;text-align:left}
 .disc-draft{font-size:var(--t-disc);color:#b06a4a;margin-bottom:6px;letter-spacing:.04em}
 
@@ -903,6 +978,7 @@ body.builder{--rail-w:440px}
 mark.needs{background:#FFE8B3;color:#5c3a06;font-weight:600;padding:0 2px;border-radius:2px}
 mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border-radius:3px;border-bottom:1.5px dashed #D99E14}
 @media print{mark.blank{background:#FFF3C4}}
+mark.blank.is-current,mark.needs.is-current{outline:2px solid #D99E14;outline-offset:1px}
 
 /* ── Page style: Classic ─────────────────────────────────────────────────────
    The original inside pages (Oct 2): tighter margins, boxed key numbers, a
@@ -965,8 +1041,8 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .doc[data-format="slides"] .cover-wm{left:72px;top:58px}
 .doc[data-format="slides"] .cover-shield{right:72px;top:58px}
 .doc[data-format="slides"] .cover-body{padding:0 72px}
-.doc[data-format="slides"] .cover-foot{padding-left:72px;padding-right:72px}
-.doc[data-format="slides"] .cover[data-style="white"] .cover-foot{margin:0 72px;padding:20px 0 48px}
+.doc[data-format="slides"] .cover-band{padding:22px 72px 26px}
+.doc[data-format="slides"] .cover-pic{margin:0 72px 22px;height:150px}
 .doc[data-format="slides"] .cover[data-style="white"]::before{left:72px;right:72px;top:150px}
 .doc[data-format="slides"] .cover-title{font-size:56px;max-width:22ch}
 .doc[data-format="slides"] .cover[data-style="white"] .cover-title{font-size:64px;max-width:24ch}
@@ -1239,6 +1315,73 @@ mark.blank{background:#FFF3C4;color:#6b4f00;font-weight:600;padding:0 3px;border
 .hh-chart-side .hh-title{margin-bottom:10px}
 .hh-donut{margin-top:3px;margin-bottom:9px}
 .hh-structure .hh-title{margin-top:2px;margin-bottom:6px}
+
+/* slides are landscape: profile band on top, mix and account table side by side */
+.doc[data-format="slides"] .hh-intro{display:none}
+.doc[data-format="slides"] .hh-page-title{font-size:28px}
+.doc[data-format="slides"] .hh-main{display:grid;grid-template-columns:44% 56%;gap:22px;align-items:start}
+.doc[data-format="slides"] .hh-allocation-panel{grid-template-columns:52% 48%;gap:10px;border-bottom:0;padding:0;margin:0}
+.doc[data-format="slides"] .hh-donut{width:150px;height:150px}
+.doc[data-format="slides"] .hh-note{display:none}
+.blk-src{font-size:10px;letter-spacing:.03em;color:#8b978d;margin-top:4px}
+
+/* ── v10: slides read from across a room ────────────────────────────────────
+   Nothing on a slide is set smaller than about 14px (team, disclosures, captions). */
+.doc[data-format="slides"]{ --t-cap:15px; --t-disc:14.5px; }
+.doc[data-format="slides"] .closing-h{font-size:38px}
+.doc[data-format="slides"] .closing-sub{font-size:18px;margin-bottom:12px}
+.doc[data-format="slides"] .team-grid{grid-template-columns:repeat(4,1fr)}
+.doc[data-format="slides"] .team-cell{padding:12px 10px;border-right:1px solid var(--hair)}
+.doc[data-format="slides"] .team-cell:nth-child(4n){border-right:0}
+.doc[data-format="slides"] .team-cell .t-name{font-size:21px}
+.doc[data-format="slides"] .team-cell .t-desig{font-size:13px}
+.doc[data-format="slides"] .team-cell .t-title{font-size:14.5px;line-height:1.35}
+.doc[data-format="slides"] .team-sub{font-size:13px;margin-top:14px}
+.doc[data-format="slides"] .team-grid.is-small .t-name{font-size:18px}
+.doc[data-format="slides"] .contact{padding:14px 0 6px;margin-top:14px}
+.doc[data-format="slides"] .contact .c-firm{font-size:20px}
+.doc[data-format="slides"] .contact .c-line{font-size:15px}
+.doc[data-format="slides"] .disc-h.is-page{font-size:30px}
+.doc[data-format="slides"] .disc-p{line-height:1.45;margin-bottom:7px}
+.doc[data-format="slides"] .disc-draft{font-size:14px}
+.doc[data-format="slides"] .stat .s-label{font-size:14px}
+.doc[data-format="slides"] .stat .s-note{font-size:15px}
+.doc[data-format="slides"] .blk-table th{font-size:14px}
+.doc[data-format="slides"] .blk-src{font-size:13px}
+.doc[data-format="slides"] .page-head{font-size:12px}
+.doc[data-format="slides"] .page-foot{font-size:12px}
+.doc[data-format="slides"] .cover-band .cf-name{font-size:28px}
+.doc[data-format="slides"] .cb-by{font-size:14px}
+.doc[data-format="slides"] .cb-by .cb-name{font-size:19px}
+.doc[data-format="slides"] .cb-date{font-size:15px}
+
+/* ── v10: the account recommendation page, with more air ─────────────────── */
+.rec-profile .rec-family{font-size:10.5px;letter-spacing:.06em;color:var(--gold-dk);margin:-4px 0 10px}
+.recommendation-page .rec-recommendation-title{border-bottom:0;padding-bottom:0;margin-bottom:6px}
+.recommendation-page .rec-family{padding-bottom:8px;border-bottom:1px solid var(--gold);margin-bottom:10px}
+.recommendation-page .rec-commentary{gap:10px 22px;margin:6px 0 12px}
+.recommendation-page .rec-commentary-block{padding:8px 10px;background:var(--tint);border-radius:2px}
+.rec-holding.rec-more span{font-style:italic;color:var(--gray)}
+.recommendation-page .rec-summary{font-size:12px;line-height:16.5px;margin-bottom:8px}
+.recommendation-page .rec-commentary-block span{font-size:10.6px;line-height:14px}
+.recommendation-page .rec-holding{font-size:10.6px;line-height:15.5px}
+.recommendation-page .rec-fit li{font-size:11px;line-height:15px}
+
+/* ── v10: the one-page leave-behind and the prep sheet (views.js) ────────── */
+.lb-head .brand-pair{display:flex;align-items:center;justify-content:space-between;flex-direction:row-reverse;margin-bottom:22px}
+.lb-head .brand-pair svg{width:190px;height:auto;display:block}
+.lb-head .td-shield img{height:40px;width:auto;display:block}
+.lb-kick{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--kick);margin-bottom:8px}
+.lb-title{font-family:var(--f-disp);font-size:30px;line-height:1.08;color:var(--deep);margin:0 0 8px;font-weight:400}
+.lb-meta{font-size:12px;color:var(--gray);padding-bottom:12px;border-bottom:1.5px solid var(--gold)}
+.lb-foot{border-top:1px solid var(--hair);padding-top:10px;margin-top:6px}
+.lb-contact{font-size:10.5px;color:var(--deep);margin-bottom:8px}
+.lb-disc-h{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep);font-weight:600;margin-bottom:3px}
+.lb-disc{font-size:8.4px;line-height:1.38;color:var(--gray);margin:0 0 3px}
+.page-internal{position:absolute;left:0;right:0;top:18px;text-align:center;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:#fff;background:#9A1C08;padding:5px 0;font-weight:600}
+.doc[data-format="slides"] .team-grid.is-small{display:flex;justify-content:center}
+.doc[data-format="slides"] .team-grid.is-small .team-cell{width:25%}
 </style>
 </head>
 <body data-build="1.0" class="builder">
@@ -1390,13 +1533,25 @@ const BRAND = {
   address:"101, 2810 13th Ave SE, Medicine Hat, AB  T1A 3P9",
   phone:"(403) 504-2780",
   web:"advisors.td.com/medicinehatwealthgroup",
-  tagline:"Your goals. Our guidance. One team.",
+  /* in the team's own words, from advisors.td.com/medicinehatwealthgroup */
+  tagline:"Let's build a strategy that fits your life — today and tomorrow.",
+  /* who signs the cover when nobody has been chosen yet (the choice is remembered, app.js) */
+  defaultAdvisor:"Matthew Solberg, CFP®, CIM®",
 
+  /* Titles and designations as on the team website. group: "advisor" (the
+     grid on the closing page and the "Prepared by" list), "service" (client
+     service team) or "specialist" (TD specialists, shown when that option is on).
+     Neil's designations: the website lists them two ways; this is the shorter
+     listing until he confirms. */
   team:[
-    {name:"Neil Mardian",    desig:"CFP®, CIWM, M.Sc.", title:"Investment Advisor"},
-    {name:"Matthew Solberg", desig:"CFP®, CIM®",   title:"Investment Advisor"},
-    {name:"Brian Widmer",    desig:"CFP®, CIM®",   title:"Investment Advisor"},
-    {name:"Shandie Froese",  desig:"B.Sc., CFP®",       title:"Investment Advisor"}
+    {name:"Neil Mardian",       desig:"CFP®, CIWM, M.Sc.", title:"Senior Portfolio Manager, Senior Investment Advisor", group:"advisor"},
+    {name:"Matthew Solberg",    desig:"CFP®, CIM®",        title:"Senior Investment Advisor", group:"advisor"},
+    {name:"Brian Widmer",       desig:"CFP®, CIM®",        title:"Portfolio Manager, Senior Investment Advisor", group:"advisor"},
+    {name:"Shandie Froese",     desig:"B.Sc., CFP®",       title:"Senior Investment Advisor", group:"advisor"},
+    {name:"Denise Butterfield", desig:"",                  title:"Client Service Associate", group:"service"},
+    {name:"Rachel Forster",     desig:"",                  title:"Client Service Associate", group:"service"},
+    {name:"Jane Mozill",        desig:"",                  title:"Executive Trust Officer, TD Wealth Private Trust", group:"specialist"},
+    {name:"Blaine Wilson",      desig:"",                  title:"Estate Planning Advisor, TD Wealth Insurance Services", group:"specialist"}
   ],
 
   draftTag:"DRAFT — pending branch/firm compliance pre-approval",
@@ -2503,6 +2658,9 @@ function readTextFile(file){
 
 const VIZ_W = 660;                      /* the content column, in CSS px */
 const SEQ = BRAND.sequence;
+/* Bars and lines are big areas of colour: deep green and gold lead, so the page
+   stays calm; the bright Shield Green comes third. Donuts use the same order. */
+const BAR_SEQ = ["#002B1A", "#CFBD91", "#42BF19", "#3B5B72", "#A4D6DD", "#D99E14", "#855991"];
 const INK = "#1C1C1C";
 
 const svgEsc = (s) => esc(s);
@@ -2627,7 +2785,8 @@ function chartFrame(h, inner){
 /* Legend that flows onto as many rows as it needs within maxW. Long names
    wrap inside their own entry. Returns the markup and the height used
    below the first baseline. */
-function legend(names, x, y, maxW){
+function legend(names, x, y, maxW, seq){
+  seq = seq || SEQ;
   const fs = 11, rowH = 17, limit = maxW || (VIZ_W - x);
   let out = "", cx = x, cy = y, rowExtra = 0;
   names.forEach((n, i) => {
@@ -2635,7 +2794,7 @@ function legend(names, x, y, maxW){
     const textW = Math.max(0, ...lines.map(l => l.length)) * fs * 0.58;
     const w = 14 + textW + 16;
     if (cx > x && cx + w - 16 > x + limit){ cx = x; cy += rowH + rowExtra; rowExtra = 0; }
-    out += `<rect x="${cx}" y="${cy - 8}" width="9" height="9" fill="${SEQ[i % SEQ.length]}"/>` +
+    out += `<rect x="${cx}" y="${cy - 8}" width="9" height="9" fill="${seq[i % seq.length]}"/>` +
            svgLines(lines, cx + 14, cy, 13, `font-size="${fs}" fill="#3C4339"`);
     rowExtra = Math.max(rowExtra, (lines.length - 1) * 13);
     cx += w;
@@ -2662,7 +2821,7 @@ function valueAxis(sc, y, padL, padR, unit){
   let g = "";
   sc.ticks.forEach(t => {
     g += `<line x1="${padL}" x2="${VIZ_W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="#E4E9E2" stroke-width="1"/>` +
-         `<text x="${padL - 9}" y="${y(t) + 4}" font-size="10.5" fill="#8b978d" text-anchor="end">${svgEsc(t === sc.max ? withUnit(t, unit) : nfmt(t))}</text>`;
+         `<text x="${padL - 9}" y="${y(t) + 4}" font-size="10.5" fill="#8b978d" text-anchor="end">${svgEsc(t === 0 ? "0" : withUnit(t, unit))}</text>`;
   });
   return g;
 }
@@ -2672,7 +2831,7 @@ function chartFoot(labels, series, xAt, slotW, plotBottom, padL){
   const xl = xLabels(labels, xAt, slotW, plotBottom + 18);
   const lastLabelY = plotBottom + 18 + (xl.lines - 1) * 13;
   let leg = {svg:"", height:0};
-  if (series.length > 1) leg = legend(series.map(s => s.name || ""), padL, lastLabelY + 20, VIZ_W - padL - 8);
+  if (series.length > 1) leg = legend(series.map(s => s.name || ""), padL, lastLabelY + 20, VIZ_W - padL - 8, BAR_SEQ);
   return {svg:xl.svg + leg.svg, H:lastLabelY + 28 + leg.height};
 }
 
@@ -2710,7 +2869,7 @@ function barChart(labels, series, unit, stacked){
         if (!v) return;
         const from = v > 0 ? pos : neg, to = from + v;
         const ya = y(Math.max(from, to)), yb = y(Math.min(from, to));
-        bars += `<rect x="${cx - bw/2}" y="${ya}" width="${bw}" height="${Math.max(0, yb - ya)}" fill="${SEQ[si % SEQ.length]}"/>`;
+        bars += `<rect x="${cx - bw/2}" y="${ya}" width="${bw}" height="${Math.max(0, yb - ya)}" fill="${BAR_SEQ[si % BAR_SEQ.length]}"/>`;
         if (v > 0) pos = to; else neg = to;
       });
     } else {
@@ -2721,8 +2880,8 @@ function barChart(labels, series, unit, stacked){
         const yy = y(v);
         const top = Math.min(yy, y0), h = Math.abs(y0 - yy);
         const ly = v < 0 ? yy + 14 : yy - 6;
-        bars += `<rect x="${x}" y="${top}" width="${bw - 3}" height="${h}" fill="${SEQ[si % SEQ.length]}"/>` +
-                `<text x="${x + (bw - 3)/2}" y="${ly}" font-size="10.5" fill="#3C4339" text-anchor="middle">${nfmt(v)}</text>`;
+        bars += `<rect x="${x}" y="${top}" width="${bw - 3}" height="${h}" fill="${BAR_SEQ[si % BAR_SEQ.length]}"/>` +
+                `<text x="${x + (bw - 3)/2}" y="${ly}" font-size="10.5" fill="#3C4339" text-anchor="middle">${svgEsc(withUnit(v, unit))}</text>`;
       });
     }
   });
@@ -2744,7 +2903,7 @@ function lineChart(labels, series, unit){
   const g = valueAxis(sc, y, padL, padR, unit);
   let lines = "";
   series.forEach((s, si) => {
-    const col = SEQ[si % SEQ.length];
+    const col = BAR_SEQ[si % BAR_SEQ.length];
     const pts = s.values.map((v, i) => [x(i), y(Number(v) || 0)]);
     lines += `<polyline fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" ` +
              `points="${pts.map(p => p.join(",")).join(" ")}"/>`;
@@ -2754,7 +2913,7 @@ function lineChart(labels, series, unit){
   const base = `<line x1="${padL}" x2="${VIZ_W - padR}" y1="${y(0)}" y2="${y(0)}" stroke="#002B1A" stroke-width="1.2"/>`;
   /* a long run (51 years, 24 months) shows about a dozen evenly spaced labels */
   const step = Math.max(1, Math.ceil(labels.length / 12));
-  const shown = labels.map((l, i) => (i % step === 0 || i === labels.length - 1) && !(i !== labels.length - 1 && labels.length - 1 - i < step / 2) ? l : "");
+  const shown = labels.map((l, i) => (i % step === 0 || i === labels.length - 1) && !(i !== labels.length - 1 && labels.length - 1 - i < step) ? l : "");
   const slotW = labels.length < 2 ? plotW : plotW / (labels.length - 1) * step;
   const foot = chartFoot(shown, series, x, slotW, padT + plotH, padL);
   return chartFrame(foot.H, g + base + lines + foot.svg);
@@ -2780,7 +2939,7 @@ function donutChart(labels, values, unit){
   const p = (ang, rad) => [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)];
   nums.forEach((v, i) => {
     if (!(v > 0)) return;                  /* zero slices draw nothing */
-    const fill = SEQ[i % SEQ.length];
+    const fill = BAR_SEQ[i % BAR_SEQ.length];
     const share = v / total;
     if (share >= 0.9999){
       /* A full ring: an arc can't start and end on the same point, so draw
@@ -2803,7 +2962,7 @@ function donutChart(labels, values, unit){
   rowsData.forEach(d => {
     const i = d.i;
     const pct = asTyped ? nums[i] : (nums[i] / total) * 100;
-    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${SEQ[i % SEQ.length]}"/>` +
+    rows += `<rect x="330" y="${yy - 9}" width="10" height="10" fill="${BAR_SEQ[i % BAR_SEQ.length]}"/>` +
             svgLines(d.lines, lx, yy, lh, `font-size="12" fill="${INK}"`) +
             `<text x="${VIZ_W - 4}" y="${yy}" font-size="12" fill="#002B1A" text-anchor="end" font-weight="600">` +
             `${unit === "%" ? nfmt(pct) + "%" : svgEsc(withUnit(nums[i], unit))}</text>`;
@@ -2830,7 +2989,7 @@ function hBarChart(labels, values, unit){
     const tx = nums[i] < 0 ? bx - 6 : zx + w + 8;
     out += svgLines(lines, padL - 12, mid + 4 - (lines.length - 1) * lh / 2, lh, `font-size="12" fill="#3C4339" text-anchor="end"`) +
            `<rect x="${padL}" y="${mid - 8.5}" width="${plotW}" height="17" fill="#F4F8F5"/>` +
-           `<rect x="${bx}" y="${mid - 8.5}" width="${Math.max(1, w)}" height="17" fill="${SEQ[i % SEQ.length]}"/>` +
+           `<rect x="${bx}" y="${mid - 8.5}" width="${Math.max(1, w)}" height="17" fill="${BAR_SEQ[0]}"/>` +
            `<text x="${tx}" y="${mid + 4}" font-size="11.5" fill="#002B1A" font-weight="600"${nums[i] < 0 ? ' text-anchor="end"' : ""}>${svgEsc(withUnit(nums[i], unit))}</text>`;
     y += rowH;
   });
@@ -3047,7 +3206,7 @@ function editable(tag, cls, text, bid, path){
 }
 
 function renderBlock(b){
-  const wrap = el("div", "blk blk-hit blk-" + b.type);
+  const wrap = el("div", "blk blk-hit blk-" + b.type + (b.runOn ? " is-runon" : ""));
   wrap.dataset.bid = b.id;
   wrap.dataset.type = b.type;
   if (b._off != null){ wrap.dataset.off = b._off; wrap.dataset.len = b._len; }
@@ -3211,13 +3370,15 @@ function renderBlock(b){
       if (BLOCK_RENDERERS[b.type]){ BLOCK_RENDERERS[b.type](b, wrap); break; }
       wrap.appendChild(el("p","blk-p", esc(JSON.stringify(b))));
   }
+  /* where the figures came from (smart.js sets it on report charts and tables) */
+  if (b.source && (b.type === "chart" || b.type === "table")) wrap.appendChild(el("div","blk-src", "Source: " + esc(b.source)));
   return wrap;
 }
 
 function looksNumericHeader(b, ci){
   const col = (b.rows || []).map(r => r[ci]).filter(v => v != null && v !== "" && v !== "—");
   if (!col.length) return false;
-  return col.every(v => /^[\s$€£+\-(]?[\d.,]+\s*[%kKMB)]*$/.test(String(v).trim()));
+  return col.every(v => /^[\s$€£+\-−(]{0,2}[\d.,]+\s*[%kKMB)]*$/.test(String(v).trim()));
 }
 
 /* ── Splitting a block across a page break ──────────────────────────────── */
@@ -3319,6 +3480,8 @@ function newPage(deck, ctx){
   p.appendChild(foot);
 
   if (deck.options.draft) p.appendChild(el("div","page-draft", esc(BRAND.draftTag)));
+  /* the prep sheet (views.js): never mistaken for something to hand over */
+  if (deck.internal) p.appendChild(el("div","page-internal","Internal — for the advisor only, not for the client"));
   p._body = body;
   return p;
 }
@@ -3351,21 +3514,36 @@ function coverPage(deck){
   c.appendChild(body);
   c.appendChild(el("div","cover-gap gap-b"));
 
-  const foot = el("div","cover-foot");
-  const forBox = el("div","cover-for");
+  /* an optional picture between the title and the band; an empty one is a
+     placeholder on screen only (render.js never prints an empty frame) */
+  if (deck.cover.style === "picture"){
+    const pic = el("div", "cover-pic" + (deck.cover.image ? "" : " is-empty"));
+    if (deck.cover.image) pic.style.backgroundImage = "url(" + deck.cover.image + ")";
+    else pic.appendChild(el("span", "", "Team photo or a Medicine Hat picture goes here.<br>Finish &rarr; Look &amp; pages &rarr; Choose the cover picture."));
+    c.appendChild(pic);
+  }
+
+  /* the deep-green band: who it is for, when, and who prepared it */
+  const band = el("div","cover-band");
+  const forBox = el("div","cb-for");
   if (deck.meta.client){
     forBox.appendChild(el("span","cf-label","Prepared for"));
     forBox.appendChild(el("div","cf-name", esc(deck.meta.client)));
   }
-  foot.appendChild(forBox);
-  const meta = el("div","cover-meta");
-  if (deck.meta.advisor) meta.appendChild(el("div","", esc(deck.meta.advisor)));
-  meta.appendChild(el("div","", esc(BRAND.firm)));
-  meta.appendChild(el("div","", esc(BRAND.subbrand)));
-  if (deck.meta.date) meta.appendChild(el("div","", esc(prettyDate(deck.meta.date))));
-  if (deck.options.draft) meta.appendChild(el("div","", esc(BRAND.draftTag)));
-  foot.appendChild(meta);
-  c.appendChild(foot);
+  if (deck.meta.date) forBox.appendChild(el("div","cb-date", esc(prettyDate(deck.meta.date))));
+  band.appendChild(forBox);
+  const by = el("div","cb-by");
+  const who = preparedBy(deck);
+  if (who){
+    by.appendChild(el("span","cf-label","Prepared by"));
+    by.appendChild(el("div","cb-name", esc(who.name)));
+    if (who.title) by.appendChild(el("div","cb-title", esc(who.title)));
+  }
+  by.appendChild(el("div","cb-firm", esc(BRAND.firm) + " &middot; " + esc(BRAND.subbrand)));
+  if (deck.contact && deck.contact.phone) by.appendChild(el("div","cb-phone", esc(deck.contact.phone)));
+  band.appendChild(by);
+  c.appendChild(band);
+  if (deck.options.draft) c.appendChild(el("div","cover-draft", esc(BRAND.draftTag)));
 
   p.appendChild(c);
   return p;
@@ -3402,7 +3580,11 @@ function prettyDate(iso){
  * Lay the whole deck out into pages inside `host`.
  * Returns {pages, sectionPages} so the table of contents can be numbered.
  */
+/* the deck being laid out right now (a view's copy, or the document itself) */
+let layoutDeck = null;
+
 function layout(deck, host){
+  layoutDeck = deck;
   host.innerHTML = "";
   const doc = host;
   doc.dataset.accent = deck.design.accent || "gold";
@@ -3416,12 +3598,12 @@ function layout(deck, host){
   const sectionPages = {};
 
   /* front matter -------------------------------------------------------- */
-  pages.push({node: coverPage(deck), numbered:false});
+  if (!deck.noCover) pages.push({node: coverPage(deck), numbered:false});
 
   /* account pages are listed once, under "Our recommendations", not one by one */
   const tocSections = deck.sections.filter(s => !s.accountRecommendation);
   const tocCount = deck.options.toc
-    ? Math.max(1, Math.ceil(tocSections.length / 16))
+    ? Math.max(1, Math.ceil(tocSections.length / tocPerPage(deck)))
     : 0;
   const tocSlots = [];
   for (let i = 0; i < tocCount; i++){
@@ -3450,7 +3632,7 @@ function layout(deck, host){
     const frag = (from, to) => {
       const f = rule.build(b, units.slice(from, to), from === 0);
       f.id = b.id; f._off = from; f._len = to - from;
-      if (b.type === "table" && to < units.length){ f.totalRow = false; f.caption = ""; }
+      if (b.type === "table" && to < units.length){ f.totalRow = false; f.caption = ""; f.source = ""; }
       return f;
     };
     let best = 0;
@@ -3458,6 +3640,8 @@ function layout(deck, host){
       if (M.height(renderBlock(frag(0, k))) <= room) best = k; else break;
     }
     if (best === 0) return false;
+    /* never leave one line, row or item on its own at the top of the next page */
+    if (units.length - best === 1 && best >= 2) best--;
     place(renderBlock(frag(0, best)), room);
     startPage();
     let start = best;
@@ -3477,19 +3661,26 @@ function layout(deck, host){
     return true;
   };
 
+  /* Slides always give each section its own slide. On paper, short sections run
+     on (no half-empty pages) unless "Each section starts a new page" is ticked. */
+  const breakEach = deck.options.sectionBreak || deck.design.format === "slides";
+
   deck.sections.forEach((section, si) => {
     const recPart = section.recommendationOverview || section.recommendation;
     ctx = {section: recPart ? "OUR RECOMMENDATIONS" : (section.runningTitle || section.title || ""),
            recommendation: !!section.recommendation, householdSummary: !!section.recommendationOverview};
+    const ownPage = section.recommendation || section.recommendationOverview || (deck.sections[si - 1] || {}).recommendation;
     if (deck.options.dividers){
       pages.push({node: dividerPage(deck, section, si + 1), numbered:true});
       sectionPages[section.id] = pages.length;   /* provisional; fixed below */
       page = null;
-    } else if ((deck.options.sectionBreak || section.recommendation || section.recommendationOverview || (deck.sections[si - 1] || {}).recommendation) && si > 0){
+    } else if ((breakEach || ownPage) && si > 0){
       page = null;              /* each section opens a page; a recommendation always has its own */
     }
     let items = (section.blocks || []).slice();
-    if (!deck.options.dividers && !section.recommendation && !section.recommendationOverview){
+    if (section.noHeading){
+      /* a view's page (views.js) brings its own heading */
+    } else if (!deck.options.dividers && !section.recommendation && !section.recommendationOverview){
       items = [Object.assign(newBlock("heading"),
                 {id:"sec-" + section.id, level:2, kicker: section.kicker || "", text: section.title || "", num: si + 1})]
               .concat(items);
@@ -3501,21 +3692,47 @@ function layout(deck, host){
     }
     /* the household summary carries its own title, so title and summary never split */
 
+    /* Running on: the section starts part way down the page. It moves to a fresh
+       page when little room is left, or when it is short enough to keep whole
+       on the next page but would be split here (unless nearly half the page
+       is still empty: then it starts here, rather than leave a gap). */
+    let pre = null;
+    if (page && used > 0 && !deck.options.dividers && items.length && items[0].type === "heading"){
+      items[0] = Object.assign({}, items[0], {runOn: true});
+      pre = items.map(b => { const node = renderBlock(b); return {node, h: M.height(node)}; });
+      /* the last block's bottom margin need not fit on the page */
+      const gap = parseFloat(getComputedStyle(doc).getPropertyValue("--gap")) || 15;
+      const total = pre.reduce((n, x) => n + x.h, 0) - gap, room = LIMIT - used;
+      if (room < LIMIT * 0.22 || (total > room && total <= LIMIT * 0.6 && room < LIMIT * 0.45)){
+        page = null;
+        items[0] = Object.assign({}, items[0], {runOn: false});
+        pre = null;
+      }
+    }
+
     items.forEach((b, bi) => {
       if (b.type === "pagebreak"){ page = null; return; }
       if (!page) { startPage(); if (!sectionPages[section.id]) sectionPages[section.id] = pages.length; }
       if (!sectionPages[section.id]) sectionPages[section.id] = pages.length;
 
-      let node = renderBlock(b);
-      let h = M.height(node);
+      let node, h;
+      if (pre && pre[bi]){ node = pre[bi].node; h = pre[bi].h; }
+      else { node = renderBlock(b); h = M.height(node); }
 
       if (h <= LIMIT - used){
-        /* a heading should never be the last thing on a page */
+        /* a heading is never the last thing on a page: it keeps with what follows */
         const isHeading = b.type === "heading";
         if (isHeading && bi < items.length - 1){
-          const nextH = M.height(renderBlock(items[bi + 1]));
+          const nextH = pre && pre[bi + 1] ? pre[bi + 1].h : M.height(renderBlock(items[bi + 1]));
           const room = LIMIT - used - h;
-          if (room < Math.min(nextH, 90)){ startPage(); node = renderBlock(b); h = M.height(node); }
+          /* a list or paragraph can start here and carry on; a chart or picture cannot */
+          const next = items[bi + 1], splits = SPLITTABLE[next.type] && SPLITTABLE[next.type].units(next).length > 1;
+          if (splits ? room < Math.min(nextH, 130) : (room < nextH && nextH <= LIMIT - h)){
+            startPage();
+            if (bi === 0) sectionPages[section.id] = pages.length;
+            if (b.runOn) b = Object.assign({}, b, {runOn: false});
+            node = renderBlock(b); h = M.height(node);
+          }
         }
         place(node, h);
         return;
@@ -3527,6 +3744,7 @@ function layout(deck, host){
       const room = LIMIT - used;
       if (rule && room > 70 && splitAcross(b, rule, room)) return;
       if (used > 0) startPage();
+      if (b.runOn) b = Object.assign({}, b, {runOn: false});
       node = renderBlock(b);
       h = M.height(node);
       if (h > LIMIT && rule && splitAcross(b, rule, LIMIT)) return;
@@ -3575,8 +3793,13 @@ function layout(deck, host){
   return {pages, sectionPages};
 }
 
+/* How many entries fit on one contents page. Past a handful the list is set
+   tighter (.toc-list.is-long) so a long document still fits. */
+function tocPerPage(deck){ return deck.design.format === "slides" ? 7 : 13; }
+
 function fillToc(deck, slots, sectionPages){
-  const perPage = 16;
+  const perPage = tocPerPage(deck);
+  const long = deck.sections.filter(s => !s.accountRecommendation).length > (deck.design.format === "slides" ? 5 : 9);
   slots.forEach((p, pi) => {
     const body = p._body;
     body.innerHTML = "";
@@ -3584,7 +3807,7 @@ function fillToc(deck, slots, sectionPages){
       body.appendChild(el("h2","toc-title","Contents"));
       body.appendChild(el("div","toc-rule"));
     }
-    const list = el("ol","toc-list");
+    const list = el("ol","toc-list" + (long ? " is-long" : ""));
     deck.sections.filter(s => !s.accountRecommendation).slice(pi * perPage, (pi + 1) * perPage).forEach((s, i) => {
       const li = el("li","toc-item");
       li.appendChild(el("span","toc-num", String(pi * perPage + i + 1).padStart(2,"0")));
@@ -3601,34 +3824,60 @@ function fillToc(deck, slots, sectionPages){
   });
 }
 
+/** Team members of one group: "advisor", "service" or "specialist" (brand.js). */
+function teamGroup(deck, group){
+  return (deck.team && deck.team.length ? deck.team : BRAND.team).filter(m => (m.group || "advisor") === group && m.name);
+}
+/** The cover's "Prepared by": the advisor as chosen, with their title from the team list. */
+function preparedBy(deck){
+  const who = String(deck.meta.advisor || "").trim();
+  if (!who) return null;
+  const m = (deck.team || []).find(x => x.name && who.toLowerCase().startsWith(x.name.toLowerCase()));
+  return {name: who, title: m && m.title && who !== BRAND.firm ? m.title : ""};
+}
+
 function closingPages(deck, M, LIMIT){
   const out = [];
-  const deckPage = () => {
-    const p = newPage(deck, {section:"Your team"});
+  const deckPage = (section) => {
+    const p = newPage(deck, {section});
     out.push(p);
     return p;
   };
-  let p = deckPage(), used = 0;
+  let p = null, used = 0;
   const put = (node) => {
     const h = M.height(node) + 3;   /* small allowance: margins between these pieces collapse unevenly */
-    if (h > LIMIT - used && used > 0){ p = deckPage(); used = 0; }
+    if (h > LIMIT - used && used > 0){ const sec = p._section; p = deckPage(sec); p._section = sec; used = 0; }
     p._body.appendChild(node);
     used += h;
   };
-
-  if (deck.options.team){
-    put(el("h2","closing-h","Your Wealth Management Team"));
-    put(el("p","closing-sub", esc(BRAND.tagline)));
-    put(el("div","closing-rule"));
-    const grid = el("div","team-grid");
-    (deck.team && deck.team.length ? deck.team : BRAND.team).forEach(m => {
+  const grid = (members, cls) => {
+    const g = el("div", "team-grid " + (cls || ""));
+    members.forEach(m => {
       const c = el("div","team-cell");
       c.appendChild(el("div","t-name", esc(m.name)));
       if (m.desig) c.appendChild(el("div","t-desig", esc(m.desig)));
       if (m.title) c.appendChild(el("div","t-title", esc(m.title)));
-      grid.appendChild(c);
+      g.appendChild(c);
     });
-    put(grid);
+    return g;
+  };
+
+  if (deck.options.team){
+    p = deckPage("Your team"); p._section = "Your team"; used = 0;
+    put(el("h2","closing-h","Your Wealth Management Team"));
+    put(el("p","closing-sub", esc(BRAND.tagline)));
+    put(el("div","closing-rule"));
+    put(grid(teamGroup(deck, "advisor")));
+    const service = teamGroup(deck, "service");
+    if (service.length){
+      put(el("div","team-sub","Your client service team"));
+      put(grid(service, "is-small"));
+    }
+    const specialists = teamGroup(deck, "specialist");
+    if (deck.options.specialists && specialists.length){
+      put(el("div","team-sub","TD specialists we bring in"));
+      put(grid(specialists, "is-small"));
+    }
 
     const contact = el("div","contact");
     contact.appendChild(el("div","c-firm", esc(deck.contact.firm || BRAND.firm)));
@@ -3640,16 +3889,14 @@ function closingPages(deck, M, LIMIT){
   }
 
   if (deck.options.disclosures){
-    /* on a slide, the disclosures get a slide of their own */
-    if (deck.design.format === "slides" && used > 0){ p = deckPage(); used = 0; }
-    put(el("div","disc-h","Important disclosures"));
+    /* the disclosures have a back page of their own */
+    p = deckPage("Important disclosures"); p._section = "Important disclosures"; used = 0;
+    put(el("div","disc-h is-page","Important disclosures"));
     if (deck.options.draft) put(el("div","disc-draft", esc("[" + BRAND.draftTag + "]")));
     (deck.disclosures || []).forEach(d => put(el("p","disc-p", esc(d))));
   }
   return out;
 }
-
-;
 
 ;
 /* ==========================================================================
@@ -3665,12 +3912,13 @@ const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 function toast(msg, ms){
   const t = $("toast");
   t.textContent = msg; t.hidden = false;
+  t.onclick = () => { t.hidden = true; };      /* click to dismiss */
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.hidden = true; }, ms || 2600);
 }
 
-async function copyText(text, msg){
-  try { await navigator.clipboard.writeText(text); toast(msg || "Copied"); }
+async function copyText(text, msg, ms){
+  try { await navigator.clipboard.writeText(text); toast(msg || "Copied", ms); }
   catch {
     /* some locked-down browsers refuse the clipboard: show it, selected, to copy by hand */
     showModal("Copy this", "<p class='hint'>Press <b>Ctrl+C</b> to copy the selected text.</p><textarea id='copyBox' rows='16' class='mono'></textarea>");
@@ -3932,18 +4180,23 @@ function recommendationProfileMarkup(p, fit){
   p = normalizePortfolio(p);
   const d = donutMarkup(p);
   const blocks = p.commentaryBlocks.filter(x => x && (x.title || x.description)).slice(0, 4);
-  const holdings = p.topHoldings.slice(0, 10);
+  const holdings = p.topHoldings.slice(0, 10), moreHoldings = p.topHoldings.length - holdings.length;
+  /* a short title ("Balanced Growth portfolio") with the family name small beneath it */
+  const full = preferredPortfolioTitle(p), cut = full.lastIndexOf(" - ");
+  const short = cut > 0 ? full.slice(cut + 3) + " portfolio" : full, family = cut > 0 ? full.slice(0, cut) : "";
   const fitItems = (fit && fit.length ? fit : p.fitTemplate.length ? p.fitTemplate
     : ["Client-specific rationale is added when this portfolio is selected for an account."]).slice(0, 4);
   const summary = p.recommendationSummary || p.investmentApproach || "";
   return `<div class="rec-profile"><div class="rec-label">Our Recommendation</div>` +
-    `<div class="rec-recommendation-title">${escProfile(preferredPortfolioTitle(p))}</div>` +
+    `<div class="rec-recommendation-title">${escProfile(short)}</div>` +
+    (family ? `<div class="rec-family">${escProfile(family)}</div>` : "") +
     `<div class="rec-label">Investment Approach</div><p class="rec-summary">${escProfile(summary)}</p>` +
     (blocks.length ? `<div class="rec-commentary">${blocks.map(x => `<div class="rec-commentary-block"><b>${escProfile(x.title)}</b><span>${escProfile(x.description)}</span></div>`).join("")}</div>` : "") +
     portfolioStatsMarkup(p) +
     `<div class="rec-snapshot"><div class="rec-donut-wrap"><div class="rec-holdings-title rec-allocation-title">Asset Allocation</div>${d.svg}<div class="rec-legend">${d.legend}</div></div>` +
     `<div class="rec-holdings"><div class="rec-holdings-title">Representative Holdings</div><div class="rec-holdings-head"><span>Holding</span><span>Weight</span></div>` +
-    holdings.map(x => `<div class="rec-holding"><span>${escProfile(x.name)}</span><span>${escProfile(x.weight)}</span></div>`).join("") + `</div></div>` +
+    holdings.map(x => `<div class="rec-holding"><span>${escProfile(x.name)}</span><span>${escProfile(x.weight)}</span></div>`).join("") +
+    (moreHoldings > 0 ? `<div class="rec-holding rec-more"><span>and ${moreHoldings} more</span><span></span></div>` : "") + `</div></div>` +
     `<div class="rec-fit"><h3>How It Fits the Plan</h3><ul>${fitItems.map(x => `<li>${escProfile(x)}</li>`).join("")}</ul></div>` +
     `<div class="rec-asat">${escProfile(portfolioAsAt(p))}</div></div>`;
 }
@@ -4560,7 +4813,7 @@ function rebuildRail(){
   $("fldHousehold").value = h.name;
   $("fldDate").value = h.date;
   const adv = $("fldAdvisor");
-  const opts = [""].concat(BRAND.team.map(m => m.name + (m.desig ? ", " + m.desig : ""))).concat([BRAND.firm]);
+  const opts = [""].concat(BRAND.team.filter(m => m.group === "advisor").map(m => m.name + (m.desig ? ", " + m.desig : ""))).concat([BRAND.firm]);
   if (h.advisor && !opts.includes(h.advisor)) opts.push(h.advisor);
   adv.innerHTML = opts.map(o => '<option value="' + esc(o) + '">' + esc(o || "— choose —") + "</option>").join("");
   adv.value = h.advisor;

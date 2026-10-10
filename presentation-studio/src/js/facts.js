@@ -113,6 +113,36 @@ function accountLabelFor(kind, ownerNames, joint, corpName){
 
 const MAIN_CLASS_RE = /^(Cash & Cash Equivalents|Cash and Cash Equivalents|Fixed Income|Canadian Equity|American Equity|U\.?S\.? Equity|Foreign Equity|International Equity|Global Equity|Alternative[s]?(?: Investments)?|Preferred (?:Shares|Equity)|Other(?: Assets)?|Mixed|Balanced)$/i;
 
+/* The "Your asset allocation" chart on the performance page. Croesus draws its labels
+   and numbers as shapes, not text, so each category is known by its colour and its
+   share is measured from the chart (pdfread.js → pdfDonuts), then rounded to one
+   decimal exactly as the report prints it. Legend order is the report's order. */
+const CROESUS_ALLOCATION_COLORS = {
+  "#00b624": "Cash & Cash Equivalents",
+  "#c8009c": "Medium-Term Fixed Income",
+  "#0063be": "Long-Term Fixed Income",
+  "#ffc82e": "Other Fixed Income",
+  "#007770": "Canadian Equity",
+  "#e70033": "American Equity",
+  "#00257b": "Foreign Equity",
+  "#f07b05": "Other"
+};
+function croesusAllocation(doc, warnings){
+  const d = (doc.donuts || [])[0];
+  if (!d) return [];
+  const order = d.legend.map(l => l.color);
+  d.slices.forEach(s => { if (!order.includes(s.color)) order.push(s.color); });
+  let unknown = 0;
+  const out = order.map(color => {
+    const s = d.slices.find(x => x.color === color);
+    const name = CROESUS_ALLOCATION_COLORS[color];
+    if (!name) unknown++;
+    return {name: name || "[[asset class, as named in the report]]", pct: s ? Math.round(s.pct * 10) / 10 : 0, color};
+  });
+  if (unknown) warnings.push("The asset allocation chart has " + unknown + " categor" + (unknown === 1 ? "y" : "ies") + " this program does not know by colour: check the name against the report.");
+  return out;
+}
+
 function parseCroesus(doc){
   const L = doc.lines, found = [];
   const f = {kind:"portfolio-facts", source:"Croesus portfolio report", accounts:[], holdings:[], classes:[], periods:[], years:[], monthly:[]};
@@ -248,6 +278,9 @@ function parseCroesus(doc){
   f.holdings = f.holdings.filter(h => !/^ACCOUNT BALANCE/i.test(h.name) || h.value);
   if (f.holdings.length) found.push(f.holdings.length + " holdings");
   if (f.classes.length) found.push("asset mix");
+  f.warnings = [];
+  f.allocation = croesusAllocation(doc, f.warnings);
+  if (f.allocation.length) found.push("asset allocation");
 
   const fx = doc.text.match(/USD\s*1\.000\s*=\s*CAD\s*([\d.]+)/); if (fx) f.usdcad = +fx[1];
   const inc = f.holdings.reduce((n, h) => n + (h.income || 0), 0);
@@ -454,7 +487,8 @@ const FACTS_SHAPES = {
   "monthly": [{"date": "03/31/2026", "value": 1250400.00}],
   "accounts": [{"number": "1ABC23S", "kind": "RRSP", "label": "Robert's RRSP", "owners": ["Robert"], "joint": false, "currency": "CAD", "value": 540000.00}],
   "holdings": [{"account": "1ABC23S", "name": "EXAMPLE CDN EQUITY ETF", "symbol": "XYZ", "assetClass": "Canadian Equity", "value": 85000.00, "pct": 6.80, "income": 2550.00, "yield": 3.00}],
-  "classes": [{"name": "Canadian Equity", "value": 610000.00, "pct": 48.78}]
+  "classes": [{"name": "Canadian Equity", "value": 610000.00, "pct": 48.78}],
+  "allocation": [{"name": "Canadian Equity", "pct": 35.4}]
 }`,
   plan: `{
   "kind": "plan-facts",
@@ -493,7 +527,7 @@ function normalizeFacts(v){
   if (!v || typeof v !== "object") throw Error("That is not a facts object.");
   const arrs = v.kind === "plan-facts"
     ? ["people", "children", "goals", "assetMix", "education", "income", "savings", "pensions", "property", "debt", "netWorthByYear", "assumptions"]
-    : ["accounts", "holdings", "classes", "periods", "years", "monthly"];
+    : ["accounts", "holdings", "classes", "allocation", "periods", "years", "monthly"];
   arrs.forEach(k => { if (!Array.isArray(v[k])) v[k] = []; });
   if (v.kind === "plan-facts"){ v.insights = v.insights || {}; v.insights.protection = v.insights.protection || []; }
   else {

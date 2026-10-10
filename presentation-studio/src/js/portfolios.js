@@ -217,18 +217,23 @@ function recommendationProfileMarkup(p, fit){
   p = normalizePortfolio(p);
   const d = donutMarkup(p);
   const blocks = p.commentaryBlocks.filter(x => x && (x.title || x.description)).slice(0, 4);
-  const holdings = p.topHoldings.slice(0, 10);
+  const holdings = p.topHoldings.slice(0, 10), moreHoldings = p.topHoldings.length - holdings.length;
+  /* a short title ("Balanced Growth portfolio") with the family name small beneath it */
+  const full = preferredPortfolioTitle(p), cut = full.lastIndexOf(" - ");
+  const short = cut > 0 ? full.slice(cut + 3) + " portfolio" : full, family = cut > 0 ? full.slice(0, cut) : "";
   const fitItems = (fit && fit.length ? fit : p.fitTemplate.length ? p.fitTemplate
     : ["Client-specific rationale is added when this portfolio is selected for an account."]).slice(0, 4);
   const summary = p.recommendationSummary || p.investmentApproach || "";
   return `<div class="rec-profile"><div class="rec-label">Our Recommendation</div>` +
-    `<div class="rec-recommendation-title">${escProfile(preferredPortfolioTitle(p))}</div>` +
+    `<div class="rec-recommendation-title">${escProfile(short)}</div>` +
+    (family ? `<div class="rec-family">${escProfile(family)}</div>` : "") +
     `<div class="rec-label">Investment Approach</div><p class="rec-summary">${escProfile(summary)}</p>` +
     (blocks.length ? `<div class="rec-commentary">${blocks.map(x => `<div class="rec-commentary-block"><b>${escProfile(x.title)}</b><span>${escProfile(x.description)}</span></div>`).join("")}</div>` : "") +
     portfolioStatsMarkup(p) +
     `<div class="rec-snapshot"><div class="rec-donut-wrap"><div class="rec-holdings-title rec-allocation-title">Asset Allocation</div>${d.svg}<div class="rec-legend">${d.legend}</div></div>` +
     `<div class="rec-holdings"><div class="rec-holdings-title">Representative Holdings</div><div class="rec-holdings-head"><span>Holding</span><span>Weight</span></div>` +
-    holdings.map(x => `<div class="rec-holding"><span>${escProfile(x.name)}</span><span>${escProfile(x.weight)}</span></div>`).join("") + `</div></div>` +
+    holdings.map(x => `<div class="rec-holding"><span>${escProfile(x.name)}</span><span>${escProfile(x.weight)}</span></div>`).join("") +
+    (moreHoldings > 0 ? `<div class="rec-holding rec-more"><span>and ${moreHoldings} more</span><span></span></div>` : "") + `</div></div>` +
     `<div class="rec-fit"><h3>How It Fits the Plan</h3><ul>${fitItems.map(x => `<li>${escProfile(x)}</li>`).join("")}</ul></div>` +
     `<div class="rec-asat">${escProfile(portfolioAsAt(p))}</div></div>`;
 }

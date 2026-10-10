@@ -8,6 +8,10 @@
 
 
 const AUTOSAVE_KEY = "mhwg.presentation.working-copy";
+const ADVISOR_KEY = "mhwg.presentation.advisor";     /* "Prepared by", remembered on this computer */
+function rememberedAdvisor(){
+  try { return localStorage.getItem(ADVISOR_KEY) || BRAND.defaultAdvisor; } catch (e){ return BRAND.defaultAdvisor; }
+}
 
 /* ── State ──────────────────────────────────────────────────────────────── */
 
@@ -18,6 +22,7 @@ let openSectionId = null;        /* the section expanded in the Build outline */
 let undoStack = [], redoStack = [];
 let zoom = 0;                    /* 0 = fit to the window */
 let relayoutTimer = null;
+let viewMode = "doc";            /* "doc" the document · "leave" one-page leave-behind · "prep" private prep sheet (views.js) */
 
 function todayISO(){
   const t = new Date();
@@ -27,10 +32,11 @@ function newDeck(kind){
   const t = TEMPLATES[kind] || {title:"Our Recommendations", subtitle:"", kicker:"Investment recommendation", sections:[]};
   return {
     version: 1,
-    meta:{ kind, title:t.title, subtitle:t.subtitle, kicker:t.kicker, client:"", advisor:"", date:todayISO(), docTitle:"" },
+    meta:{ kind, title:t.title, subtitle:t.subtitle, kicker:t.kicker, client:"", advisor:rememberedAdvisor(), date:todayISO(), docTitle:"" },
     cover:{style:"white", image:""},
     design:{accent:"gold", density:"comfortable", look:"private", format:"report"},
-    options:{ toc:true, dividers:false, sectionBreak:true, team:true, disclosures:true,
+    /* sections run on down the page (no half-empty pages); see layout() in render.js */
+    options:{ toc:true, dividers:false, sectionBreak:false, team:true, disclosures:true, specialists:false,
       draft:true, confidential:true, pageNumbers:true, watermark:false, runningHead:true },
     /* Starter content is marked `seed`; any edit clears the mark. */
     sections:(t.sections || []).map(s => ({
@@ -142,10 +148,11 @@ function autosave(){
 
 function render(){
   const host = $("pages");
-  const edit = $("optEditInline").checked;
+  /* the leave-behind and the prep sheet are made from the document, not typed into (views.js) */
+  const edit = $("optEditInline").checked && viewMode === "doc";
   const keepTop = host.scrollTop, keepLeft = host.scrollLeft;
   host.className = "pages doc" + (edit ? " edit-on" : "");
-  const result = layout(deck, host);
+  const result = layout(shownDeck(), host);
   $("pageCount").textContent = result.pages.length + (result.pages.length === 1 ? " page" : " pages");
   if (edit){
     $$(".is-editable", host).forEach(n => {
@@ -157,18 +164,28 @@ function render(){
   if (selectedId){
     $$('.blk-hit[data-bid="' + selectedId + '"]', host).forEach(n => n.classList.add("is-selected"));
   }
-  decorateBlocks();
+  if (viewMode === "doc"){
+    decorateBlocks();
+    decorateToCheck();        /* blanks.js: what Copilot wrote, to read over */
+  }
   applyZoom();
   /* laying out again rebuilds every page; put the view back where the person was */
   host.scrollTop = keepTop; host.scrollLeft = keepLeft;
   updateChips();
+  updateBlankButton();
+  buildBlankForm();
   const print = deckPrint();
   if (print !== lastPrint){ lastPrint = print; markDirty(); }
   updateUndoButtons();
 }
 function relayoutSoon(){
   clearTimeout(relayoutTimer);
-  relayoutTimer = setTimeout(() => { render(); buildOutline(); }, 260);
+  relayoutTimer = setTimeout(() => {
+    /* never lay the pages out again under someone typing on them: wait until they leave the text */
+    const a = document.activeElement;
+    if (a && a.closest && a.closest("#pages .is-editable")){ relayoutSoon(); return; }
+    render(); buildOutline();
+  }, 260);
 }
 function applyZoom(){
   const host = $("pages");
@@ -198,6 +215,7 @@ function decorateBlocks(){
       if (!sec) return;
       btn("+ Block", "Add a block at the top of this section", (b) => showInsertMenu(b, {sectionId: sec.id, top: true}));
       btn("✦ Copilot", "Write this section with Copilot", () => { showRail("copilot"); setPromptKind("section", sec.id); });
+      btn("✕ Remove section", "Take this whole section out (Undo brings it back)", () => removeSection(sec.id), "is-danger");
     } else if (w.dataset.type === "recommendation"){
       btn("Edit recommendation", "Change the account, amount, portfolio or points", () => selectBlock(bid, false));
       btn("Delete page", "Remove this recommendation page", () => {
@@ -207,13 +225,56 @@ function decorateBlocks(){
     } else {
       btn("+ Add below", "Insert a block below this one", (b) => showInsertMenu(b, {after: bid}));
       btn("✦ Copilot", "Improve or write this with Copilot", () => openBlockCopilot(bid));
+      btn("⚙", "All the settings for this block", () => selectBlock(bid, false));
+      const fb = findBlock(bid);
+      if (fb && fb.block.from) btn("Source", "Where these figures came from in the report", () => {
+        selectBlock(bid, false);
+        const pv = $("inspectorBody").querySelector(".prov");
+        if (pv) pv.scrollIntoView({block: "start", behavior: "smooth"});
+      });
       btn("↑", "Move up", () => moveBlock(bid, -1));
       btn("↓", "Move down", () => moveBlock(bid, 1));
       btn("⧉", "Duplicate", () => duplicateBlock(bid));
-      btn("✕", "Delete", () => deleteBlock(bid), "is-danger");
+      btn("✕ Remove", "Take this block out (Undo brings it back)", () => deleteBlock(bid), "is-danger");
     }
     w.appendChild(bar);
+    addItemDeletes(w);
   });
+}
+/* Trimming is as easy as filling in: every bullet, fact row and action step gets
+   its own small ✕ (on screen only), so a generous template is cut down in clicks. */
+function addItemDeletes(w){
+  const found = findBlock(w.dataset.bid);
+  if (!found || !["bullets", "facts", "actions"].includes(found.block.type)) return;
+  const off = +(w.dataset.off || 0);
+  const rows = found.block.type === "bullets" ? $$("li.is-editable", w) : $$(found.block.type === "facts" ? ".fact" : ".action", w);
+  rows.forEach((row, i) => {
+    if (row.querySelector(":scope > .item-del")) return;
+    const x = el("button", "item-del", "✕");
+    x.type = "button";
+    x.title = "Remove this line (Undo brings it back)";
+    x.setAttribute("contenteditable", "false");
+    x.addEventListener("mousedown", e => e.preventDefault());
+    x.onclick = (e) => { e.stopPropagation(); removeItem(found.block.id, off + i); };
+    row.appendChild(x);
+  });
+}
+function removeItem(bid, i){
+  const found = findBlock(bid);
+  if (!found || !found.block.items || found.block.items[i] === undefined) return;
+  snapshot();
+  found.block.items.splice(i, 1);
+  delete found.block.seed;
+  if (!found.block.items.length) found.section.blocks = found.section.blocks.filter(b => b !== found.block);
+  buildOutline(); render();
+}
+function removeSection(id){
+  const at = deck.sections.findIndex(s => s.id === id);
+  if (at < 0) return;
+  snapshot();
+  const [gone] = deck.sections.splice(at, 1);
+  clearSelection(); syncPanels(); render();
+  toast("“" + (gone.title || "Section") + "” removed — Undo (Ctrl+Z) brings it back");
 }
 
 function showInsertMenu(anchor, where){
@@ -247,7 +308,8 @@ const FIELD_MAP = [
 const OPTION_MAP = [
   ["optToc","toc"], ["optDividers","dividers"], ["optSectionBreak","sectionBreak"], ["optTeam","team"],
   ["optDisc","disclosures"], ["optDraft","draft"], ["optConfidential","confidential"],
-  ["optPageNums","pageNumbers"], ["optWatermark","watermark"], ["optRunningHead","runningHead"]
+  ["optPageNums","pageNumbers"], ["optWatermark","watermark"], ["optRunningHead","runningHead"],
+  ["optSpecialists","specialists"]
 ];
 
 function syncPanels(){
@@ -283,14 +345,14 @@ function swatchRow(host, items, current, cls, onPick){
 function buildSwatches(){
   swatchRow($("formatPick"), [["report", "Report", "Portrait — print or email"], ["slides", "Slides", "Landscape — screen or TV"]],
     deck.design.format || "report", "fmt-swatch", id => { deck.design.format = id; zoom = 0; });
-  swatchRow($("coverPick"), [["white", "Clean white"], ["ivory", "Ivory"], ["premium", "Premium green"], ["photo", "Photograph"]],
+  swatchRow($("coverPick"), [["white", "Clean white"], ["picture", "With a picture"], ["ivory", "Ivory"], ["premium", "Premium green"], ["photo", "Full photograph"]],
     deck.cover.style || "white", "cover-swatch", id => {
       deck.cover.style = id;
       if (id === "photo" && !deck.cover.image) setTimeout(() => $("btnCoverImage").click(), 50);
     });
   swatchRow($("lookPick"), [["private", "Private bank", "Open, gold hairlines"], ["classic", "Classic", "Boxed, green headers"]],
     deck.design.look || "private", "look-swatch", id => { deck.design.look = id; });
-  $("btnCoverImage").hidden = deck.cover.style !== "photo";
+  $("btnCoverImage").hidden = deck.cover.style !== "photo" && deck.cover.style !== "picture";
 }
 
 function buildTitlePicker(){
@@ -302,7 +364,8 @@ function buildTitlePicker(){
 function buildAdvisorPicker(){
   const sel = $("fldAdvisor");
   const cur = deck.meta.advisor || "";
-  const opts = [""].concat(deck.team.map(m => m.name + (m.desig ? ", " + m.desig : ""))).concat([BRAND.firm]);
+  const opts = [""].concat(deck.team.filter(m => (m.group || "advisor") === "advisor" && m.name)
+    .map(m => m.name + (m.desig ? ", " + m.desig : ""))).concat([BRAND.firm]);
   if (cur && !opts.includes(cur)) opts.push(cur);
   sel.innerHTML = opts.map(o => '<option value="' + esc(o) + '">' + esc(o || "— choose —") + "</option>").join("");
   sel.value = cur;
@@ -319,6 +382,10 @@ function buildTeamEditor(){
       inp.oninput = () => { deck.team[i][k] = inp.value; relayoutSoon(); };
       row.appendChild(inp);
     });
+    const grp = inspSelect([{id:"advisor", name:"Advisor"}, {id:"service", name:"Client service"}, {id:"specialist", name:"TD specialist"}],
+      m.group || "advisor", v => { snapshot(); deck.team[i].group = v; buildAdvisorPicker(); render(); });
+    grp.title = "Where they appear on the closing page";
+    row.appendChild(grp);
     row.appendChild(inspBtn("Remove", () => { snapshot(); deck.team.splice(i, 1); buildTeamEditor(); render(); }, "btn-danger"));
     host.appendChild(row);
   });
@@ -489,22 +556,21 @@ const SECTION_PRESETS = [
     {type:"table", caption:"Illustrative — figures rounded, before tax", headers:["Option","What it does","Trade-off"],
       rows:[["Option A","",""],["Option B","",""]]},
     {type:"twocol", aTitle:"What this does well", aText:"", bTitle:"What to watch", bText:""})})],
-  ["how", "How we work", () => ({title:"How we work", blocks:blocks(
-    {type:"infographic", graphic:"steps", title:"Our process",
-      items:[{t:"Discover",d:"Understand the whole picture"},{t:"Plan",d:"Model the options"},{t:"Implement",d:"Put the plan to work"},{t:"Review",d:"Adjust as life changes"}]},
-    {type:"paragraph", text:"What working with us is actually like."})})],
+  ["how", "How we work with you", () => ({title:"How we work with you", blocks:blocks(...HOW_WE_WORK_BLOCKS())})],   /* content.js */
   ["team", "The team behind the plan", () => ({title:"The team behind the plan", blocks:blocks(
     {type:"paragraph", text:"You are not hiring one advisor — you are hiring a team, with a dedicated service group behind it."})})],
   ["next", "What happens next", () => ({title:"What happens next", blocks:blocks(
     {type:"actions", items:[{t:"Confirm the plan", d:"Review and confirm the agreed direction.", who:"You", when:"Next meeting"},
                             {t:"Implement", d:"Complete the agreed account and portfolio changes.", who:"Us", when:"After approval"}]})})]
-];
+].concat(PLANNING_TOPICS.map(([id, name, group, make]) => [id, name, make, group]));   /* content.js */
 function addPresetSection(id){
   const p = SECTION_PRESETS.find(x => x[0] === id) || SECTION_PRESETS[0];
   const made = p[2]();
   snapshot();
   const sec = {id:uid(), title:made.title, brief:made.title, kicker:"", summary:"",
     blocks:made.blocks.map(b => Object.assign(b, {seed:true}))};
+  /* a topic added twice gets its own Copilot boxes */
+  sec.blocks.forEach(b => { if (b.slot) b.slot += "_" + sec.id; });
   deck.sections.push(sec);
   currentSectionId = openSectionId = sec.id;
   selectedId = null;
@@ -579,24 +645,38 @@ function buildCheckList(){
   } else {
     host.appendChild(el("p", "hint", "Worth fixing before anyone sees it. Click one to go to it."));
     issues.forEach(is => {
-      const row = el("button", "check-row", esc(is.t));
+      const row = el("button", "check-row" + (is.soft ? " is-soft" : ""), esc(is.t));
       row.onclick = is.fix;
       host.appendChild(row);
     });
   }
 }
 function updateChips(){
-  const p = deckProgress();
-  $("buildChip").textContent = p.total ? p.done + "/" + p.total : "";
-  const n = preflight().length;
+  /* Edit: yellow blanks left. Finish: things to fix (the "read it over" reminder does not count). */
+  const blanks = collectBlanks().length;
+  $("buildChip").textContent = blanks ? String(blanks) : "✓";
+  $("buildChip").className = blanks ? "is-warn" : "is-ok";
+  $("buildChip").title = blanks ? blanks + " yellow blanks to fill in" : "Every blank is filled in";
+  const n = preflight().filter(is => !is.soft).length;
   $("finishChip").textContent = n ? String(n) : "✓";
   $("finishChip").className = n ? "is-warn" : "is-ok";
   if ($("rail").querySelector('.panel.is-active[data-panel="finish"]')) buildCheckList();
 }
+/** Finish tab, with the folded card that holds the field `id` opened and in view. */
+function openFinishCard(id){
+  showRail("finish");
+  const f = $(id);
+  if (!f) return;
+  const card = f.closest("details");
+  if (card) card.open = true;
+  f.scrollIntoView({block: "center", behavior: "smooth"});
+}
 
 /* ── Inspector ──────────────────────────────────────────────────────────── */
 
-function selectBlock(id, scroll){
+/** quiet: select without opening the settings panel (clicking text to type) —
+    the panel opens from the block's "Settings" button or a click on the block. */
+function selectBlock(id, scroll, quiet){
   selectedId = id;
   const found = findBlock(id);
   if (found){ currentSectionId = found.section.id; if (!found.section.accountRecommendation) openSectionId = found.section.id; }
@@ -605,7 +685,7 @@ function selectBlock(id, scroll){
   nodes.forEach(n => n.classList.add("is-selected"));
   if (scroll && nodes[0]) nodes[0].scrollIntoView({block:"center", behavior:"smooth"});
   buildOutline();
-  buildInspector();
+  if (!quiet || !$("inspector").hidden) buildInspector();
 }
 function clearSelection(){
   selectedId = null;
@@ -669,6 +749,7 @@ function buildInspector(){
   ["btnBlockUp", "btnBlockDown", "btnBlockDup", "btnBlockCopilot"].forEach(id => { $(id).hidden = isRec; });
   if (isRec){ buildRecommendationInspector(b, body); return; }
   body.appendChild(el("p", "insp-note insp-sec", "In “" + esc(found.section.title || "section") + "”" + (b.seed ? " · <b>still sample text</b>" : "")));
+  const prov = b.from && provenanceBox(b);            /* views.js: where the figures came from */
 
   /* `look` edits (chart type, title, size) change how it looks, not what it says,
      so they never clear a chart's "still sample numbers" mark */
@@ -793,6 +874,7 @@ function buildInspector(){
     default:
       body.appendChild(el("p","insp-note","Nothing to set on this block."));
   }
+  if (prov) body.appendChild(prov);
 }
 
 /* ── Numbers for charts ─────────────────────────────────────────────────── */
@@ -1100,9 +1182,17 @@ function migrate(d){
   d.meta = d.meta || {};
   d.cover = d.cover || {style:"white", image:""};
   d.design = Object.assign({accent:"gold", density:"comfortable", look:"private", format:"report"}, d.design || {});
-  d.options = Object.assign({toc:true, dividers:false, sectionBreak:true, team:true, disclosures:true,
+  d.options = Object.assign({toc:true, dividers:false, sectionBreak:true, team:true, disclosures:true, specialists:false,
     draft:true, confidential:true, pageNumbers:true, watermark:false, runningHead:true}, d.options || {});
   d.team = d.team && d.team.length ? d.team : BRAND.team.map(m => Object.assign({}, m));
+  /* v10: titles from the team website, and the client service team and TD specialists */
+  d.team.forEach(m => {
+    const b = BRAND.team.find(x => x.name === m.name);
+    if (b && !m.group) m.group = b.group;
+    if (b && m.title === "Investment Advisor") m.title = b.title;
+  });
+  if (!d.team.some(m => m.group === "service" || m.group === "specialist"))
+    BRAND.team.filter(m => m.group !== "advisor").forEach(m => d.team.push(Object.assign({}, m)));
   d.contact = Object.assign({firm:BRAND.firm, address:BRAND.address, phone:BRAND.phone, web:BRAND.web}, d.contact || {});
   d.disclosures = d.disclosures && d.disclosures.length ? d.disclosures : BRAND.disclosures.slice();
   d.sections = (d.sections || []).map(s => Object.assign({id:uid(), title:"", blocks:[]}, s));
@@ -1116,6 +1206,7 @@ function migrate(d){
   d.sections.forEach(s => { if (s.recommendationOverview && !(s.blocks || []).some(b => b.type === "householdSummary")) s.blocks = [{id: uid(), type: "householdSummary"}]; });
   d.drafts = d.drafts && typeof d.drafts === "object" ? d.drafts : {};
   d.sources = d.sources && typeof d.sources === "object" ? d.sources : {};
+  d.toCheck = d.toCheck && typeof d.toCheck === "object" ? d.toCheck : {};
   delete d.wizard;
   /* No network, ever: a picture must be embedded in the file. */
   const local = v => !v || /^data:image\//i.test(v);
@@ -1135,8 +1226,8 @@ function layoutProblems(){
 }
 function exportPdf(force){
   commitEdits();
-  const gaps = gapCount(deck.sections.map(s => s.blocks));
-  if (gaps && force !== true && force !== "gaps"){
+  const gaps = gapCount(shownDeck().sections.map(s => s.blocks));
+  if (gaps && force !== true && force !== "gaps" && viewMode !== "prep"){
     showModal("Notes for the advisor are still in the text", `
       <p>${gaps} place${gaps === 1 ? "" : "s"} still say <b>[NEEDS ADVISOR INPUT]</b> or
       <b>[SOURCE CONFLICT]</b> — they are highlighted on the page and would print in the PDF.</p>
@@ -1159,9 +1250,11 @@ function exportPdf(force){
     $("btnPrintAnyway").onclick = () => exportPdf(true);
     return;
   }
-  const slides = deck.design.format === "slides";
-  showModal("Export the PDF", `
-    <p>The PDF comes out of the browser's own print engine, so the type stays sharp and selectable.</p>
+  const slides = deck.design.format === "slides" && viewMode === "doc";
+  showModal(viewMode === "prep" ? "Export your prep sheet" : viewMode === "leave" ? "Export the one-page summary" : "Export the PDF", `
+    ${viewMode === "prep" ? '<div class="callout">This is your internal prep sheet. Every page says so; it is not for the client.</div>' : ""}
+    <p>The PDF comes out of the browser's own print engine, so the type stays sharp and selectable.
+      It is named for you: <b>${esc(pdfName())}.pdf</b></p>
     <h3>In the print window</h3>
     <ol>
       <li><b>Destination:</b> Save as PDF</li>
@@ -1172,12 +1265,26 @@ function exportPdf(force){
     </ol>
     <div class="callout">These settings stick after the first time on this computer.</div>
     <div class="modal-actions"><button class="btn btn-primary" id="btnDoPrint">Open the print window</button></div>`);
-  $("btnDoPrint").onclick = () => { hideModal(); setPrintPage(); setTimeout(() => window.print(), 60); };
+  $("btnDoPrint").onclick = () => { hideModal(); setPrintPage(); printNamed(); };
+}
+/** The browser names the PDF after the page title, so it is set for the print:
+    "Kowalchuk – Portfolio Review – 2026-10-08". */
+function pdfName(){
+  const who = surnameOf(deck.meta.client) || deck.meta.client || deck.meta.title || "Presentation";
+  const kind = (SMART_KINDS.find(k => k.kind === deck.meta.kind) || {}).name || "";
+  const what = viewMode === "leave" ? "Summary" : viewMode === "prep" ? "Prep sheet (internal)" : kind.replace(/\b\w/g, c => c.toUpperCase());
+  return [who, what, deck.meta.date].filter(Boolean).join(" – ").replace(/[\\/:*?"<>|]/g, "");
+}
+function printNamed(){
+  const keep = document.title;
+  document.title = pdfName();
+  window.addEventListener("afterprint", () => { document.title = keep; }, {once: true});
+  setTimeout(() => window.print(), 60);
 }
 function setPrintPage(){
   let st = $("printPageSize");
   if (!st){ st = document.createElement("style"); st.id = "printPageSize"; document.head.appendChild(st); }
-  st.textContent = deck.design.format === "slides" ? "@page{size:13.333in 7.5in;margin:0}" : "@page{size:letter;margin:0}";
+  st.textContent = shownDeck().design.format === "slides" ? "@page{size:13.333in 7.5in;margin:0}" : "@page{size:letter;margin:0}";
 }
 
 /* ── Present: full screen, one page at a time ───────────────────────────── */
@@ -1227,7 +1334,8 @@ function presentGo(i){
   ["accent", "density", "look", "format"].forEach(k => holder.dataset[k] = $("presentHost").dataset[k] || "");
   const p = presentPages[presentAt].cloneNode(true);
   p.querySelectorAll("[contenteditable]").forEach(n => n.removeAttribute("contenteditable"));
-  p.querySelectorAll(".page-overflow,.blk-tag,.blk-quickbar").forEach(n => n.remove());
+  p.querySelectorAll(".page-overflow,.blk-tag,.blk-quickbar,.blk-check,.item-del").forEach(n => n.remove());
+  p.querySelectorAll(".is-tocheck").forEach(n => n.classList.remove("is-tocheck"));
   const w = parseFloat(getComputedStyle($("presentHost")).getPropertyValue("--pw")) || 1280;
   const h = parseFloat(getComputedStyle($("presentHost")).getPropertyValue("--ph")) || 720;
   p.style.zoom = Math.min(window.innerWidth / w, (window.innerHeight - 34) / h);
@@ -1286,7 +1394,7 @@ function newPresentation(){
   if (!deckIsStarter() && !confirm("Start a new presentation?\n\nSave this one first if you need it. (Undo brings it back.)")) return;
   snapshot();
   const keep = {team: deck.team, contact: deck.contact, design: deck.design, cover: deck.cover};
-  deck = Object.assign(newDeck("portfolio_review"), keep);
+  deck = Object.assign(newDeck("prospect"), keep);   /* prospect meetings are the most common piece */
   selectedId = null; currentSectionId = null; openSectionId = null;
   syncPanels(); render();
   builtPrint = deckPrint();
@@ -1316,9 +1424,15 @@ function wire(){
   $("docTitle").oninput = () => { deck.meta.docTitle = $("docTitle").value; markDirty(); };
   $("btnUndo").onclick = undo;
   $("btnRedo").onclick = redo;
-  $("btnNew").onclick = newPresentation;
-  $("btnOpen").onclick = () => pickFile(".json", async f => openAnyJSON(await readTextFile(f)));
-  $("btnSave").onclick = saveDeck;
+  /* the File menu: New, Open, Save */
+  $("btnFile").onclick = () => { $("fileDrop").hidden = !$("fileDrop").hidden; };
+  const fileItem = (id, fn) => { $(id).onclick = () => { $("fileDrop").hidden = true; fn(); }; };
+  fileItem("btnNew", newPresentation);
+  fileItem("btnOpen", () => pickFile(".json", async f => openAnyJSON(await readTextFile(f))));
+  fileItem("btnSave", saveDeck);
+  document.addEventListener("mousedown", (e) => { if (!e.target.closest(".file-menu")) $("fileDrop").hidden = true; });
+  /* the one Copilot button: copies the prompt; the answer can be pasted anywhere (intake.js) */
+  $("btnCopilotTop").onclick = copySlotPrompt;
   $("btnSave2").onclick = saveDeck;
   $("btnPresent").onclick = present;
   $("btnPresent2").onclick = present;
@@ -1362,7 +1476,10 @@ function wire(){
   $("btnCoverImage").onclick = () => pickFile("image/*", async f => {
     snapshot(); deck.cover.image = await readImage(f); deck.cover.style = "photo"; buildSwatches(); render();
   });
-  $("btnAddMember").onclick = () => { snapshot(); deck.team.push({name:"", desig:"", title:""}); buildTeamEditor(); render(); };
+  $("btnAddMember").onclick = () => { snapshot(); deck.team.push({name:"", desig:"", title:"", group:"advisor"}); buildTeamEditor(); render(); };
+  $("fldAdvisor").addEventListener("change", () => {
+    try { localStorage.setItem(ADVISOR_KEY, deck.meta.advisor || ""); } catch (e){}
+  });
   $("fldDisclosures").oninput = () => {
     deck.disclosures = $("fldDisclosures").value.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
     relayoutSoon();
@@ -1373,7 +1490,15 @@ function wire(){
   };
 
   /* build */
-  $("presetPick").innerHTML = SECTION_PRESETS.map(([id, name]) => '<option value="' + id + '">' + esc(name) + "</option>").join("");
+  /* general sections first, then the planning topics under their groups */
+  const groups = [];
+  SECTION_PRESETS.forEach(([id, name, , group]) => {
+    const g = group || "Sections";
+    let at = groups.find(x => x.g === g);
+    if (!at) groups.push(at = {g, items: []});
+    at.items.push('<option value="' + id + '">' + esc(name) + "</option>");
+  });
+  $("presetPick").innerHTML = groups.map(x => '<optgroup label="' + esc(x.g) + '">' + x.items.join("") + "</optgroup>").join("");
   $("btnAddSection").onclick = () => addPresetSection($("presetPick").value);
   $("btnAddRec").onclick = openRecommendationDialog;
   $("btnBorrow").onclick = showBorrowDialog;
@@ -1424,15 +1549,22 @@ function wire(){
   /* the page itself */
   const host = $("pages");
   host.addEventListener("click", (e) => {
-    if (e.target.closest(".blk-quickbar")) return;
+    if (e.target.closest(".blk-quickbar") || viewMode !== "doc") return;
     const hit = e.target.closest(".blk-hit");
-    if (hit && !hit.dataset.bid.startsWith("sec-")) selectBlock(hit.dataset.bid, false);
+    if (hit && !hit.dataset.bid.startsWith("sec-")) selectBlock(hit.dataset.bid, false, !!e.target.closest(".is-editable"));
     else if (hit){ currentSectionId = hit.dataset.bid.slice(4); clearSelection(); }
     else if (!e.target.closest(".is-editable")) clearSelection();
   });
+  /* the text of an editable, without the on-screen ✕ a bullet carries */
+  const edHTML = (ed) => {
+    if (!ed.querySelector(".item-del")) return ed.innerHTML;
+    const c = ed.cloneNode(true);
+    c.querySelectorAll(".item-del").forEach(n => n.remove());
+    return c.innerHTML;
+  };
   host.addEventListener("focusin", (e) => {
     const ed = e.target.closest(".is-editable");
-    if (ed) ed._before = ed.innerHTML;
+    if (ed) ed._before = edHTML(ed);
   });
   /* Pasting onto the page goes in as plain text: rich paste from Word or Outlook can
      carry pictures that are web links, which the browser would fetch. */
@@ -1453,20 +1585,20 @@ function wire(){
   });
   host.addEventListener("focusout", (e) => {
     const ed = e.target.closest(".is-editable");
-    if (!ed || ed.innerHTML === ed._before) return;
+    if (!ed || edHTML(ed) === ed._before) return;
     const bid = ed.dataset.bid;
     if (bid && bid.startsWith("sec-")){
       const sec = deck.sections.find(s => "sec-" + s.id === bid);
       if (!sec) return;
       snapshot();
-      sec[ed.dataset.path === "kicker" ? "kicker" : "title"] = htmlToRich(ed.innerHTML);
+      sec[ed.dataset.path === "kicker" ? "kicker" : "title"] = htmlToRich(edHTML(ed));
       buildOutline(); render();
       return;
     }
     const found = findBlock(bid);
     if (!found) return;
     snapshot();
-    let path = ed.dataset.path, value = htmlToRich(ed.innerHTML);
+    let path = ed.dataset.path, value = htmlToRich(edHTML(ed));
     /* a block split across pages: write back into this fragment's part only */
     const frag = ed.closest(".blk");
     if (frag && frag.dataset.off != null){
@@ -1484,6 +1616,7 @@ function wire(){
     }
     setPath(found.block, path, value);
     delete found.block.seed;
+    clearToCheck(found.block.id);       /* edited, so read over */
     buildOutline(); render();
     if (selectedId === found.block.id) buildInspector();
   });
@@ -1492,6 +1625,11 @@ function wire(){
     if (e.key === "Escape" && e.target.closest(".is-editable")) e.target.blur();
   });
   $("optEditInline").onchange = render;
+  /* what the canvas shows: the document, the leave-behind or the prep sheet (views.js) */
+  $("viewPick").onchange = () => setView($("viewPick").value);
+  $("btnViewBack").onclick = () => setView("doc");
+  $("btnLeave").onclick = () => setView("leave");
+  $("btnPrep").onclick = () => setView("prep");
 
   /* zoom */
   $("btnZoomIn").onclick = () => { zoom = Math.min(1.6, (zoom || fitZoom()) + 0.1); applyZoom(); };
@@ -1544,7 +1682,7 @@ function boot(){
     const saved = localStorage.getItem(AUTOSAVE_KEY);
     if (saved) restored = JSON.parse(saved);
   } catch (e){}
-  deck = restored && restored.sections ? migrate(restored) : newDeck("portfolio_review");
+  deck = restored && restored.sections ? migrate(restored) : newDeck("prospect");
   $$("[data-wordmark]").forEach(n => n.appendChild(wordmark()));
   wire();
   syncPanels();
